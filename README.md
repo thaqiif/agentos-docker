@@ -83,10 +83,11 @@ agent CLI scatters its auth and state across different home paths — Claude Cod
 in `~/.claude` **and** the loose `~/.claude.json`, the extra profiles in
 `~/.claude-profiles`, OpenCode in `~/.local/share/opencode`, Codex in
 `~/.codex`, git in `~/.gitstate`, SSH keys in `~/.ssh`, and AgentOS itself in
-`~/.agent-os`. Mounting all of `$HOME` means every login
-survives `docker compose down && up` (and image rebuilds), instead of having to
-re-authenticate each tool. Build artifacts live in `/opt` (outside home), so
-nothing important is shadowed.
+`~/.agent-os` — including its SQLite database (`DB_PATH`), so your **projects and
+session history** persist too. Mounting all of `$HOME` means every login and all
+app state survive `docker compose down && up` (and image rebuilds), instead of
+having to re-authenticate each tool or re-create your projects. Build artifacts
+live in `/opt` (outside home), so nothing important is shadowed.
 
 > Log in to each agent **once** and it stays logged in. To wipe all saved
 > logins/state, remove the volume: `docker compose down -v`.

@@ -80,6 +80,11 @@ RUN useradd --create-home --shell /bin/bash --uid 1001 agent \
 ENV HOME=/home/agent \
     AGENT_OS_HOME=/home/agent/.agent-os \
     AGENT_OS_PORT=3011 \
+    # AgentOS' SQLite DB (projects, sessions, messages) defaults to
+    # <cwd>/agent-os.db, i.e. /opt/agent-os/agent-os.db — which lives in the
+    # image build dir and gets wiped on every rebuild. Relocate it into the
+    # persisted home volume so projects and session history survive redeploys.
+    DB_PATH=/home/agent/.agent-os/agent-os.db \
     NODE_ENV=production \
     PATH=/home/agent/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin \
     # Relocate git's global config into a persisted volume so logins (HTTPS
