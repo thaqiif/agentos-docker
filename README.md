@@ -204,6 +204,28 @@ keyboard, so you can't see what you type. The app already tracks the keyboard vi
 root to the keyboard-aware `h-app` height. The prompt and toolbar then stay above
 the keyboard.
 
+## Upstream Version (Pinning)
+
+The build is pinned to a specific upstream AgentOS **commit SHA** via
+`ARG AGENT_OS_REF` in the [`Dockerfile`](Dockerfile), not a moving branch like
+`main`. This is deliberate: the build-time patches above
+([`inject-*.mjs`](Dockerfile)) match the source they were written against by
+*anchoring* on specific upstream code. If upstream refactored a patched file, an
+anchor would no longer match and the build would **fail loudly** rather than
+silently skip the patch — good, but it means an un-pinned `main` could break a
+rebuild at any time.
+
+To move to a newer upstream version, bump `AGENT_OS_REF` (to a newer SHA, tag, or
+branch) and rebuild:
+
+```bash
+docker compose build --build-arg AGENT_OS_REF=main   # or a specific SHA/tag
+```
+
+If an injector's anchor check fails after a bump, that file changed upstream —
+update the matching `inject-*.mjs` script, then rebuild. The ref accepts a commit
+SHA, tag, or branch.
+
 ## Docker Socket (Optional)
 
 Uncomment the `/var/run/docker.sock` line under `volumes:` in `docker-compose.yml` if you want AgentOS sessions to control the host Docker daemon.

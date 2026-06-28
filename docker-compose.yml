@@ -10,8 +10,10 @@ services:
         # these needs a rebuild: `docker compose up -d --build`.
         TERMINAL_FONT_SIZE: ${TERMINAL_FONT_SIZE:-16}
         TERMINAL_FONT_SIZE_MOBILE: ${TERMINAL_FONT_SIZE_MOBILE:-13}
-        # Pin a specific upstream release if you like:
-        # AGENT_OS_REF: v0.2.1
+        # Upstream AgentOS is pinned to a commit SHA in the Dockerfile so our
+        # build-time patches stay in sync. Override here to build a different
+        # commit SHA, tag, or branch (e.g. to try the latest):
+        # AGENT_OS_REF: main
     restart: unless-stopped
 
     # Optional: pass extra env (e.g. agent API keys) into the container.

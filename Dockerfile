@@ -5,9 +5,14 @@
 
 FROM node:20-bookworm-slim
 
-# Which ref of the upstream repo to build. Override with:
+# Which ref of the upstream repo to build. Pinned to a specific commit SHA so
+# our build-time codegen patches (inject-*.mjs) keep matching the source they
+# were written against — a moving target like `main` could refactor a patched
+# file and break an anchor check on some future rebuild. Bump this deliberately
+# (and re-verify the injectors) when you want newer upstream changes. Accepts a
+# commit SHA, tag, or branch; override with:
 #   docker compose build --build-arg AGENT_OS_REF=v0.2.1
-ARG AGENT_OS_REF=main
+ARG AGENT_OS_REF=378069fed63708179ae4dd9ddad1a2ce64f37d5d
 
 # ---- System dependencies AgentOS needs at runtime ----
 # tmux: drives the terminal sessions  |  ripgrep: code search
@@ -40,11 +45,17 @@ RUN npm install -g \
 # old named volume.
 ENV AGENT_OS_REPO=/opt/agent-os
 
-# Clone + install deps. Kept separate so it stays cached when only the profile
-# list (CLAUDE_PROFILES) changes.
-RUN git clone --depth 1 --branch "${AGENT_OS_REF}" \
-        https://github.com/saadnvd1/agent-os "${AGENT_OS_REPO}" \
+# Fetch the pinned ref + install deps. Kept separate so it stays cached when
+# only the profile list (CLAUDE_PROFILES) changes. We fetch by ref instead of
+# `git clone --branch` because that flag rejects a bare commit SHA — fetching a
+# single ref shallow handles a SHA, tag, or branch uniformly. Because the ref is
+# pinned, this layer is fully deterministic and Docker's cache stays valid until
+# AGENT_OS_REF actually changes (no clone-cache-busting needed).
+RUN git init "${AGENT_OS_REPO}" \
     && cd "${AGENT_OS_REPO}" \
+    && git remote add origin https://github.com/saadnvd1/agent-os \
+    && git fetch --depth 1 origin "${AGENT_OS_REF}" \
+    && git checkout --detach FETCH_HEAD \
     && npm install --legacy-peer-deps
 
 # Register the configured Claude profiles as selectable harnesses in the UI,
