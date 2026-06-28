@@ -1,0 +1,45 @@
+services:
+  agent-os:
+    build:
+      context: .
+      # Pin a specific upstream release if you like, e.g.:
+      # args:
+      #   AGENT_OS_REF: v0.2.1
+    restart: unless-stopped
+
+    # Optional: pass extra env (e.g. agent API keys) into the container.
+    env_file:
+      - path: .env
+        required: false
+
+    environment:
+      AGENT_OS_PORT: 3011
+      SHELL: /bin/bash
+      # CLAUDE_PROFILES (extra Claude Code logins) is configured in .env so you
+      # can add/remove profiles without touching this file or rebuilding.
+
+    ports:
+      # Exposed on all interfaces by default — see the security note in README.
+      # For a safer default, bind to localhost: "127.0.0.1:3011:3011"
+      - "3011:3011"
+
+    volumes:
+      - agent_os_home:/home/agent/.agent-os
+      - agent_os_config:/home/agent/.config
+      - agent_os_claude:/home/agent/.claude
+      - agent_os_claude_profiles:/home/agent/.claude-profiles
+      - agent_os_codex:/home/agent/.codex
+      - agent_os_ssh:/home/agent/.ssh
+      - ${WORKSPACE_DIR:-/developer}:/workspaces
+
+      # Optional: let AgentOS sessions control the host Docker daemon.
+      # WARNING: this gives the agent huge power over your server.
+      # - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  agent_os_home:
+  agent_os_config:
+  agent_os_claude:
+  agent_os_claude_profiles:
+  agent_os_codex:
+  agent_os_ssh:

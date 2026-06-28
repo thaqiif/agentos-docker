@@ -1,0 +1,5 @@
+.env
+.git
+.claude
+node_modules
+README.md
