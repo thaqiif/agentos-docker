@@ -6,6 +6,10 @@ services:
         # Bake the configured Claude profiles into the UI's harness list.
         # Read from .env so it stays the single source of truth.
         CLAUDE_PROFILES: ${CLAUDE_PROFILES:-a b c}
+        # Terminal font size (px). Compiled into the client bundle, so changing
+        # these needs a rebuild: `docker compose up -d --build`.
+        TERMINAL_FONT_SIZE: ${TERMINAL_FONT_SIZE:-16}
+        TERMINAL_FONT_SIZE_MOBILE: ${TERMINAL_FONT_SIZE_MOBILE:-13}
         # Pin a specific upstream release if you like:
         # AGENT_OS_REF: v0.2.1
     restart: unless-stopped

@@ -47,15 +47,23 @@ RUN git clone --depth 1 --branch "${AGENT_OS_REF}" \
     && cd "${AGENT_OS_REPO}" \
     && npm install --legacy-peer-deps
 
-# Register the configured Claude profiles as selectable harnesses in the UI and
-# apply our downstream UI patches, then build. Declared here (after install) so
-# changing CLAUDE_PROFILES only re-runs codegen + build, not the slow clone +
-# npm install above.
+# Register the configured Claude profiles as selectable harnesses in the UI,
+# bake the terminal font size into the bundle, and apply our downstream UI
+# patches, then build. Declared here (after install) so changing these only
+# re-runs codegen + build, not the slow clone + npm install above. The xterm.js
+# font size is compiled into the client bundle, so it can't be changed at
+# runtime — patch it at build time instead.
 ARG CLAUDE_PROFILES="a b c"
+ARG TERMINAL_FONT_SIZE=16
+ARG TERMINAL_FONT_SIZE_MOBILE=13
 COPY inject-claude-profiles.mjs /tmp/inject-claude-profiles.mjs
+COPY inject-terminal-font.mjs /tmp/inject-terminal-font.mjs
 COPY inject-mobile-viewport-fix.mjs /tmp/inject-mobile-viewport-fix.mjs
 RUN cd "${AGENT_OS_REPO}" \
     && CLAUDE_PROFILES="${CLAUDE_PROFILES}" node /tmp/inject-claude-profiles.mjs "${AGENT_OS_REPO}" \
+    && TERMINAL_FONT_SIZE="${TERMINAL_FONT_SIZE}" \
+       TERMINAL_FONT_SIZE_MOBILE="${TERMINAL_FONT_SIZE_MOBILE}" \
+       node /tmp/inject-terminal-font.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-mobile-viewport-fix.mjs "${AGENT_OS_REPO}" \
     && npm run build \
     && npm cache clean --force
