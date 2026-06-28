@@ -71,26 +71,42 @@ that's you, no change is needed. After changing them, run
 > If you previously hit `Permission denied` in `/workspaces`, this is the fix:
 > set `PUID`/`PGID` to match your host user and bring the stack back up.
 
-## Volumes
+## Volumes & Persistence
 
 | Volume | Container Path | Purpose |
 |--------|---------------|---------|
-| `agent_os_home` | `/home/agent/.agent-os` | AgentOS app data |
-| `agent_os_config` | `/home/agent/.config` | Config files |
-| `agent_os_claude` | `/home/agent/.claude` | Claude Code config (default profile) |
-| `agent_os_claude_profiles` | `/home/agent/.claude-profiles` | Extra Claude Code profiles (`claude-a`, …) |
-| `agent_os_codex` | `/home/agent/.codex` | Codex config |
-| `agent_os_ssh` | `/home/agent/.ssh` | SSH keys |
+| `agent_os_home` | `/home/agent` | The agent user's entire home — **all** logins, configs and state |
 | Host bind | `/workspaces` | Your projects (configurable via `WORKSPACE_DIR`) |
+
+The whole home directory is persisted in a single `agent_os_home` volume. Each
+agent CLI scatters its auth and state across different home paths — Claude Code
+in `~/.claude` **and** the loose `~/.claude.json`, the extra profiles in
+`~/.claude-profiles`, OpenCode in `~/.local/share/opencode`, Codex in
+`~/.codex`, git in `~/.gitstate`, SSH keys in `~/.ssh`, and AgentOS itself in
+`~/.agent-os`. Mounting all of `$HOME` means every login
+survives `docker compose down && up` (and image rebuilds), instead of having to
+re-authenticate each tool. Build artifacts live in `/opt` (outside home), so
+nothing important is shadowed.
+
+> Log in to each agent **once** and it stays logged in. To wipe all saved
+> logins/state, remove the volume: `docker compose down -v`.
+
+### Git credentials
+
+`git`'s global config is relocated to `~/.gitstate/config` (via
+`GIT_CONFIG_GLOBAL`) and the `store` credential helper writes to
+`~/.gitstate/credentials` — both inside the persisted home volume. So your
+`git config --global user.name/email` and any HTTPS credentials (e.g. a GitHub
+token entered on first `git push`) are remembered across restarts. SSH keys you
+add to `~/.ssh` persist too.
 
 ## Installed Agents
 
 The container comes with these pre-installed:
 
-- **Claude Code** — Anthropic's coding agent (`claude`)
+- **Claude Code** — Anthropic's coding agent (`claude`, plus extra profiles)
 - **Codex** — OpenAI's coding agent
 - **OpenCode** — open-source coding tool
-- **Gemini CLI** — Google's AI CLI
 
 (AgentOS itself — the web UI — runs the whole thing.)
 

@@ -31,12 +31,13 @@ services:
       - "3011:3011"
 
     volumes:
-      - agent_os_home:/home/agent/.agent-os
-      - agent_os_config:/home/agent/.config
-      - agent_os_claude:/home/agent/.claude
-      - agent_os_claude_profiles:/home/agent/.claude-profiles
-      - agent_os_codex:/home/agent/.codex
-      - agent_os_ssh:/home/agent/.ssh
+      # Persist the whole home directory in one volume. Each agent CLI scatters
+      # its auth/state across different home paths — Claude in ~/.claude AND the
+      # loose ~/.claude.json, OpenCode in ~/.local/share/opencode, Gemini in
+      # ~/.gemini, git in ~/.gitstate, etc. Mounting all of $HOME persists every
+      # login at once instead of whack-a-mole per-tool volumes. Build artifacts
+      # live in /opt (outside home), so nothing important is shadowed.
+      - agent_os_home:/home/agent
       - ${WORKSPACE_DIR:-/developer}:/workspaces
 
       # Optional: let AgentOS sessions control the host Docker daemon.
@@ -45,8 +46,3 @@ services:
 
 volumes:
   agent_os_home:
-  agent_os_config:
-  agent_os_claude:
-  agent_os_claude_profiles:
-  agent_os_codex:
-  agent_os_ssh:

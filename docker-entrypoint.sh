@@ -16,6 +16,21 @@ if [ "$(id -u agent)" != "${PUID}" ]; then
     usermod -o -u "${PUID}" agent
 fi
 
+# ---- Re-create home scaffolding ----------------------------------------------
+# $HOME is a persisted named volume, so on the very first start it's empty and
+# shadows the directories the image created at build time. Re-make the standard
+# dirs (and fix ~/.ssh perms, which OpenSSH requires to be 0700) so every tool
+# has its home in place regardless of volume age.
+mkdir -p \
+    "${HOME}/.agent-os" \
+    "${HOME}/.config" \
+    "${HOME}/.claude" \
+    "${HOME}/.codex" \
+    "${HOME}/.ssh" \
+    "${HOME}/.gitstate" \
+    "${HOME}/.local/bin"
+chmod 700 "${HOME}/.ssh"
+
 # ---- Generate isolated Claude Code profiles ----------------------------------
 # `claude`        -> default ~/.claude   (your official / primary auth)
 # `claude-a`, ... -> ~/.claude-profiles/<name>, each with its own auth.
@@ -44,6 +59,16 @@ chown -R agent:agent "${HOME}"
 chown agent:agent "${AGENT_OS_REPO:-/opt/agent-os}"
 mkdir -p "${AGENT_OS_REPO:-/opt/agent-os}/.next/cache"
 chown -R agent:agent "${AGENT_OS_REPO:-/opt/agent-os}/.next/cache"
+
+# ---- Persist git credentials & identity --------------------------------------
+# GIT_CONFIG_GLOBAL points at ~/.gitstate/config (inside the persisted home
+# volume), so any `git config --global ...` the user runs survives restarts.
+# Enable the `store` helper, pointing the credentials file at the same dir so
+# HTTPS logins (e.g. a GitHub token) are remembered too. We set the file path
+# explicitly rather than relying on the default ~/.git-credentials. Run as the
+# agent user, after the chown above so the dir is writable by it.
+gosu agent git config --global credential.helper \
+    "store --file=${HOME}/.gitstate/credentials"
 
 # AgentOS' server.ts reads the listening port from $PORT. Upstream's CLI exposes
 # it as AGENT_OS_PORT, so map it through here to keep that name working.
