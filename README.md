@@ -87,10 +87,11 @@ agent CLI scatters its auth and state across different home paths — Claude Cod
 in `~/.claude` **and** the loose `~/.claude.json`, the extra profiles in
 `~/.claude-profiles`, OpenCode in `~/.local/share/opencode`, Codex in
 `~/.codex`, git in `~/.gitstate`, SSH keys in `~/.ssh`, and AgentOS itself in
-`~/.agent-os`. Mounting all of `$HOME` means every login
-survives `docker compose down && up` (and image rebuilds), instead of having to
-re-authenticate each tool. Build artifacts live in `/opt` (outside home), so
-nothing important is shadowed.
+`~/.agent-os` — including its SQLite database (`DB_PATH`), so your **projects and
+session history** persist too. Mounting all of `$HOME` means every login and all
+app state survive `docker compose down && up` (and image rebuilds), instead of
+having to re-authenticate each tool or re-create your projects. Build artifacts
+live in `/opt` (outside home), so nothing important is shadowed.
 
 > Log in to each agent **once** and it stays logged in. To wipe all saved
 > logins/state, remove the volume: `docker compose down -v`.
@@ -176,10 +177,20 @@ A build-time codegen step
 ([`inject-terminal-font.mjs`](inject-terminal-font.mjs)) patches the values into
 the upstream source before the build.
 
-> On a phone (or any viewport under 768px wide) the terminal also shows a
-> **special-keys toolbar** — Esc, Tab, Ctrl-C, Ctrl-D, arrow keys, etc. — for
-> keys a touch keyboard lacks. It appears automatically; there's nothing to
-> enable.
+## Mobile
+
+On a phone (viewport < 768px) the terminal shows an always-visible **special-keys
+toolbar** — Esc, Tab, Ctrl-C, Ctrl-D, arrow keys, plus paste/mic/copy — for keys
+a touch keyboard lacks. It appears automatically; there's nothing to enable.
+
+This image also carries a downstream fix for upstream's mobile layout: the
+`MobileView` root uses a fixed `h-screen` (`100vh`), which on mobile pushes the
+terminal's bottom (your prompt **and** the toolbar) *behind* the on-screen
+keyboard, so you can't see what you type. The app already tracks the keyboard via
+`useViewportHeight()` → `--app-height`, so a build-time codegen step
+([`inject-mobile-viewport-fix.mjs`](inject-mobile-viewport-fix.mjs)) switches the
+root to the keyboard-aware `h-app` height. The prompt and toolbar then stay above
+the keyboard.
 
 ## Docker Socket (Optional)
 

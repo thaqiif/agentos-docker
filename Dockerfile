@@ -47,21 +47,24 @@ RUN git clone --depth 1 --branch "${AGENT_OS_REF}" \
     && cd "${AGENT_OS_REPO}" \
     && npm install --legacy-peer-deps
 
-# Register the configured Claude profiles as selectable harnesses in the UI and
-# bake the terminal font size into the bundle, then build. Declared here (after
-# install) so changing these only re-runs codegen + build, not the slow clone +
-# npm install above. The xterm.js font size is compiled into the client bundle,
-# so it can't be changed at runtime — patch it at build time instead.
+# Register the configured Claude profiles as selectable harnesses in the UI,
+# bake the terminal font size into the bundle, and apply our downstream UI
+# patches, then build. Declared here (after install) so changing these only
+# re-runs codegen + build, not the slow clone + npm install above. The xterm.js
+# font size is compiled into the client bundle, so it can't be changed at
+# runtime — patch it at build time instead.
 ARG CLAUDE_PROFILES="a b c"
 ARG TERMINAL_FONT_SIZE=16
 ARG TERMINAL_FONT_SIZE_MOBILE=13
 COPY inject-claude-profiles.mjs /tmp/inject-claude-profiles.mjs
 COPY inject-terminal-font.mjs /tmp/inject-terminal-font.mjs
+COPY inject-mobile-viewport-fix.mjs /tmp/inject-mobile-viewport-fix.mjs
 RUN cd "${AGENT_OS_REPO}" \
     && CLAUDE_PROFILES="${CLAUDE_PROFILES}" node /tmp/inject-claude-profiles.mjs "${AGENT_OS_REPO}" \
     && TERMINAL_FONT_SIZE="${TERMINAL_FONT_SIZE}" \
        TERMINAL_FONT_SIZE_MOBILE="${TERMINAL_FONT_SIZE_MOBILE}" \
        node /tmp/inject-terminal-font.mjs "${AGENT_OS_REPO}" \
+    && node /tmp/inject-mobile-viewport-fix.mjs "${AGENT_OS_REPO}" \
     && npm run build \
     && npm cache clean --force
 
@@ -88,6 +91,11 @@ RUN useradd --create-home --shell /bin/bash --uid 1001 agent \
 ENV HOME=/home/agent \
     AGENT_OS_HOME=/home/agent/.agent-os \
     AGENT_OS_PORT=3011 \
+    # AgentOS' SQLite DB (projects, sessions, messages) defaults to
+    # <cwd>/agent-os.db, i.e. /opt/agent-os/agent-os.db — which lives in the
+    # image build dir and gets wiped on every rebuild. Relocate it into the
+    # persisted home volume so projects and session history survive redeploys.
+    DB_PATH=/home/agent/.agent-os/agent-os.db \
     NODE_ENV=production \
     PATH=/home/agent/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin \
     # Relocate git's global config into a persisted volume so logins (HTTPS
