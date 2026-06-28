@@ -183,6 +183,18 @@ On a phone (viewport < 768px) the terminal shows an always-visible **special-key
 toolbar** — Esc, Tab, Ctrl-C, Ctrl-D, arrow keys, plus paste/mic/copy — for keys
 a touch keyboard lacks. It appears automatically; there's nothing to enable.
 
+This image adds two more keys to that toolbar
+([`inject-terminal-toolbar-keys.mjs`](inject-terminal-toolbar-keys.mjs)):
+
+- **⇧Tab** — sends the ANSI back-tab sequence (`\x1b[Z`), which is what Claude
+  Code uses to cycle its modes (plan / auto-accept). There's no other way to send
+  it from a touch keyboard.
+- **⌃ (Ctrl)** — a modifier toggle (like the existing ⇧ button): tap it, then the
+  **next** key becomes a control character (e.g. ⌃ then `r` → Ctrl-R). It's
+  captured at the page level, so it works with your device keyboard on desktop.
+  Some mobile soft keyboards don't emit a usable `keydown`, so the dedicated
+  ^C / ^D buttons remain as a reliable fallback.
+
 This image also carries a downstream fix for upstream's mobile layout: the
 `MobileView` root uses a fixed `h-screen` (`100vh`), which on mobile pushes the
 terminal's bottom (your prompt **and** the toolbar) *behind* the on-screen
