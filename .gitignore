@@ -1,0 +1,6 @@
+# Local environment — copy .env.example to .env and edit.
+# Never commit .env: it may hold API keys for the AI agents.
+.env
+
+# Local tooling / editor state
+.claude/
