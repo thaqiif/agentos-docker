@@ -78,19 +78,21 @@ isolated authentication and config:
   independently. Run `claude-a` once and log in; its credentials are stored in
   `~/.claude-profiles/a` and never mix with the others.
 
-Configure which profiles exist via the `CLAUDE_PROFILES` env var in
-`docker-compose.yml` (space-separated names — they don't have to be single
-letters):
+Configure which profiles exist via `CLAUDE_PROFILES` in your `.env` file
+(space-separated names — they don't have to be single letters):
 
-```yaml
-    environment:
-      CLAUDE_PROFILES: "a b c"        # -> claude-a, claude-b, claude-c
-      # CLAUDE_PROFILES: "work personal client1"
+```env
+CLAUDE_PROFILES=a b c                 # -> claude-a, claude-b, claude-c
+# CLAUDE_PROFILES=work personal client1
 ```
 
+Add or remove names and run `docker compose up -d` to apply — **no rebuild
+needed**. Removing a name does **not** delete its saved login: the config is
+kept in the `agent_os_claude_profiles` volume, so adding the name back later
+restores that profile exactly as it was.
+
 Under the hood each `claude-<name>` wrapper just sets `CLAUDE_CONFIG_DIR` to a
-separate directory, so the official `claude` CLI does all the work. The profile
-auth is persisted in the `agent_os_claude_profiles` volume across restarts.
+separate directory, so the official `claude` CLI does all the work.
 
 ## Docker Socket (Optional)
 

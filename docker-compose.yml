@@ -15,10 +15,8 @@ services:
     environment:
       AGENT_OS_PORT: 3011
       SHELL: /bin/bash
-      # Extra Claude Code profiles, each with isolated auth/config.
-      # Creates claude-a, claude-b, claude-c ... alongside the default `claude`.
-      # Change/extend freely, e.g. "a b c d work personal".
-      CLAUDE_PROFILES: "a b c"
+      # CLAUDE_PROFILES (extra Claude Code logins) is configured in .env so you
+      # can add/remove profiles without touching this file or rebuilding.
 
     ports:
       # Exposed on all interfaces by default — see the security note in README.
