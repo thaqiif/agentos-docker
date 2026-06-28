@@ -1,8 +1,59 @@
 # AgentOS Docker
 
-Docker setup for [AgentOS](https://github.com/saadnvd1/agent-os) — a mobile-first web UI for managing AI coding sessions.
+> Self-host [**AgentOS**](https://github.com/saadnvd1/agent-os) — the mobile-first
+> web UI for driving AI coding agents — as a single Docker container, with a few
+> quality-of-life touches for self-hosters and phone users.
 
-AgentOS lets you control AI agents like Claude Code, Codex, OpenCode, and others from a browser. This repo packages it into a Docker container for easy self-hosting.
+Run Claude Code, Codex, and OpenCode from your browser (including your phone),
+fully self-hosted, with `docker compose up -d`.
+
+## What is this?
+
+[AgentOS](https://github.com/saadnvd1/agent-os) (by
+[@saadnvd1](https://github.com/saadnvd1)) is a lovely open-source, mobile-first
+web app that lets you start and manage AI coding-agent sessions from any browser.
+
+**This repo is not a fork or a replacement** — it's a packaging layer. It clones
+the upstream project at build time and ships it as a reproducible, self-hostable
+Docker image, then adds a handful of small, optional conveniences on top
+(persistent logins, multiple Claude accounts, a friendlier mobile keyboard, an
+autonomous TDD workflow, a couple of bundled CLIs).
+
+It exists for one reason: to make AgentOS effortless to **self-host and keep
+running** — one command to start, your logins and history survive restarts, and
+your phone behaves. Nothing here changes what AgentOS *is*; upstream remains the
+source of truth.
+
+## Credit & relationship to upstream
+
+All the real work — the app, the design, the UX — is
+[@saadnvd1](https://github.com/saadnvd1)'s. If you find this useful, please go
+[⭐ star **agent-os**](https://github.com/saadnvd1/agent-os) first. 💛
+
+A few principles this repo tries to honour:
+
+- **Packaging, not forking.** We clone upstream and patch it transparently at
+  build time — we don't vendor a modified copy or hide changes.
+- **Additive & reversible.** Every enhancement is a small build-time codegen
+  patch (in [`patches/`](patches/)) that *anchors* on upstream code and **fails
+  loudly** if upstream changes, so nothing silently diverges.
+- **Fixes go home.** Where we fix a bug in AgentOS itself (e.g. the mobile
+  keyboard overlap), the goal is to contribute it back upstream.
+- **Upstream owns the app.** For questions about AgentOS itself, see the official
+  [docs](https://runagentos.com/docs).
+
+## What this image adds over upstream
+
+| Enhancement | What you get | More |
+|---|---|---|
+| 🔐 **Persistent logins & state** | Authenticate each agent once — logins, projects, and session history survive restarts and rebuilds | [Volumes](#volumes--persistence) |
+| 👥 **Multiple Claude accounts** | Run `claude`, `claude-a`, `claude-b`… side by side, each its own login, selectable in the UI | [Logins](#multiple-claude-code-logins) |
+| 📱 **Friendlier mobile keyboard** | Keyboard-overlap fix, plus toolbar keys for newline, ⇧Tab, and ⌃/⌥ modifiers | [Mobile](#mobile) |
+| 🤖 **Autopilot TDD workflow** | `autopilot-multi` slash commands & hooks baked in for every Claude login | [Autopilot](#autopilot-tdd-workflow) |
+| 🔤 **Configurable terminal font** | Set desktop/mobile xterm font size from `.env` | [Font](#terminal-font-size) |
+| 🧰 **Bundled CLIs** | `gh`, `git`, `ripgrep`, `tmux`, `jq` preinstalled in every session | [Agents](#installed-agents) |
+| 👤 **Host-matched file ownership** | `PUID`/`PGID` so files in your mounted workspace stay owned by *you* | [Permissions](#file-permissions-puid--pgid) |
+| 📌 **Reproducible builds** | Upstream pinned to a commit; transparent patches that fail loudly on drift | [Pinning](#upstream-version-pinning) |
 
 > **⚠️ Security Disclaimer**
 >
@@ -53,6 +104,35 @@ CLAUDE_PROFILES=a b c
 TERMINAL_FONT_SIZE=16
 TERMINAL_FONT_SIZE_MOBILE=13
 ```
+
+> No `.env` is required — sensible defaults are baked in. Create one only to
+> change something. You can also drop agent API keys (e.g. `ANTHROPIC_API_KEY`)
+> in here; everything in `.env` is passed through to the container.
+
+### Settings reference
+
+Runtime settings (in `.env`, applied with `docker compose up -d` — no rebuild):
+
+| Variable | Default | What it does |
+|---|---|---|
+| `WORKSPACE_DIR` | `/developer` | Host directory mounted as `/workspaces` (your projects) |
+| `PUID` / `PGID` | `1000` / `1000` | Host user/group IDs to run as, so workspace files stay yours |
+| `CLAUDE_PROFILES` | `a b c` | Extra Claude logins to generate (rebuild to change — it's also a build arg) |
+| `TERMINAL_FONT_SIZE` | `16` | Desktop xterm font size, px (rebuild to change) |
+| `TERMINAL_FONT_SIZE_MOBILE` | `13` | Mobile xterm font size, px (rebuild to change) |
+
+Build args (passed at **build** time, e.g. `docker compose build --build-arg NAME=value`):
+
+| Build arg | Default | What it does |
+|---|---|---|
+| `AGENT_OS_REF` | pinned commit SHA | Which upstream AgentOS ref to build — SHA, tag, or branch ([Pinning](#upstream-version-pinning)) |
+| `AUTOPILOT_REF` | `main` | Which [autopilot-multi](#autopilot-tdd-workflow) ref to bundle |
+| `CLAUDE_PROFILES` | `a b c` | Compiled into the UI's harness list (also read from `.env`) |
+| `TERMINAL_FONT_SIZE` / `…_MOBILE` | `16` / `13` | Compiled into the client bundle |
+
+> Anything **compiled into the bundle** (fonts, the profile harness list) needs a
+> rebuild — `docker compose up -d --build` — to take effect. Plain runtime
+> settings (`WORKSPACE_DIR`, `PUID`/`PGID`) only need `docker compose up -d`.
 
 ### File Permissions (PUID / PGID)
 
@@ -113,6 +193,15 @@ The container comes with these pre-installed:
 - **Codex** — OpenAI's coding agent
 - **OpenCode** — open-source coding tool
 
+Plus a few supporting CLI tools on `PATH` inside every session:
+
+- **GitHub CLI (`gh`)** — installed from GitHub's official apt repo for PRs,
+  issues, and authenticated git over HTTPS. Run `gh auth login` once; the token
+  lands in `~/.config`, which is in the persisted home volume, so it survives
+  restarts.
+- **git**, **ripgrep (`rg`)**, **tmux** — version control, code search, and the
+  terminal multiplexer that drives AgentOS sessions.
+
 (AgentOS itself — the web UI — runs the whole thing.)
 
 ## Multiple Claude Code Logins
@@ -153,8 +242,10 @@ profile exactly as it was.
 
 Under the hood each `claude-<name>` wrapper just sets `CLAUDE_CONFIG_DIR` to a
 separate directory, so the official `claude` CLI does all the work. A build-time
-codegen step ([`inject-claude-profiles.mjs`](inject-claude-profiles.mjs))
+codegen step ([`inject-claude-profiles.mjs`](patches/inject-claude-profiles.mjs))
 registers each profile as an AgentOS provider.
+
+(All these build-time patch scripts live in [`patches/`](patches/).)
 
 ## Terminal Font Size
 
@@ -174,7 +265,7 @@ docker compose up -d --build
 ```
 
 A build-time codegen step
-([`inject-terminal-font.mjs`](inject-terminal-font.mjs)) patches the values into
+([`inject-terminal-font.mjs`](patches/inject-terminal-font.mjs)) patches the values into
 the upstream source before the build.
 
 ## Mobile
@@ -183,26 +274,65 @@ On a phone (viewport < 768px) the terminal shows an always-visible **special-key
 toolbar** — Esc, Tab, Ctrl-C, Ctrl-D, arrow keys, plus paste/mic/copy — for keys
 a touch keyboard lacks. It appears automatically; there's nothing to enable.
 
-This image adds two more keys to that toolbar
-([`inject-terminal-toolbar-keys.mjs`](inject-terminal-toolbar-keys.mjs)):
+This image adds a few more keys to that toolbar
+([`inject-terminal-toolbar-keys.mjs`](patches/inject-terminal-toolbar-keys.mjs)):
 
 - **⇧Tab** — sends the ANSI back-tab sequence (`\x1b[Z`), which is what Claude
   Code uses to cycle its modes (plan / auto-accept). There's no other way to send
   it from a touch keyboard.
+- **↵ NL** — inserts a **newline** in the prompt without submitting. It sends
+  `Alt+Enter` (`\x1b\r`) directly on tap, so unlike the `⌥` toggle below it works
+  on every soft keyboard (no `keydown` needed). This is the reliable way to write
+  multi-line messages on a phone.
 - **⌃ (Ctrl)** — a modifier toggle (like the existing ⇧ button): tap it, then the
   **next** key becomes a control character (e.g. ⌃ then `r` → Ctrl-R). It's
   captured at the page level, so it works with your device keyboard on desktop.
   Some mobile soft keyboards don't emit a usable `keydown`, so the dedicated
   ^C / ^D buttons remain as a reliable fallback.
+- **⌥ (Alt/Option)** — a modifier toggle that sends the **next** key ESC-prefixed
+  (Meta). The main use on mobile is **⌥ then Return → newline**: Claude Code reads
+  `Alt+Enter` (`\x1b\r`) as "insert a newline" instead of submitting the prompt,
+  so you can write multi-line messages. Also gives you `Alt+b` / `Alt+f` for
+  word-by-word navigation. Captured at the page level like ⌃.
 
 This image also carries a downstream fix for upstream's mobile layout: the
 `MobileView` root uses a fixed `h-screen` (`100vh`), which on mobile pushes the
 terminal's bottom (your prompt **and** the toolbar) *behind* the on-screen
 keyboard, so you can't see what you type. The app already tracks the keyboard via
 `useViewportHeight()` → `--app-height`, so a build-time codegen step
-([`inject-mobile-viewport-fix.mjs`](inject-mobile-viewport-fix.mjs)) switches the
+([`inject-mobile-viewport-fix.mjs`](patches/inject-mobile-viewport-fix.mjs)) switches the
 root to the keyboard-aware `h-app` height. The prompt and toolbar then stay above
 the keyboard.
+
+## Autopilot (TDD workflow)
+
+[autopilot-multi](https://github.com/thaqiif/autopilot-multi) — a set of Claude
+Code slash commands, hooks, and CLIs for autonomous test-driven development — is
+baked into the image and wired up automatically. You get the `/prd`, `/tasks`,
+`/autopilot`, and `/analyze` slash commands inside Claude sessions, plus the
+`autopilot` and `autopilot-cleanup` terminal commands.
+
+How it's installed: the repo is cloned into `/opt/autopilot-multi` at build time
+(so it isn't shadowed by the home volume), and the entrypoint symlinks the
+commands/hooks/CLIs into the persisted home volume on every boot. It needs no
+setup and survives restarts and rebuilds. (`jq`, its one dependency, ships in
+the image.)
+
+The commands and hooks are installed into **every** Claude login, not just the
+default one — the default `~/.claude` plus each isolated profile config dir
+(`~/.claude-profiles/<name>`). So `/autopilot` works the same whether a session
+runs on `claude` or on `claude-a`/`claude-b`/… (the shared `autopilot` terminal
+CLI is on `PATH` for all of them).
+
+It tracks autopilot's `main` by default — bumping it just needs a rebuild, since
+there are no source-anchored patches against it (unlike upstream AgentOS below).
+Pin it to a specific commit, tag, or branch if you want:
+
+```bash
+docker compose build --build-arg AUTOPILOT_REF=<sha|tag|branch>
+```
+
+Run `/autopilot init` in a project to set up its configuration.
 
 ## Upstream Version (Pinning)
 

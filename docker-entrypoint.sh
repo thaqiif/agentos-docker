@@ -52,6 +52,60 @@ EOF
     chmod +x "${wrapper}"
 done
 
+# ---- Install autopilot-multi into every Claude config dir --------------------
+# autopilot-multi is baked into /opt (unshadowed by the home volume). Its own
+# install.sh only wires up the DEFAULT profile (~/.claude) plus the shared CLIs.
+# Each extra Claude profile, though, runs with an isolated CLAUDE_CONFIG_DIR
+# (~/.claude-profiles/<name>), so it would NOT see the slash commands/hooks. So
+# we mirror the autopilot config into the default dir AND every profile dir, so
+# /autopilot works on whichever Claude login a session uses. Idempotent
+# (`ln -sfn`) and pointed at /opt, so a rebuild that bumps autopilot is picked up
+# automatically; the chown below gives the new links agent ownership.
+AUTOPILOT_REPO="${AUTOPILOT_REPO:-/opt/autopilot-multi}"
+if [ -d "${AUTOPILOT_REPO}" ]; then
+    # Shared terminal CLIs — one copy on PATH, used by all profiles.
+    ln -sfn "${AUTOPILOT_REPO}/run.sh" "${BIN_DIR}/autopilot"
+    ln -sfn "${AUTOPILOT_REPO}/cleanup.sh" "${BIN_DIR}/autopilot-cleanup"
+
+    # Mirror the per-config-dir bits (commands, hooks, AGENTS.md, hooks.json)
+    # into one Claude config dir. Mirrors autopilot's install.sh, kept minimal.
+    install_autopilot_config() {
+        cfg="$1"
+        mkdir -p "${cfg}/commands" "${cfg}/hooks"
+        # Slash commands — enumerated, so commands autopilot adds are picked up.
+        for f in "${AUTOPILOT_REPO}"/commands/*.md; do
+            if [ -e "${f}" ]; then
+                ln -sfn "${f}" "${cfg}/commands/$(basename "${f}")"
+            fi
+        done
+        ln -sfn "${AUTOPILOT_REPO}/AGENTS.md" "${cfg}/AGENTS.md"
+        ln -sfn "${AUTOPILOT_REPO}/hooks/stop-hook.sh" \
+            "${cfg}/hooks/autopilot-stop-hook.sh"
+        ln -sfn "${AUTOPILOT_REPO}/hooks/git-commit" "${cfg}/hooks/git-commit"
+        # Register the stop hook, pointed at THIS dir's copy. Don't clobber an
+        # existing hooks.json — the user may have customised it.
+        if [ ! -f "${cfg}/hooks.json" ]; then
+            cat > "${cfg}/hooks.json" <<HOOKEOF
+{
+  "hooks": {
+    "stop": [
+      {
+        "command": "${cfg}/hooks/autopilot-stop-hook.sh",
+        "description": "Autopilot loop mechanism"
+      }
+    ]
+  }
+}
+HOOKEOF
+        fi
+    }
+
+    install_autopilot_config "${HOME}/.claude"
+    for name in ${CLAUDE_PROFILES:-}; do
+        install_autopilot_config "${PROFILE_ROOT}/${name}"
+    done
+fi
+
 # Make sure the agent user owns its home (incl. mounted config/auth volumes) and
 # the app's writable build cache after any UID/GID change. node_modules and the
 # rest of /opt stay root-owned but world-readable, so no slow recursive chown.

@@ -49,12 +49,26 @@ const edits = [
     insert: `  TAB: "\\t",\n  SHIFT_TAB: "\\x1b[Z",\n`,
   },
   {
+    name: "NEWLINE sequence",
+    marker: `NEWLINE:`,
+    anchor: `  SHIFT_TAB: "\\x1b[Z",\n`,
+    insert: `  SHIFT_TAB: "\\x1b[Z",\n  NEWLINE: "\\x1b\\r",\n`,
+  },
+  {
     name: "ctrlActive state",
     marker: `const [ctrlActive, setCtrlActive]`,
     anchor: `  const [shiftActive, setShiftActive] = useState(false);\n`,
     insert:
       `  const [shiftActive, setShiftActive] = useState(false);\n` +
       `  const [ctrlActive, setCtrlActive] = useState(false);\n`,
+  },
+  {
+    name: "altActive state",
+    marker: `const [altActive, setAltActive]`,
+    anchor: `  const [ctrlActive, setCtrlActive] = useState(false);\n`,
+    insert:
+      `  const [ctrlActive, setCtrlActive] = useState(false);\n` +
+      `  const [altActive, setAltActive] = useState(false);\n`,
   },
   {
     name: "Ctrl keydown capture effect",
@@ -89,6 +103,33 @@ const edits = [
       `  if (!visible) return null;\n`,
   },
   {
+    name: "Alt keydown capture effect",
+    marker: `Alt/Option modifier: when armed`,
+    anchor: `  }, [ctrlActive, onKeyPress]);\n\n  if (!visible) return null;\n`,
+    insert:
+      `  }, [ctrlActive, onKeyPress]);\n\n` +
+      `  // Alt/Option modifier: when armed, the next physical key is sent ESC-\n` +
+      `  // prefixed (Meta). The main use is Alt+Enter -> "\\x1b\\r", which Claude\n` +
+      `  // Code inserts as a newline instead of submitting; also Alt+b / Alt+f for\n` +
+      `  // word navigation. Same window-level capture as the Ctrl modifier.\n` +
+      `  useEffect(() => {\n` +
+      `    if (!altActive) return;\n` +
+      `    const handler = (e: KeyboardEvent) => {\n` +
+      `      const k = e.key;\n` +
+      `      if (k === "Control" || k === "Shift" || k === "Alt" || k === "Meta")\n` +
+      `        return;\n` +
+      `      e.preventDefault();\n` +
+      `      e.stopPropagation();\n` +
+      `      if (k === "Enter") onKeyPress("\\x1b\\r");\n` +
+      `      else if (k.length === 1) onKeyPress("\\x1b" + k);\n` +
+      `      setAltActive(false);\n` +
+      `    };\n` +
+      `    window.addEventListener("keydown", handler, true);\n` +
+      `    return () => window.removeEventListener("keydown", handler, true);\n` +
+      `  }, [altActive, onKeyPress]);\n\n` +
+      `  if (!visible) return null;\n`,
+  },
+  {
     name: "Ctrl toggle button",
     marker: `Ctrl modifier toggle`,
     anchor: `        >\n          ⇧\n        </button>\n`,
@@ -113,12 +154,44 @@ const edits = [
       `        </button>\n`,
   },
   {
+    name: "Alt toggle button",
+    marker: `Alt modifier toggle`,
+    anchor: `          ⌃\n        </button>\n`,
+    insert:
+      `          ⌃\n        </button>\n\n` +
+      `        {/* Alt modifier toggle - next physical key is sent ESC-prefixed (Meta) */}\n` +
+      `        <button\n` +
+      `          type="button"\n` +
+      `          onMouseDown={(e) => e.preventDefault()}\n` +
+      `          onClick={(e) => {\n` +
+      `            e.stopPropagation();\n` +
+      `            setAltActive((v) => !v);\n` +
+      `          }}\n` +
+      `          className={cn(\n` +
+      `            "flex-shrink-0 rounded-md px-2.5 py-1.5 text-xs font-medium",\n` +
+      `            altActive\n` +
+      `              ? "bg-primary text-primary-foreground"\n` +
+      `              : "bg-secondary text-secondary-foreground active:bg-primary active:text-primary-foreground"\n` +
+      `          )}\n` +
+      `        >\n` +
+      `          ⌥\n` +
+      `        </button>\n`,
+  },
+  {
     name: "Shift+Tab button",
     marker: `SPECIAL_KEYS.SHIFT_TAB`,
     anchor: `    { label: "Tab", key: SPECIAL_KEYS.TAB },\n`,
     insert:
       `    { label: "Tab", key: SPECIAL_KEYS.TAB },\n` +
       `    { label: "⇧Tab", key: SPECIAL_KEYS.SHIFT_TAB },\n`,
+  },
+  {
+    name: "Newline button",
+    marker: `SPECIAL_KEYS.NEWLINE`,
+    anchor: `    { label: "⇧Tab", key: SPECIAL_KEYS.SHIFT_TAB },\n`,
+    insert:
+      `    { label: "⇧Tab", key: SPECIAL_KEYS.SHIFT_TAB },\n` +
+      `    { label: "↵ NL", key: SPECIAL_KEYS.NEWLINE },\n`,
   },
 ];
 
