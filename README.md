@@ -27,6 +27,23 @@ Then open `http://localhost:3011` in your browser.
 The first build clones and compiles AgentOS from source, so it takes a few
 minutes. Follow the logs with `docker compose logs -f`.
 
+## Updating AgentOS
+
+The image builds AgentOS from upstream `main`. A normal rebuild
+(`docker compose up -d --build`) pulls the **latest** upstream commit
+automatically — the build detects when `main` has moved and re-clones; if it
+hasn't, the slow clone/install stays cached.
+
+If you ever need to force a totally clean rebuild (e.g. to rule out a stale
+layer):
+
+```bash
+docker compose build --no-cache && docker compose up -d
+```
+
+> Pin a specific upstream release instead of tracking `main` by setting
+> `AGENT_OS_REF` (a build arg in `docker-compose.yml`), e.g. `AGENT_OS_REF=v0.2.1`.
+
 ## Configuration
 
 Copy the example env file and edit it:

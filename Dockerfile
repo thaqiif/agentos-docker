@@ -40,8 +40,19 @@ RUN npm install -g \
 # old named volume.
 ENV AGENT_OS_REPO=/opt/agent-os
 
+# Bust the clone cache when the upstream branch advances. Without this, the
+# `git clone` layer below stays cached forever, so every rebuild keeps shipping
+# the AgentOS commit from the *first* build — you'd never pick up upstream fixes
+# (e.g. mobile keyboard handling / the special-keys toolbar) even with
+# `docker compose up -d --build`. This ADD re-fetches the branch's latest commit
+# metadata on each build; its content only changes when the branch moves, which
+# is exactly when we want the clone + npm install below to re-run.
+ADD https://api.github.com/repos/saadnvd1/agent-os/commits/${AGENT_OS_REF} \
+    /tmp/agent-os-upstream-commit.json
+
 # Clone + install deps. Kept separate so it stays cached when only the profile
-# list (CLAUDE_PROFILES) changes.
+# list (CLAUDE_PROFILES) changes — but re-runs whenever the commit JSON above
+# changes, i.e. when upstream advances.
 RUN git clone --depth 1 --branch "${AGENT_OS_REF}" \
         https://github.com/saadnvd1/agent-os "${AGENT_OS_REPO}" \
     && cd "${AGENT_OS_REPO}" \
