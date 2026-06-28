@@ -59,12 +59,14 @@ ARG TERMINAL_FONT_SIZE_MOBILE=13
 COPY inject-claude-profiles.mjs /tmp/inject-claude-profiles.mjs
 COPY inject-terminal-font.mjs /tmp/inject-terminal-font.mjs
 COPY inject-mobile-viewport-fix.mjs /tmp/inject-mobile-viewport-fix.mjs
+COPY inject-terminal-toolbar-keys.mjs /tmp/inject-terminal-toolbar-keys.mjs
 RUN cd "${AGENT_OS_REPO}" \
     && CLAUDE_PROFILES="${CLAUDE_PROFILES}" node /tmp/inject-claude-profiles.mjs "${AGENT_OS_REPO}" \
     && TERMINAL_FONT_SIZE="${TERMINAL_FONT_SIZE}" \
        TERMINAL_FONT_SIZE_MOBILE="${TERMINAL_FONT_SIZE_MOBILE}" \
        node /tmp/inject-terminal-font.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-mobile-viewport-fix.mjs "${AGENT_OS_REPO}" \
+    && node /tmp/inject-terminal-toolbar-keys.mjs "${AGENT_OS_REPO}" \
     && npm run build \
     && npm cache clean --force
 
