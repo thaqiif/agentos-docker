@@ -86,13 +86,25 @@ CLAUDE_PROFILES=a b c                 # -> claude-a, claude-b, claude-c
 # CLAUDE_PROFILES=work personal client1
 ```
 
-Add or remove names and run `docker compose up -d` to apply — **no rebuild
-needed**. Removing a name does **not** delete its saved login: the config is
-kept in the `agent_os_claude_profiles` volume, so adding the name back later
-restores that profile exactly as it was.
+Each profile also shows up as its own **selectable harness in the AgentOS UI**
+(e.g. "Claude (mimo)"), so you can start a session against a specific login from
+the new-session dialog — with full status detection, resume, and fork support.
+
+Because that harness list is compiled into the app, apply changes with a
+rebuild:
+
+```bash
+docker compose up -d --build
+```
+
+Removing a name does **not** delete its saved login: the config is kept in the
+`agent_os_claude_profiles` volume, so adding the name back later restores that
+profile exactly as it was.
 
 Under the hood each `claude-<name>` wrapper just sets `CLAUDE_CONFIG_DIR` to a
-separate directory, so the official `claude` CLI does all the work.
+separate directory, so the official `claude` CLI does all the work. A build-time
+codegen step ([`inject-claude-profiles.mjs`](inject-claude-profiles.mjs))
+registers each profile as an AgentOS provider.
 
 ## Docker Socket (Optional)
 

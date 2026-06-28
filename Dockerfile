@@ -40,10 +40,21 @@ RUN npm install -g \
 # the image always ships fresh build artifacts instead of being shadowed by an
 # old named volume.
 ENV AGENT_OS_REPO=/opt/agent-os
+
+# Clone + install deps. Kept separate so it stays cached when only the profile
+# list (CLAUDE_PROFILES) changes.
 RUN git clone --depth 1 --branch "${AGENT_OS_REF}" \
         https://github.com/saadnvd1/agent-os "${AGENT_OS_REPO}" \
     && cd "${AGENT_OS_REPO}" \
-    && npm install --legacy-peer-deps \
+    && npm install --legacy-peer-deps
+
+# Register the configured Claude profiles as selectable harnesses in the UI,
+# then build. Declared here (after install) so changing CLAUDE_PROFILES only
+# re-runs codegen + build, not the slow clone + npm install above.
+ARG CLAUDE_PROFILES="a b c"
+COPY inject-claude-profiles.mjs /tmp/inject-claude-profiles.mjs
+RUN cd "${AGENT_OS_REPO}" \
+    && CLAUDE_PROFILES="${CLAUDE_PROFILES}" node /tmp/inject-claude-profiles.mjs "${AGENT_OS_REPO}" \
     && npm run build \
     && npm cache clean --force
 
@@ -75,9 +86,11 @@ ENV HOME=/home/agent \
     # host workspace folder (run `id` on the host) so files are read/writable.
     PUID=1000 \
     PGID=1000 \
-    # Extra Claude Code profiles to create, each with isolated auth/config.
-    # Generates claude-a, claude-b, claude-c ... wrappers. Override in compose.
-    CLAUDE_PROFILES="a b c"
+    # Extra Claude Code profiles, each with isolated auth/config. Generates
+    # claude-a, claude-b, ... wrappers at runtime; the matching UI harnesses are
+    # baked in at build time from the CLAUDE_PROFILES build arg above (which is
+    # why changing this list needs a rebuild: `docker compose up -d --build`).
+    CLAUDE_PROFILES=${CLAUDE_PROFILES}
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
