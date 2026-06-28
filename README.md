@@ -151,6 +151,21 @@ separate directory, so the official `claude` CLI does all the work. A build-time
 codegen step ([`inject-claude-profiles.mjs`](inject-claude-profiles.mjs))
 registers each profile as an AgentOS provider.
 
+## Mobile
+
+On a phone (viewport < 768px) the terminal shows an always-visible **special-keys
+toolbar** — Esc, Tab, Ctrl-C, Ctrl-D, arrow keys, plus paste/mic/copy — for keys
+a touch keyboard lacks. It appears automatically; there's nothing to enable.
+
+This image also carries a downstream fix for upstream's mobile layout: the
+`MobileView` root uses a fixed `h-screen` (`100vh`), which on mobile pushes the
+terminal's bottom (your prompt **and** the toolbar) *behind* the on-screen
+keyboard, so you can't see what you type. The app already tracks the keyboard via
+`useViewportHeight()` → `--app-height`, so a build-time codegen step
+([`inject-mobile-viewport-fix.mjs`](inject-mobile-viewport-fix.mjs)) switches the
+root to the keyboard-aware `h-app` height. The prompt and toolbar then stay above
+the keyboard.
+
 ## Docker Socket (Optional)
 
 Uncomment the `/var/run/docker.sock` line under `volumes:` in `docker-compose.yml` if you want AgentOS sessions to control the host Docker daemon.

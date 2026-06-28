@@ -47,13 +47,16 @@ RUN git clone --depth 1 --branch "${AGENT_OS_REF}" \
     && cd "${AGENT_OS_REPO}" \
     && npm install --legacy-peer-deps
 
-# Register the configured Claude profiles as selectable harnesses in the UI,
-# then build. Declared here (after install) so changing CLAUDE_PROFILES only
-# re-runs codegen + build, not the slow clone + npm install above.
+# Register the configured Claude profiles as selectable harnesses in the UI and
+# apply our downstream UI patches, then build. Declared here (after install) so
+# changing CLAUDE_PROFILES only re-runs codegen + build, not the slow clone +
+# npm install above.
 ARG CLAUDE_PROFILES="a b c"
 COPY inject-claude-profiles.mjs /tmp/inject-claude-profiles.mjs
+COPY inject-mobile-viewport-fix.mjs /tmp/inject-mobile-viewport-fix.mjs
 RUN cd "${AGENT_OS_REPO}" \
     && CLAUDE_PROFILES="${CLAUDE_PROFILES}" node /tmp/inject-claude-profiles.mjs "${AGENT_OS_REPO}" \
+    && node /tmp/inject-mobile-viewport-fix.mjs "${AGENT_OS_REPO}" \
     && npm run build \
     && npm cache clean --force
 
