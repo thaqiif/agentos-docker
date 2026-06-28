@@ -48,6 +48,10 @@ PGID=1000
 
 # Extra Claude Code logins (see "Multiple Claude Code Logins" below).
 CLAUDE_PROFILES=a b c
+
+# Terminal font size in px (desktop / mobile). See "Terminal Font Size" below.
+TERMINAL_FONT_SIZE=16
+TERMINAL_FONT_SIZE_MOBILE=13
 ```
 
 ### File Permissions (PUID / PGID)
@@ -150,6 +154,32 @@ Under the hood each `claude-<name>` wrapper just sets `CLAUDE_CONFIG_DIR` to a
 separate directory, so the official `claude` CLI does all the work. A build-time
 codegen step ([`inject-claude-profiles.mjs`](inject-claude-profiles.mjs))
 registers each profile as an AgentOS provider.
+
+## Terminal Font Size
+
+The in-browser terminal (xterm.js) font size is configurable via `.env`:
+
+```env
+TERMINAL_FONT_SIZE=16          # desktop viewports
+TERMINAL_FONT_SIZE_MOBILE=13   # mobile viewports (< 768px wide)
+```
+
+Upstream hardcodes these at `14` / `11`; the defaults here bump them up a little.
+The size is **compiled into the client bundle**, so changes take effect on a
+rebuild:
+
+```bash
+docker compose up -d --build
+```
+
+A build-time codegen step
+([`inject-terminal-font.mjs`](inject-terminal-font.mjs)) patches the values into
+the upstream source before the build.
+
+> On a phone (or any viewport under 768px wide) the terminal also shows a
+> **special-keys toolbar** — Esc, Tab, Ctrl-C, Ctrl-D, arrow keys, etc. — for
+> keys a touch keyboard lacks. It appears automatically; there's nothing to
+> enable.
 
 ## Docker Socket (Optional)
 
