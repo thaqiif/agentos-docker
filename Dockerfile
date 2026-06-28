@@ -18,6 +18,7 @@ ARG AGENT_OS_REF=378069fed63708179ae4dd9ddad1a2ce64f37d5d
 # tmux: drives the terminal sessions  |  ripgrep: code search
 # git/openssh: cloning & git integration  |  procps: process management for tmux
 # gosu: drop from root to the agent user after remapping its UID/GID at startup
+# jq: JSON processor used by the autopilot-multi CLI to read task status
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         bash \
@@ -25,11 +26,26 @@ RUN apt-get update \
         curl \
         git \
         gosu \
+        jq \
         less \
         openssh-client \
         procps \
         ripgrep \
         tmux \
+    && rm -rf /var/lib/apt/lists/*
+
+# ---- GitHub CLI (gh) ----
+# Installed from GitHub's official apt repo so the binary lives in /usr/bin
+# (root-owned, like the other tools) and ships with every build. Kept in its own
+# layer because it needs the repo's signing key + source list added first.
+RUN mkdir -p -m 755 /etc/apt/keyrings \
+    && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+         -o /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+    && chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+         > /etc/apt/sources.list.d/github-cli.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends gh \
     && rm -rf /var/lib/apt/lists/*
 
 # ---- Pre-install the AI coding agents AgentOS can drive ----
@@ -67,10 +83,10 @@ RUN git init "${AGENT_OS_REPO}" \
 ARG CLAUDE_PROFILES="a b c"
 ARG TERMINAL_FONT_SIZE=16
 ARG TERMINAL_FONT_SIZE_MOBILE=13
-COPY inject-claude-profiles.mjs /tmp/inject-claude-profiles.mjs
-COPY inject-terminal-font.mjs /tmp/inject-terminal-font.mjs
-COPY inject-mobile-viewport-fix.mjs /tmp/inject-mobile-viewport-fix.mjs
-COPY inject-terminal-toolbar-keys.mjs /tmp/inject-terminal-toolbar-keys.mjs
+COPY patches/inject-claude-profiles.mjs /tmp/inject-claude-profiles.mjs
+COPY patches/inject-terminal-font.mjs /tmp/inject-terminal-font.mjs
+COPY patches/inject-mobile-viewport-fix.mjs /tmp/inject-mobile-viewport-fix.mjs
+COPY patches/inject-terminal-toolbar-keys.mjs /tmp/inject-terminal-toolbar-keys.mjs
 RUN cd "${AGENT_OS_REPO}" \
     && CLAUDE_PROFILES="${CLAUDE_PROFILES}" node /tmp/inject-claude-profiles.mjs "${AGENT_OS_REPO}" \
     && TERMINAL_FONT_SIZE="${TERMINAL_FONT_SIZE}" \
@@ -80,6 +96,23 @@ RUN cd "${AGENT_OS_REPO}" \
     && node /tmp/inject-terminal-toolbar-keys.mjs "${AGENT_OS_REPO}" \
     && npm run build \
     && npm cache clean --force
+
+# ---- autopilot-multi (TDD workflow commands/hooks for Claude Code) ----
+# Baked into /opt (root-owned, world-readable) so it's NOT shadowed by the
+# persisted home volume — its installer symlinks the commands/hooks/CLIs into
+# ~/.claude and ~/.local/bin at runtime from the entrypoint, which is the only
+# place that reliably writes into the volume regardless of its age. Placed after
+# the agent-os build so bumping AUTOPILOT_REF doesn't invalidate that layer.
+# Defaults to `main` (latest on each rebuild): unlike AGENT_OS_REF there are no
+# source-anchored patches against this repo, so tracking the branch is safe.
+# Override with: docker compose build --build-arg AUTOPILOT_REF=<sha|tag|branch>
+ARG AUTOPILOT_REF=main
+ENV AUTOPILOT_REPO=/opt/autopilot-multi
+RUN git init "${AUTOPILOT_REPO}" \
+    && cd "${AUTOPILOT_REPO}" \
+    && git remote add origin https://github.com/thaqiif/autopilot-multi \
+    && git fetch --depth 1 origin "${AUTOPILOT_REF}" \
+    && git checkout --detach FETCH_HEAD
 
 # ---- Non-root runtime user ----
 # Pre-create the home subdirectories that docker-compose mounts as named
