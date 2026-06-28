@@ -32,7 +32,6 @@ RUN npm install -g \
         @anthropic-ai/claude-code \
         @openai/codex \
         opencode-ai \
-        @google/gemini-cli \
     && npm cache clean --force
 
 # ---- Build AgentOS from source ----
@@ -72,6 +71,7 @@ RUN useradd --create-home --shell /bin/bash --uid 1001 agent \
         /home/agent/.claude-profiles \
         /home/agent/.codex \
         /home/agent/.ssh \
+        /home/agent/.gitstate \
         /home/agent/.local/bin \
         /workspaces \
     && chmod 700 /home/agent/.ssh \
@@ -82,6 +82,10 @@ ENV HOME=/home/agent \
     AGENT_OS_PORT=3011 \
     NODE_ENV=production \
     PATH=/home/agent/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin \
+    # Relocate git's global config into a persisted volume so logins (HTTPS
+    # credentials via the store helper) AND user.name/user.email survive a
+    # container recreation. The matching credentials file lives in the same dir.
+    GIT_CONFIG_GLOBAL=/home/agent/.gitstate/config \
     # UID/GID the container process runs as. Set these to match the owner of your
     # host workspace folder (run `id` on the host) so files are read/writable.
     PUID=1000 \
