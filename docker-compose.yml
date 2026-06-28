@@ -33,8 +33,8 @@ services:
     volumes:
       # Persist the whole home directory in one volume. Each agent CLI scatters
       # its auth/state across different home paths — Claude in ~/.claude AND the
-      # loose ~/.claude.json, OpenCode in ~/.local/share/opencode, Gemini in
-      # ~/.gemini, git in ~/.gitstate, etc. Mounting all of $HOME persists every
+      # loose ~/.claude.json, OpenCode in ~/.local/share/opencode, Codex in
+      # ~/.codex, git in ~/.gitstate, etc. Mounting all of $HOME persists every
       # login at once instead of whack-a-mole per-tool volumes. Build artifacts
       # live in /opt (outside home), so nothing important is shadowed.
       - agent_os_home:/home/agent
