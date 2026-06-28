@@ -113,14 +113,29 @@ patch(
     `  },\n`
 );
 
-// 4) The UI dropdown list (AGENT_OPTIONS). Insert right after the Claude entry.
+// 4) The new-session dropdown list (AGENT_OPTIONS). Insert after the Claude entry.
 patch(
   "components/NewSessionDialog/NewSessionDialog.types.ts",
   `  { value: "claude", label: "Claude Code", description: "Anthropic's CLI" },\n`,
   (n) => `  { value: "claude-${n}", label: "Claude (${n})", description: "${n} profile" },\n`
 );
 
-// 5) Optional: let Claude profiles use the "Fork" action too (otherwise it's
+// 5) The project-level "Default Agent" dropdowns. A project's default agent is
+//    the harness used when you click "Start Fresh", so the profiles have to show
+//    up here too. These lists are separate from the new-session one above and
+//    each declare their own AGENT_OPTIONS, so patch both.
+for (const file of [
+  "components/Projects/NewProjectDialog.types.ts",
+  "components/Projects/ProjectSettingsDialog.tsx",
+]) {
+  patch(
+    file,
+    `  { value: "claude", label: "Claude Code" },\n`,
+    (n) => `  { value: "claude-${n}", label: "Claude (${n})" },\n`
+  );
+}
+
+// 6) Optional: let Claude profiles use the "Fork" action too (otherwise it's
 //    gated to the literal "claude" id). Best-effort — don't fail the build.
 {
   const file = "components/SessionCard.tsx";

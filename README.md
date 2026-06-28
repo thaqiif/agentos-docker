@@ -2,7 +2,7 @@
 
 Docker setup for [AgentOS](https://github.com/saadnvd1/agent-os) — a mobile-first web UI for managing AI coding sessions.
 
-AgentOS lets you control AI agents like Claude Code, Codex, OpenCode, Gemini CLI, and others from a browser. This repo packages it into a Docker container for easy self-hosting.
+AgentOS lets you control AI agents like Claude Code, Codex, OpenCode, and others from a browser. This repo packages it into a Docker container for easy self-hosting.
 
 > **⚠️ Security Disclaimer**
 >
@@ -131,6 +131,9 @@ CLAUDE_PROFILES=a b c                 # -> claude-a, claude-b, claude-c
 Each profile also shows up as its own **selectable harness in the AgentOS UI**
 (e.g. "Claude (mimo)"), so you can start a session against a specific login from
 the new-session dialog — with full status detection, resume, and fork support.
+Profiles also appear in a project's **Default Agent** dropdown (New Project and
+Project Settings), so "Start Fresh" launches new sessions with the profile you
+picked as that project's default.
 
 Because that harness list is compiled into the app, apply changes with a
 rebuild:
