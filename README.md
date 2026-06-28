@@ -29,21 +29,47 @@ minutes. Follow the logs with `docker compose logs -f`.
 
 ## Configuration
 
-Copy the example env file and edit it to configure the host workspace directory:
+Copy the example env file and edit it:
 
 ```bash
 cp .env.example .env
 ```
 
-Then edit `.env`:
+`.env` holds all the settings you'll normally touch:
 
 ```env
-# Host directory mounted as /workspaces inside the container.
-# This is where your projects live.
+# Host directory mounted as /workspaces inside the container — your projects.
 WORKSPACE_DIR=/developer
+
+# Run the container as your host user so files under /workspaces stay
+# read/writable (see "File Permissions" below). Find yours with `id`.
+PUID=1000
+PGID=1000
+
+# Extra Claude Code logins (see "Multiple Claude Code Logins" below).
+CLAUDE_PROFILES=a b c
 ```
 
-Default is `/developer`. Change this to whatever path holds your code on the host.
+### File Permissions (PUID / PGID)
+
+The container runs as a non-root user. For the bind-mounted `/workspaces` to be
+read/writable — and for files the agents create to be owned by **you** on the
+host (not `root`) — that user's UID/GID must match your host account.
+
+Set `PUID`/`PGID` in `.env` to your host values. Find them by running `id` on
+the host:
+
+```bash
+$ id
+uid=1000(you) gid=1000(you) ...
+```
+
+The defaults are `1000:1000` (the first user on most Linux systems), so if
+that's you, no change is needed. After changing them, run
+`docker compose up -d` — no rebuild required.
+
+> If you previously hit `Permission denied` in `/workspaces`, this is the fix:
+> set `PUID`/`PGID` to match your host user and bring the stack back up.
 
 ## Volumes
 
@@ -86,13 +112,25 @@ CLAUDE_PROFILES=a b c                 # -> claude-a, claude-b, claude-c
 # CLAUDE_PROFILES=work personal client1
 ```
 
-Add or remove names and run `docker compose up -d` to apply — **no rebuild
-needed**. Removing a name does **not** delete its saved login: the config is
-kept in the `agent_os_claude_profiles` volume, so adding the name back later
-restores that profile exactly as it was.
+Each profile also shows up as its own **selectable harness in the AgentOS UI**
+(e.g. "Claude (mimo)"), so you can start a session against a specific login from
+the new-session dialog — with full status detection, resume, and fork support.
+
+Because that harness list is compiled into the app, apply changes with a
+rebuild:
+
+```bash
+docker compose up -d --build
+```
+
+Removing a name does **not** delete its saved login: the config is kept in the
+`agent_os_claude_profiles` volume, so adding the name back later restores that
+profile exactly as it was.
 
 Under the hood each `claude-<name>` wrapper just sets `CLAUDE_CONFIG_DIR` to a
-separate directory, so the official `claude` CLI does all the work.
+separate directory, so the official `claude` CLI does all the work. A build-time
+codegen step ([`inject-claude-profiles.mjs`](inject-claude-profiles.mjs))
+registers each profile as an AgentOS provider.
 
 ## Docker Socket (Optional)
 

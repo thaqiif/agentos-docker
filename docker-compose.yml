@@ -2,9 +2,12 @@ services:
   agent-os:
     build:
       context: .
-      # Pin a specific upstream release if you like, e.g.:
-      # args:
-      #   AGENT_OS_REF: v0.2.1
+      args:
+        # Bake the configured Claude profiles into the UI's harness list.
+        # Read from .env so it stays the single source of truth.
+        CLAUDE_PROFILES: ${CLAUDE_PROFILES:-a b c}
+        # Pin a specific upstream release if you like:
+        # AGENT_OS_REF: v0.2.1
     restart: unless-stopped
 
     # Optional: pass extra env (e.g. agent API keys) into the container.
@@ -15,6 +18,10 @@ services:
     environment:
       AGENT_OS_PORT: 3011
       SHELL: /bin/bash
+      # Run the container as your host user so files on the mounted /workspaces
+      # are read/writable. Set PUID/PGID in .env to match `id` on the host.
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
       # CLAUDE_PROFILES (extra Claude Code logins) is configured in .env so you
       # can add/remove profiles without touching this file or rebuilding.
 
