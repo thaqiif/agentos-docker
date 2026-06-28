@@ -15,6 +15,10 @@ services:
     environment:
       AGENT_OS_PORT: 3011
       SHELL: /bin/bash
+      # Run the container as your host user so files on the mounted /workspaces
+      # are read/writable. Set PUID/PGID in .env to match `id` on the host.
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
       # CLAUDE_PROFILES (extra Claude Code logins) is configured in .env so you
       # can add/remove profiles without touching this file or rebuilding.
 

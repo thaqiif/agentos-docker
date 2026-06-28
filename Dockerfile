@@ -12,12 +12,14 @@ ARG AGENT_OS_REF=main
 # ---- System dependencies AgentOS needs at runtime ----
 # tmux: drives the terminal sessions  |  ripgrep: code search
 # git/openssh: cloning & git integration  |  procps: process management for tmux
+# gosu: drop from root to the agent user after remapping its UID/GID at startup
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         bash \
         ca-certificates \
         curl \
         git \
+        gosu \
         less \
         openssh-client \
         procps \
@@ -48,6 +50,9 @@ RUN git clone --depth 1 --branch "${AGENT_OS_REF}" \
 # ---- Non-root runtime user ----
 # Pre-create the home subdirectories that docker-compose mounts as named
 # volumes so the volumes inherit the agent user's ownership on first run.
+# The agent user's UID/GID here are just defaults — the entrypoint remaps them
+# at startup to PUID/PGID so files on bind-mounted host folders get the right
+# owner. Build artifacts in /opt stay root-owned but world-readable.
 RUN useradd --create-home --shell /bin/bash --uid 1001 agent \
     && mkdir -p \
         /home/agent/.agent-os \
@@ -59,13 +64,17 @@ RUN useradd --create-home --shell /bin/bash --uid 1001 agent \
         /home/agent/.local/bin \
         /workspaces \
     && chmod 700 /home/agent/.ssh \
-    && chown -R agent:agent /home/agent /opt/agent-os
+    && chown -R agent:agent /home/agent
 
 ENV HOME=/home/agent \
     AGENT_OS_HOME=/home/agent/.agent-os \
     AGENT_OS_PORT=3011 \
     NODE_ENV=production \
     PATH=/home/agent/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin \
+    # UID/GID the container process runs as. Set these to match the owner of your
+    # host workspace folder (run `id` on the host) so files are read/writable.
+    PUID=1000 \
+    PGID=1000 \
     # Extra Claude Code profiles to create, each with isolated auth/config.
     # Generates claude-a, claude-b, claude-c ... wrappers. Override in compose.
     CLAUDE_PROFILES="a b c"
@@ -73,7 +82,7 @@ ENV HOME=/home/agent \
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-USER agent
+# Entrypoint starts as root to remap the user, then drops to agent via gosu.
 WORKDIR /opt/agent-os
 
 EXPOSE 3011
