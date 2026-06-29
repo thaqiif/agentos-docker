@@ -131,10 +131,11 @@ RUN cd "${AGENT_OS_REPO}" \
 # ~/.claude and ~/.local/bin at runtime from the entrypoint, which is the only
 # place that reliably writes into the volume regardless of its age. Placed after
 # the agent-os build so bumping AUTOPILOT_REF doesn't invalidate that layer.
-# Defaults to `main` (latest on each rebuild): unlike AGENT_OS_REF there are no
-# source-anchored patches against this repo, so tracking the branch is safe.
+# Defaults to `multi-agent-support` (latest on each rebuild): unlike
+# AGENT_OS_REF there are no source-anchored patches against this repo, so
+# tracking the branch is safe.
 # Override with: docker compose build --build-arg AUTOPILOT_REF=<sha|tag|branch>
-ARG AUTOPILOT_REF=main
+ARG AUTOPILOT_REF=multi-agent-support
 ENV AUTOPILOT_REPO=/opt/autopilot-multi
 RUN git init "${AUTOPILOT_REPO}" \
     && cd "${AUTOPILOT_REPO}" \
