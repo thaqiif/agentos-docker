@@ -50,7 +50,7 @@ A few principles this repo tries to honour:
 | 👥 **Multiple Claude accounts** | Run `claude`, `claude-a`, `claude-b`… side by side, each its own login, selectable in the UI | [Logins](#multiple-claude-code-logins) |
 | 📱 **Friendlier mobile keyboard** | Keyboard-overlap fix, plus toolbar keys for newline, ⇧Tab, and ⌃/⌥ modifiers | [Mobile](#mobile) |
 | 🤖 **Autopilot TDD workflow** | `autopilot-multi` slash commands & hooks baked in for every Claude login | [Autopilot](#autopilot-tdd-workflow) |
-| 🔤 **Maple Mono code font** | Terminal & UI code blocks render in self-hosted Maple Mono Nerd Font; xterm size still configurable from `.env` | [Font](#terminal--code-font) |
+| 🔤 **JetBrains Mono code font** | Terminal & UI code blocks render in self-hosted JetBrains Mono; xterm size still configurable from `.env` | [Font](#terminal--code-font) |
 | 🧰 **Bundled CLIs** | `gh`, `git`, `ripgrep`, `tmux`, `jq` preinstalled in every session | [Agents](#installed-agents) |
 | 👤 **Host-matched file ownership** | `PUID`/`PGID` so files in your mounted workspace stay owned by *you* | [Permissions](#file-permissions-puid--pgid) |
 | 🩹 **Quality-of-life fixes** | Inline session rename works again (upstream Radix focus-restore bug) | [Font & fixes](#terminal--code-font) |
@@ -128,7 +128,7 @@ Build args (passed at **build** time, e.g. `docker compose build --build-arg NAM
 |---|---|---|
 | `AGENT_OS_REF` | pinned commit SHA | Which upstream AgentOS ref to build — SHA, tag, or branch ([Pinning](#upstream-version-pinning)) |
 | `AUTOPILOT_REF` | `main` | Which [autopilot-multi](#autopilot-tdd-workflow) ref to bundle |
-| `MAPLE_MONO_REF` | `v7.9` | Which [Maple Mono](#terminal--code-font) release to self-host for the terminal/code font |
+| `JETBRAINS_MONO_REF` | `v2.304` | Which [JetBrains Mono](#terminal--code-font) release to self-host for the terminal/code font |
 | `CLAUDE_PROFILES` | `a b c` | Compiled into the UI's harness list (also read from `.env`) |
 | `TERMINAL_FONT_SIZE` / `…_MOBILE` | `16` / `13` | Compiled into the client bundle |
 
@@ -251,14 +251,13 @@ registers each profile as an AgentOS provider.
 
 ## Terminal & Code Font
 
-**Maple Mono Nerd Font.** The in-browser terminal and the UI's code blocks render
-in [Maple Mono](https://github.com/subframe7536/maple-font) (the Nerd Font build)
-instead of the default JetBrains/Geist mono. The Nerd Font glyphs mean shell
-prompts that use icons or powerline (starship, p10k, git branch icons) display
-correctly. The rest of the UI keeps its Geist sans typeface. The font is
-**self-hosted** — the build downloads the release, compresses the weights it uses
-to `woff2`, and serves them from the app, so there's no runtime CDN dependency.
-Pinned via the `MAPLE_MONO_REF` build arg (default `v7.9`).
+**JetBrains Mono.** The in-browser terminal and the UI's code blocks render in
+[JetBrains Mono](https://github.com/JetBrains/JetBrainsMono). Upstream's xterm
+config already names it first, but the font isn't actually shipped — so without
+this it falls back to a system monospace. The rest of the UI keeps its Geist sans
+typeface. The font is **self-hosted** — the build downloads the official release
+`woff2` webfonts and serves them from the app, so there's no runtime CDN
+dependency. Pinned via the `JETBRAINS_MONO_REF` build arg (default `v2.304`).
 
 **Configurable size.** The xterm.js font size is set via `.env`:
 
@@ -276,8 +275,8 @@ docker compose up -d --build
 ```
 
 Build-time codegen steps patch the upstream source before the build:
-[`inject-maple-mono-font.mjs`](patches/inject-maple-mono-font.mjs) wires up the
-`@font-face` rules + xterm `fontFamily`, and
+[`inject-jetbrains-mono-font.mjs`](patches/inject-jetbrains-mono-font.mjs) wires up
+the `@font-face` rules + `--font-mono` token, and
 [`inject-terminal-font.mjs`](patches/inject-terminal-font.mjs) sets the sizes.
 
 ### Bug fixes
