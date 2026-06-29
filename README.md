@@ -50,9 +50,10 @@ A few principles this repo tries to honour:
 | 👥 **Multiple Claude accounts** | Run `claude`, `claude-a`, `claude-b`… side by side, each its own login, selectable in the UI | [Logins](#multiple-claude-code-logins) |
 | 📱 **Friendlier mobile keyboard** | Keyboard-overlap fix, plus toolbar keys for newline, ⇧Tab, and ⌃/⌥ modifiers | [Mobile](#mobile) |
 | 🤖 **Autopilot TDD workflow** | `autopilot-multi` slash commands & hooks baked in for every Claude login | [Autopilot](#autopilot-tdd-workflow) |
-| 🔤 **Configurable terminal font** | Set desktop/mobile xterm font size from `.env` | [Font](#terminal-font-size) |
+| 🔤 **Maple Mono code font** | Terminal & UI code blocks render in self-hosted Maple Mono Nerd Font; xterm size still configurable from `.env` | [Font](#terminal--code-font) |
 | 🧰 **Bundled CLIs** | `gh`, `git`, `ripgrep`, `tmux`, `jq` preinstalled in every session | [Agents](#installed-agents) |
 | 👤 **Host-matched file ownership** | `PUID`/`PGID` so files in your mounted workspace stay owned by *you* | [Permissions](#file-permissions-puid--pgid) |
+| 🩹 **Quality-of-life fixes** | Inline session rename works again (upstream Radix focus-restore bug) | [Font & fixes](#terminal--code-font) |
 | 📌 **Reproducible builds** | Upstream pinned to a commit; transparent patches that fail loudly on drift | [Pinning](#upstream-version-pinning) |
 
 > **⚠️ Security Disclaimer**
@@ -127,6 +128,7 @@ Build args (passed at **build** time, e.g. `docker compose build --build-arg NAM
 |---|---|---|
 | `AGENT_OS_REF` | pinned commit SHA | Which upstream AgentOS ref to build — SHA, tag, or branch ([Pinning](#upstream-version-pinning)) |
 | `AUTOPILOT_REF` | `main` | Which [autopilot-multi](#autopilot-tdd-workflow) ref to bundle |
+| `MAPLE_MONO_REF` | `v7.9` | Which [Maple Mono](#terminal--code-font) release to self-host for the terminal/code font |
 | `CLAUDE_PROFILES` | `a b c` | Compiled into the UI's harness list (also read from `.env`) |
 | `TERMINAL_FONT_SIZE` / `…_MOBILE` | `16` / `13` | Compiled into the client bundle |
 
@@ -247,9 +249,18 @@ registers each profile as an AgentOS provider.
 
 (All these build-time patch scripts live in [`patches/`](patches/).)
 
-## Terminal Font Size
+## Terminal & Code Font
 
-The in-browser terminal (xterm.js) font size is configurable via `.env`:
+**Maple Mono Nerd Font.** The in-browser terminal and the UI's code blocks render
+in [Maple Mono](https://github.com/subframe7536/maple-font) (the Nerd Font build)
+instead of the default JetBrains/Geist mono. The Nerd Font glyphs mean shell
+prompts that use icons or powerline (starship, p10k, git branch icons) display
+correctly. The rest of the UI keeps its Geist sans typeface. The font is
+**self-hosted** — the build downloads the release, compresses the weights it uses
+to `woff2`, and serves them from the app, so there's no runtime CDN dependency.
+Pinned via the `MAPLE_MONO_REF` build arg (default `v7.9`).
+
+**Configurable size.** The xterm.js font size is set via `.env`:
 
 ```env
 TERMINAL_FONT_SIZE=16          # desktop viewports
@@ -257,16 +268,29 @@ TERMINAL_FONT_SIZE_MOBILE=13   # mobile viewports (< 768px wide)
 ```
 
 Upstream hardcodes these at `14` / `11`; the defaults here bump them up a little.
-The size is **compiled into the client bundle**, so changes take effect on a
-rebuild:
+Both the font swap and the size are **compiled into the client bundle**, so
+changes take effect on a rebuild:
 
 ```bash
 docker compose up -d --build
 ```
 
-A build-time codegen step
-([`inject-terminal-font.mjs`](patches/inject-terminal-font.mjs)) patches the values into
-the upstream source before the build.
+Build-time codegen steps patch the upstream source before the build:
+[`inject-maple-mono-font.mjs`](patches/inject-maple-mono-font.mjs) wires up the
+`@font-face` rules + xterm `fontFamily`, and
+[`inject-terminal-font.mjs`](patches/inject-terminal-font.mjs) sets the sizes.
+
+### Bug fixes
+
+We also patch a couple of upstream rough edges (same anchor-checked codegen
+approach, so they no-op cleanly if upstream fixes them first):
+
+- **Inline session rename.** Renaming a session from its menu used to snap the
+  text field straight back to read-only before you could type. The "Rename" item
+  lives in a Radix menu whose default close behaviour restores focus to the
+  trigger, which blurred the freshly-opened input.
+  [`inject-session-rename-fix.mjs`](patches/inject-session-rename-fix.mjs) stops
+  that focus restoration so the field stays editable on both desktop and mobile.
 
 ## Mobile
 
