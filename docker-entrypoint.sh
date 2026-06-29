@@ -72,6 +72,16 @@ if [ -d "${AUTOPILOT_REPO}" ]; then
     install_autopilot_config() {
         cfg="$1"
         mkdir -p "${cfg}/commands" "${cfg}/hooks"
+        # Clean slate: drop command symlinks left by a previous autopilot ref so
+        # switching branches can't leave behind commands that no longer exist
+        # upstream. Only links that resolve into AUTOPILOT_REPO are removed, so
+        # any user-added commands in this dir are preserved.
+        for link in "${cfg}/commands"/*; do
+            [ -L "${link}" ] || continue
+            case "$(readlink "${link}")" in
+                "${AUTOPILOT_REPO}"/*) rm -f "${link}" ;;
+            esac
+        done
         # Slash commands — enumerated, so commands autopilot adds are picked up.
         for f in "${AUTOPILOT_REPO}"/commands/*.md; do
             if [ -e "${f}" ]; then
