@@ -19,7 +19,7 @@ ARG AGENT_OS_REF=378069fed63708179ae4dd9ddad1a2ce64f37d5d
 # git/openssh: cloning & git integration  |  procps: process management for tmux
 # gosu: drop from root to the agent user after remapping its UID/GID at startup
 # jq: JSON processor used by the autopilot-multi CLI to read task status
-# unzip + woff2: extract & compress the Maple Mono NF webfont at build time
+# unzip: extract the self-hosted JetBrains Mono webfont at build time
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         bash \
@@ -34,7 +34,6 @@ RUN apt-get update \
         ripgrep \
         tmux \
         unzip \
-        woff2 \
     && rm -rf /var/lib/apt/lists/*
 
 # ---- GitHub CLI (gh) ----
@@ -77,26 +76,25 @@ RUN git init "${AGENT_OS_REPO}" \
     && git checkout --detach FETCH_HEAD \
     && npm install --legacy-peer-deps
 
-# ---- Self-hosted Maple Mono NF webfont ----
-# The terminal and UI code blocks render in Maple Mono (Nerd Font build) instead
-# of the default JetBrains/Geist mono — the NF glyphs make shell prompts (git
-# branch icons, powerline) render. The Nerd Font ships only as TTF (~2.4MB each,
-# glyph-heavy), so we fetch the release zip, take just the weights we use, and
-# compress each to woff2 (~60% smaller) into the app's public/fonts dir, which
-# the custom server serves at runtime. inject-maple-mono-font.mjs adds the
-# @font-face rules + --font-mono / xterm fontFamily that point at these files.
+# ---- Self-hosted JetBrains Mono webfont ----
+# The terminal and UI code blocks render in JetBrains Mono. Upstream's xterm
+# fontFamily already lists it first, but the font isn't shipped — so without
+# this it silently falls back to a system monospace. We fetch the official
+# release (which provides ready-made woff2 webfonts, ~92KB each) and drop just
+# the weights we use into the app's public/fonts dir, served by the custom
+# server at runtime — no runtime CDN dependency. inject-jetbrains-mono-font.mjs
+# adds the @font-face rules + the --font-mono token that reference these files.
 # Pinned to a release tag for reproducibility; its own layer so it stays cached
-# unless MAPLE_MONO_REF changes. Override with --build-arg MAPLE_MONO_REF=<tag>.
-ARG MAPLE_MONO_REF=v7.9
+# unless JETBRAINS_MONO_REF changes. Override with --build-arg JETBRAINS_MONO_REF=<tag>.
+ARG JETBRAINS_MONO_REF=v2.304
 RUN set -eux; \
     tmp="$(mktemp -d)"; \
-    curl -fsSL "https://github.com/subframe7536/maple-font/releases/download/${MAPLE_MONO_REF}/MapleMono-NF.zip" \
-        -o "${tmp}/nf.zip"; \
+    ver="${JETBRAINS_MONO_REF#v}"; \
+    curl -fsSL "https://github.com/JetBrains/JetBrainsMono/releases/download/${JETBRAINS_MONO_REF}/JetBrainsMono-${ver}.zip" \
+        -o "${tmp}/jbm.zip"; \
     dest="${AGENT_OS_REPO}/public/fonts"; mkdir -p "${dest}"; \
     for w in Regular Italic SemiBold Bold BoldItalic; do \
-        unzip -q -o "${tmp}/nf.zip" "MapleMono-NF-${w}.ttf" -d "${tmp}"; \
-        woff2_compress "${tmp}/MapleMono-NF-${w}.ttf"; \
-        mv "${tmp}/MapleMono-NF-${w}.woff2" "${dest}/MapleMono-NF-${w}.woff2"; \
+        unzip -q -o -j "${tmp}/jbm.zip" "fonts/webfonts/JetBrainsMono-${w}.woff2" -d "${dest}"; \
     done; \
     rm -rf "${tmp}"
 
@@ -114,7 +112,7 @@ COPY patches/inject-terminal-font.mjs /tmp/inject-terminal-font.mjs
 COPY patches/inject-mobile-viewport-fix.mjs /tmp/inject-mobile-viewport-fix.mjs
 COPY patches/inject-terminal-toolbar-keys.mjs /tmp/inject-terminal-toolbar-keys.mjs
 COPY patches/inject-session-rename-fix.mjs /tmp/inject-session-rename-fix.mjs
-COPY patches/inject-maple-mono-font.mjs /tmp/inject-maple-mono-font.mjs
+COPY patches/inject-jetbrains-mono-font.mjs /tmp/inject-jetbrains-mono-font.mjs
 RUN cd "${AGENT_OS_REPO}" \
     && CLAUDE_PROFILES="${CLAUDE_PROFILES}" node /tmp/inject-claude-profiles.mjs "${AGENT_OS_REPO}" \
     && TERMINAL_FONT_SIZE="${TERMINAL_FONT_SIZE}" \
@@ -123,7 +121,7 @@ RUN cd "${AGENT_OS_REPO}" \
     && node /tmp/inject-mobile-viewport-fix.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-terminal-toolbar-keys.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-session-rename-fix.mjs "${AGENT_OS_REPO}" \
-    && node /tmp/inject-maple-mono-font.mjs "${AGENT_OS_REPO}" \
+    && node /tmp/inject-jetbrains-mono-font.mjs "${AGENT_OS_REPO}" \
     && npm run build \
     && npm cache clean --force
 
