@@ -279,6 +279,12 @@ Build-time codegen steps patch the upstream source before the build:
 the `@font-face` rules + `--font-mono` token, and
 [`inject-terminal-font.mjs`](patches/inject-terminal-font.mjs) sets the sizes.
 
+The UI (sans) font is also swapped from upstream's Geist to **Inter**
+([`inject-ui-font-inter.mjs`](patches/inject-ui-font-inter.mjs)) — still loaded via
+`next/font/google` (self-hosted at build, no runtime CDN), reusing the existing
+`--font-geist-sans` variable so nothing else changes. The terminal/mono font is
+untouched.
+
 ### Bug fixes
 
 We also patch a couple of upstream rough edges (same anchor-checked codegen
@@ -327,6 +333,23 @@ keyboard, so you can't see what you type. The app already tracks the keyboard vi
 root to the keyboard-aware `h-app` height. The prompt and toolbar then stay above
 the keyboard.
 
+A companion tweak shrinks the empty band that `h-app` left below the special-keys
+toolbar when the keyboard is *closed* (the iOS home-indicator safe area). With the
+keyboard closed the visual viewport excludes that band, so the toolbar floated
+above a chunky gap.
+([`inject-mobile-toolbar-safearea.mjs`](patches/inject-mobile-toolbar-safearea.mjs))
+extends `.h-app` by `env(safe-area-inset-bottom)` and gives the toolbar a smaller
+bottom clearance (`0.375rem + 0.4 × inset`). Because iOS collapses that inset to 0
+while the keyboard is open, the keyboard-open layout is unchanged.
+
+The toolbar buttons were also sized purely by their label, so narrow keys (arrows,
+`^C`) looked skinnier than wide ones (`Esc`, `⇧Tab`).
+([`inject-toolbar-uniform-buttons.mjs`](patches/inject-toolbar-uniform-buttons.mjs))
+gives every button a `min-w-[3.25rem]` floor and centers its content, so they all
+render the same width. The `^D` (Ctrl-D / EOF) key is also dropped from the toolbar
+([`inject-remove-ctrl-d.mjs`](patches/inject-remove-ctrl-d.mjs)) — an easy mis-tap
+that logs you out of the shell.
+
 It also carries a safe-area fix for installing AgentOS as a home-screen **web app
 (PWA)**: launched standalone, the page gets the full screen (the layout sets
 `viewportFit: "cover"`), so the mobile top bar — the `bg-muted` row with the
@@ -336,6 +359,13 @@ and overlap it. A build-time codegen step
 `env(safe-area-inset-top)` to that bar's top padding, so it sits below the status
 bar. On devices/browsers with no inset, `env()` resolves to 0 and nothing changes.
 
+The mobile side drawer (`SwipeSidebar`) had the same problem at the top: it's
+`fixed top-0 bottom-0` and already pads the *bottom* inset, but its header (the
+session list's add-project / add buttons) rendered under the status bar in a PWA.
+([`inject-mobile-drawer-safearea.mjs`](patches/inject-mobile-drawer-safearea.mjs))
+adds a matching `env(safe-area-inset-top)` spacer above the drawer content so the
+buttons clear the status bar.
+
 Related: upstream sets the PWA `theme_color` to blue (`#3B82F6`) in both the web
 manifest and `viewport.themeColor`. On an **installed** app — most visibly the
 desktop app window — the browser tints the title bar / window chrome with that
@@ -344,6 +374,18 @@ the dark theme (`--background: #0a0a0a`), so
 ([`inject-pwa-theme-color.mjs`](patches/inject-pwa-theme-color.mjs)) rewrites the
 manifest `theme_color`/`background_color` and `viewport.themeColor` to that
 background, so the installed window chrome and splash match the app.
+
+A note on the home-screen icon: a *real* PWA install (Android WebAPK / iOS
+standalone), which uses the manifest icons, requires a **secure HTTPS origin**
+(only `localhost` is exempt) served at a **domain root** (the manifest uses
+absolute `/icons/...` paths — a subpath deployment 404s them). Over plain HTTP
+the browser adds a mere *shortcut* and may show a generated letter tile. As
+cheap insurance for that shortcut case,
+([`inject-raster-favicon.mjs`](patches/inject-raster-favicon.mjs)) drops a PNG
+`app/icon.png` so Next emits a raster `<link rel="icon">` alongside the SVG one,
+giving launchers that won't rasterise an SVG favicon a real image to fall back
+to. For a proper install, serve AgentOS over HTTPS (reverse proxy, Cloudflare
+Tunnel, or Tailscale Serve).
 
 ## Autopilot (TDD workflow)
 
