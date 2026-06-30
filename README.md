@@ -327,6 +327,24 @@ keyboard, so you can't see what you type. The app already tracks the keyboard vi
 root to the keyboard-aware `h-app` height. The prompt and toolbar then stay above
 the keyboard.
 
+It also carries a safe-area fix for installing AgentOS as a home-screen **web app
+(PWA)**: launched standalone, the page gets the full screen (the layout sets
+`viewportFit: "cover"`), so the mobile top bar — the `bg-muted` row with the
+hamburger and tab navigation — would render *under* the device status bar / notch
+and overlap it. A build-time codegen step
+([`inject-safe-area-top-fix.mjs`](patches/inject-safe-area-top-fix.mjs)) adds
+`env(safe-area-inset-top)` to that bar's top padding, so it sits below the status
+bar. On devices/browsers with no inset, `env()` resolves to 0 and nothing changes.
+
+Related: upstream sets the PWA `theme_color` to blue (`#3B82F6`) in both the web
+manifest and `viewport.themeColor`. On an **installed** app — most visibly the
+desktop app window — the browser tints the title bar / window chrome with that
+colour, so you get a blue title bar above AgentOS's dark UI. AgentOS defaults to
+the dark theme (`--background: #0a0a0a`), so
+([`inject-pwa-theme-color.mjs`](patches/inject-pwa-theme-color.mjs)) rewrites the
+manifest `theme_color`/`background_color` and `viewport.themeColor` to that
+background, so the installed window chrome and splash match the app.
+
 ## Autopilot (TDD workflow)
 
 [autopilot-multi](https://github.com/thaqiif/autopilot-multi) — a set of Claude
