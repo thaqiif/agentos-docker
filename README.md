@@ -352,6 +352,18 @@ the dark theme (`--background: #0a0a0a`), so
 manifest `theme_color`/`background_color` and `viewport.themeColor` to that
 background, so the installed window chrome and splash match the app.
 
+A note on the home-screen icon: a *real* PWA install (Android WebAPK / iOS
+standalone), which uses the manifest icons, requires a **secure HTTPS origin**
+(only `localhost` is exempt) served at a **domain root** (the manifest uses
+absolute `/icons/...` paths — a subpath deployment 404s them). Over plain HTTP
+the browser adds a mere *shortcut* and may show a generated letter tile. As
+cheap insurance for that shortcut case,
+([`inject-raster-favicon.mjs`](patches/inject-raster-favicon.mjs)) drops a PNG
+`app/icon.png` so Next emits a raster `<link rel="icon">` alongside the SVG one,
+giving launchers that won't rasterise an SVG favicon a real image to fall back
+to. For a proper install, serve AgentOS over HTTPS (reverse proxy, Cloudflare
+Tunnel, or Tailscale Serve).
+
 ## Autopilot (TDD workflow)
 
 [autopilot-multi](https://github.com/thaqiif/autopilot-multi) — a set of Claude
