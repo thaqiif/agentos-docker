@@ -333,15 +333,6 @@ keyboard, so you can't see what you type. The app already tracks the keyboard vi
 root to the keyboard-aware `h-app` height. The prompt and toolbar then stay above
 the keyboard.
 
-A companion tweak shrinks the empty band that `h-app` left below the special-keys
-toolbar when the keyboard is *closed* (the iOS home-indicator safe area). With the
-keyboard closed the visual viewport excludes that band, so the toolbar floated
-above a chunky gap.
-([`inject-mobile-toolbar-safearea.mjs`](patches/inject-mobile-toolbar-safearea.mjs))
-extends `.h-app` by `env(safe-area-inset-bottom)` and gives the toolbar a smaller
-bottom clearance (`0.375rem + 0.4 × inset`). Because iOS collapses that inset to 0
-while the keyboard is open, the keyboard-open layout is unchanged.
-
 The toolbar buttons were also sized purely by their label, so narrow keys (arrows,
 `^C`) looked skinnier than wide ones (`Esc`, `⇧Tab`).
 ([`inject-toolbar-uniform-buttons.mjs`](patches/inject-toolbar-uniform-buttons.mjs))
