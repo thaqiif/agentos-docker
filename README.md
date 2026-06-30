@@ -336,6 +336,13 @@ and overlap it. A build-time codegen step
 `env(safe-area-inset-top)` to that bar's top padding, so it sits below the status
 bar. On devices/browsers with no inset, `env()` resolves to 0 and nothing changes.
 
+The mobile side drawer (`SwipeSidebar`) had the same problem at the top: it's
+`fixed top-0 bottom-0` and already pads the *bottom* inset, but its header (the
+session list's add-project / add buttons) rendered under the status bar in a PWA.
+([`inject-mobile-drawer-safearea.mjs`](patches/inject-mobile-drawer-safearea.mjs))
+adds a matching `env(safe-area-inset-top)` spacer above the drawer content so the
+buttons clear the status bar.
+
 Related: upstream sets the PWA `theme_color` to blue (`#3B82F6`) in both the web
 manifest and `viewport.themeColor`. On an **installed** app — most visibly the
 desktop app window — the browser tints the title bar / window chrome with that

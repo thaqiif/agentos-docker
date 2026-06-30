@@ -115,6 +115,7 @@ COPY patches/inject-session-rename-fix.mjs /tmp/inject-session-rename-fix.mjs
 COPY patches/inject-jetbrains-mono-font.mjs /tmp/inject-jetbrains-mono-font.mjs
 COPY patches/inject-safe-area-top-fix.mjs /tmp/inject-safe-area-top-fix.mjs
 COPY patches/inject-pwa-theme-color.mjs /tmp/inject-pwa-theme-color.mjs
+COPY patches/inject-mobile-drawer-safearea.mjs /tmp/inject-mobile-drawer-safearea.mjs
 RUN cd "${AGENT_OS_REPO}" \
     && CLAUDE_PROFILES="${CLAUDE_PROFILES}" node /tmp/inject-claude-profiles.mjs "${AGENT_OS_REPO}" \
     && TERMINAL_FONT_SIZE="${TERMINAL_FONT_SIZE}" \
@@ -126,6 +127,7 @@ RUN cd "${AGENT_OS_REPO}" \
     && node /tmp/inject-jetbrains-mono-font.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-safe-area-top-fix.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-pwa-theme-color.mjs "${AGENT_OS_REPO}" \
+    && node /tmp/inject-mobile-drawer-safearea.mjs "${AGENT_OS_REPO}" \
     && npm run build \
     && npm cache clean --force
 
