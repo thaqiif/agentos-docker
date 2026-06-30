@@ -279,6 +279,12 @@ Build-time codegen steps patch the upstream source before the build:
 the `@font-face` rules + `--font-mono` token, and
 [`inject-terminal-font.mjs`](patches/inject-terminal-font.mjs) sets the sizes.
 
+The UI (sans) font is also swapped from upstream's Geist to **Inter**
+([`inject-ui-font-inter.mjs`](patches/inject-ui-font-inter.mjs)) — still loaded via
+`next/font/google` (self-hosted at build, no runtime CDN), reusing the existing
+`--font-geist-sans` variable so nothing else changes. The terminal/mono font is
+untouched.
+
 ### Bug fixes
 
 We also patch a couple of upstream rough edges (same anchor-checked codegen
@@ -340,7 +346,9 @@ The toolbar buttons were also sized purely by their label, so narrow keys (arrow
 `^C`) looked skinnier than wide ones (`Esc`, `⇧Tab`).
 ([`inject-toolbar-uniform-buttons.mjs`](patches/inject-toolbar-uniform-buttons.mjs))
 gives every button a `min-w-[3.25rem]` floor and centers its content, so they all
-render the same width.
+render the same width. The `^D` (Ctrl-D / EOF) key is also dropped from the toolbar
+([`inject-remove-ctrl-d.mjs`](patches/inject-remove-ctrl-d.mjs)) — an easy mis-tap
+that logs you out of the shell.
 
 It also carries a safe-area fix for installing AgentOS as a home-screen **web app
 (PWA)**: launched standalone, the page gets the full screen (the layout sets
