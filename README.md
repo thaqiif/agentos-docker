@@ -336,6 +336,12 @@ extends `.h-app` by `env(safe-area-inset-bottom)` and gives the toolbar a smalle
 bottom clearance (`0.375rem + 0.4 × inset`). Because iOS collapses that inset to 0
 while the keyboard is open, the keyboard-open layout is unchanged.
 
+The toolbar buttons were also sized purely by their label, so narrow keys (arrows,
+`^C`) looked skinnier than wide ones (`Esc`, `⇧Tab`).
+([`inject-toolbar-uniform-buttons.mjs`](patches/inject-toolbar-uniform-buttons.mjs))
+gives every button a `min-w-[3.25rem]` floor and centers its content, so they all
+render the same width.
+
 It also carries a safe-area fix for installing AgentOS as a home-screen **web app
 (PWA)**: launched standalone, the page gets the full screen (the layout sets
 `viewportFit: "cover"`), so the mobile top bar — the `bg-muted` row with the
