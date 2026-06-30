@@ -113,6 +113,7 @@ COPY patches/inject-mobile-viewport-fix.mjs /tmp/inject-mobile-viewport-fix.mjs
 COPY patches/inject-terminal-toolbar-keys.mjs /tmp/inject-terminal-toolbar-keys.mjs
 COPY patches/inject-session-rename-fix.mjs /tmp/inject-session-rename-fix.mjs
 COPY patches/inject-jetbrains-mono-font.mjs /tmp/inject-jetbrains-mono-font.mjs
+COPY patches/inject-safe-area-top-fix.mjs /tmp/inject-safe-area-top-fix.mjs
 RUN cd "${AGENT_OS_REPO}" \
     && CLAUDE_PROFILES="${CLAUDE_PROFILES}" node /tmp/inject-claude-profiles.mjs "${AGENT_OS_REPO}" \
     && TERMINAL_FONT_SIZE="${TERMINAL_FONT_SIZE}" \
@@ -122,6 +123,7 @@ RUN cd "${AGENT_OS_REPO}" \
     && node /tmp/inject-terminal-toolbar-keys.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-session-rename-fix.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-jetbrains-mono-font.mjs "${AGENT_OS_REPO}" \
+    && node /tmp/inject-safe-area-top-fix.mjs "${AGENT_OS_REPO}" \
     && npm run build \
     && npm cache clean --force
 
