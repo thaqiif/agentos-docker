@@ -117,7 +117,6 @@ COPY patches/inject-safe-area-top-fix.mjs /tmp/inject-safe-area-top-fix.mjs
 COPY patches/inject-pwa-theme-color.mjs /tmp/inject-pwa-theme-color.mjs
 COPY patches/inject-mobile-drawer-safearea.mjs /tmp/inject-mobile-drawer-safearea.mjs
 COPY patches/inject-raster-favicon.mjs /tmp/inject-raster-favicon.mjs
-COPY patches/inject-mobile-toolbar-safearea.mjs /tmp/inject-mobile-toolbar-safearea.mjs
 COPY patches/inject-toolbar-uniform-buttons.mjs /tmp/inject-toolbar-uniform-buttons.mjs
 COPY patches/inject-ui-font-inter.mjs /tmp/inject-ui-font-inter.mjs
 COPY patches/inject-remove-ctrl-d.mjs /tmp/inject-remove-ctrl-d.mjs
@@ -134,7 +133,6 @@ RUN cd "${AGENT_OS_REPO}" \
     && node /tmp/inject-pwa-theme-color.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-mobile-drawer-safearea.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-raster-favicon.mjs "${AGENT_OS_REPO}" \
-    && node /tmp/inject-mobile-toolbar-safearea.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-toolbar-uniform-buttons.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-ui-font-inter.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-remove-ctrl-d.mjs "${AGENT_OS_REPO}" \
