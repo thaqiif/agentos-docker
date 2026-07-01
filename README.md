@@ -4,8 +4,8 @@
 > web UI for driving AI coding agents — as a single Docker container, with a few
 > quality-of-life touches for self-hosters and phone users.
 
-Run Claude Code, Codex, and OpenCode from your browser (including your phone),
-fully self-hosted, with `docker compose up -d`.
+Run Claude Code, Codex, OpenCode, and Command Code from your browser (including
+your phone), fully self-hosted, with `docker compose up -d`.
 
 ## What is this?
 
@@ -194,6 +194,8 @@ The container comes with these pre-installed:
 - **Claude Code** — Anthropic's coding agent (`claude`, plus extra profiles)
 - **Codex** — OpenAI's coding agent
 - **OpenCode** — open-source coding tool
+- **Command Code** — coding agent that learns your coding taste
+  ([commandcode.ai](https://commandcode.ai))
 
 Plus a few supporting CLI tools on `PATH` inside every session:
 
