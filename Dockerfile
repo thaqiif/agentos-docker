@@ -55,6 +55,7 @@ RUN npm install -g \
         @anthropic-ai/claude-code \
         @openai/codex \
         opencode-ai \
+        command-code \
     && npm cache clean --force
 
 # ---- Build AgentOS from source ----
@@ -108,6 +109,7 @@ ARG CLAUDE_PROFILES="a b c"
 ARG TERMINAL_FONT_SIZE=16
 ARG TERMINAL_FONT_SIZE_MOBILE=13
 COPY patches/inject-claude-profiles.mjs /tmp/inject-claude-profiles.mjs
+COPY patches/inject-commandcode-provider.mjs /tmp/inject-commandcode-provider.mjs
 COPY patches/inject-terminal-font.mjs /tmp/inject-terminal-font.mjs
 COPY patches/inject-mobile-viewport-fix.mjs /tmp/inject-mobile-viewport-fix.mjs
 COPY patches/inject-terminal-toolbar-keys.mjs /tmp/inject-terminal-toolbar-keys.mjs
@@ -122,6 +124,7 @@ COPY patches/inject-ui-font-inter.mjs /tmp/inject-ui-font-inter.mjs
 COPY patches/inject-remove-ctrl-d.mjs /tmp/inject-remove-ctrl-d.mjs
 RUN cd "${AGENT_OS_REPO}" \
     && CLAUDE_PROFILES="${CLAUDE_PROFILES}" node /tmp/inject-claude-profiles.mjs "${AGENT_OS_REPO}" \
+    && node /tmp/inject-commandcode-provider.mjs "${AGENT_OS_REPO}" \
     && TERMINAL_FONT_SIZE="${TERMINAL_FONT_SIZE}" \
        TERMINAL_FONT_SIZE_MOBILE="${TERMINAL_FONT_SIZE_MOBILE}" \
        node /tmp/inject-terminal-font.mjs "${AGENT_OS_REPO}" \
