@@ -40,23 +40,76 @@ RUN apt-get update \
 # Installed from GitHub's official apt repo so the binary lives in /usr/bin
 # (root-owned, like the other tools) and ships with every build. Kept in its own
 # layer because it needs the repo's signing key + source list added first.
-RUN mkdir -p -m 755 /etc/apt/keyrings \
-    && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
-         -o /etc/apt/keyrings/githubcli-archive-keyring.gpg \
-    && chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
-         > /etc/apt/sources.list.d/github-cli.list \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends gh \
-    && rm -rf /var/lib/apt/lists/*
+# Gated by INSTALL_GH (default true): set false to skip it (no runtime code
+# depends on `gh` — it's purely for interactive PR/issue/auth use).
+ARG INSTALL_GH=true
+RUN set -eux; \
+    if [ "${INSTALL_GH}" = "true" ]; then \
+        mkdir -p -m 755 /etc/apt/keyrings; \
+        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+             -o /etc/apt/keyrings/githubcli-archive-keyring.gpg; \
+        chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg; \
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+             > /etc/apt/sources.list.d/github-cli.list; \
+        apt-get update; \
+        apt-get install -y --no-install-recommends gh; \
+        rm -rf /var/lib/apt/lists/*; \
+    fi
 
 # ---- Pre-install the AI coding agents AgentOS can drive ----
-RUN npm install -g \
-        @anthropic-ai/claude-code \
-        @openai/codex \
-        opencode-ai \
-        command-code \
-    && npm cache clean --force
+# Each agent is individually gated so you don't ship (and wait on) CLIs you'll
+# never use. All default to true = installed; set any to "false" via build arg
+# (surfaced in docker-compose.yml / .env) to skip it, e.g.
+#   docker compose build --build-arg INSTALL_CODEX=false
+# We assemble the package list first, then do a single `npm install -g`, so
+# skipping some still shares one layer. `if` blocks (not `[ ] &&`) keep this
+# safe under `set -e`. Note: skipping Claude Code disables the `claude`/`claude-*`
+# harnesses (and the profile wrappers become no-ops), so leave it on unless you
+# only drive the other agents.
+ARG INSTALL_CLAUDE_CODE=true
+ARG INSTALL_CODEX=true
+ARG INSTALL_OPENCODE=true
+ARG INSTALL_COMMAND_CODE=true
+RUN set -eux; \
+    pkgs=""; \
+    if [ "${INSTALL_CLAUDE_CODE}" = "true" ]; then pkgs="${pkgs} @anthropic-ai/claude-code"; fi; \
+    if [ "${INSTALL_CODEX}" = "true" ]; then pkgs="${pkgs} @openai/codex"; fi; \
+    if [ "${INSTALL_OPENCODE}" = "true" ]; then pkgs="${pkgs} opencode-ai"; fi; \
+    if [ "${INSTALL_COMMAND_CODE}" = "true" ]; then pkgs="${pkgs} command-code"; fi; \
+    if [ -n "${pkgs}" ]; then npm install -g ${pkgs} && npm cache clean --force; fi
+
+# ---- Headless browser for AI-agent frontend verification ----
+# Agents building web UIs need a real browser to render + screenshot their
+# changes. Chromium depends on a pile of system libraries (libglib, libnss3,
+# libatk, ...) that require root + apt to install — impossible at runtime, where
+# the agent runs as the non-root `agent` user (uid 1001, no sudo). So we bake it
+# in here, at build time, as root: `playwright install --with-deps chromium`
+# apt-installs those OS libs AND downloads a matching Chromium build. We point
+# PLAYWRIGHT_BROWSERS_PATH at a shared dir under /opt (root-owned but
+# world-readable, like our other build artifacts) so any agent UID — even after
+# the entrypoint remaps it to PUID/PGID — can launch it; the a+rX chmod
+# guarantees the read/traverse/execute bits regardless of the umask playwright
+# unpacked with. `playwright` is also installed globally so `npx playwright` and
+# `require('playwright')`-style scripts resolve without a per-project install
+# (and reuse this shared browser instead of re-downloading it). Pinned so the
+# Chromium build and the driving `playwright` package always match; its own
+# layer so bumping the version doesn't invalidate the agent installs above.
+# Gated by INSTALL_BROWSER (default true): set it false to skip Chromium + its
+# ~few-hundred-MB of libraries if your agents never verify frontends visually,
+# e.g. `docker compose build --build-arg INSTALL_BROWSER=false`. We keep
+# PLAYWRIGHT_BROWSERS_PATH exported either way (harmless when unused).
+# Override the pinned version with --build-arg PLAYWRIGHT_VERSION=<x.y.z>.
+ARG INSTALL_BROWSER=true
+ARG PLAYWRIGHT_VERSION=1.61.1
+ENV PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright
+RUN set -eux; \
+    if [ "${INSTALL_BROWSER}" = "true" ]; then \
+        npm install -g "playwright@${PLAYWRIGHT_VERSION}"; \
+        playwright install --with-deps chromium; \
+        chmod -R a+rX "${PLAYWRIGHT_BROWSERS_PATH}"; \
+        npm cache clean --force; \
+        rm -rf /var/lib/apt/lists/*; \
+    fi
 
 # ---- Build AgentOS from source ----
 # We build into /opt (outside the persisted home volume) so that rebuilding
@@ -87,17 +140,23 @@ RUN git init "${AGENT_OS_REPO}" \
 # adds the @font-face rules + the --font-mono token that reference these files.
 # Pinned to a release tag for reproducibility; its own layer so it stays cached
 # unless JETBRAINS_MONO_REF changes. Override with --build-arg JETBRAINS_MONO_REF=<tag>.
+# Gated by INSTALL_JETBRAINS_MONO_FONT (default true): set false to skip the
+# download AND its injector step below, leaving the terminal/code font on the
+# system-monospace fallback. Declared here so it's in scope for the build RUN too.
+ARG INSTALL_JETBRAINS_MONO_FONT=true
 ARG JETBRAINS_MONO_REF=v2.304
 RUN set -eux; \
-    tmp="$(mktemp -d)"; \
-    ver="${JETBRAINS_MONO_REF#v}"; \
-    curl -fsSL "https://github.com/JetBrains/JetBrainsMono/releases/download/${JETBRAINS_MONO_REF}/JetBrainsMono-${ver}.zip" \
-        -o "${tmp}/jbm.zip"; \
-    dest="${AGENT_OS_REPO}/public/fonts"; mkdir -p "${dest}"; \
-    for w in Regular Italic SemiBold Bold BoldItalic; do \
-        unzip -q -o -j "${tmp}/jbm.zip" "fonts/webfonts/JetBrainsMono-${w}.woff2" -d "${dest}"; \
-    done; \
-    rm -rf "${tmp}"
+    if [ "${INSTALL_JETBRAINS_MONO_FONT}" = "true" ]; then \
+        tmp="$(mktemp -d)"; \
+        ver="${JETBRAINS_MONO_REF#v}"; \
+        curl -fsSL "https://github.com/JetBrains/JetBrainsMono/releases/download/${JETBRAINS_MONO_REF}/JetBrainsMono-${ver}.zip" \
+            -o "${tmp}/jbm.zip"; \
+        dest="${AGENT_OS_REPO}/public/fonts"; mkdir -p "${dest}"; \
+        for w in Regular Italic SemiBold Bold BoldItalic; do \
+            unzip -q -o -j "${tmp}/jbm.zip" "fonts/webfonts/JetBrainsMono-${w}.woff2" -d "${dest}"; \
+        done; \
+        rm -rf "${tmp}"; \
+    fi
 
 # Register the configured Claude profiles as selectable harnesses in the UI,
 # bake the terminal font size into the bundle, and apply our downstream UI
@@ -131,7 +190,9 @@ RUN cd "${AGENT_OS_REPO}" \
     && node /tmp/inject-mobile-viewport-fix.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-terminal-toolbar-keys.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-session-rename-fix.mjs "${AGENT_OS_REPO}" \
-    && node /tmp/inject-jetbrains-mono-font.mjs "${AGENT_OS_REPO}" \
+    && if [ "${INSTALL_JETBRAINS_MONO_FONT}" = "true" ]; then \
+           node /tmp/inject-jetbrains-mono-font.mjs "${AGENT_OS_REPO}"; \
+       fi \
     && node /tmp/inject-safe-area-top-fix.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-pwa-theme-color.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-mobile-drawer-safearea.mjs "${AGENT_OS_REPO}" \
@@ -152,13 +213,20 @@ RUN cd "${AGENT_OS_REPO}" \
 # AGENT_OS_REF there are no source-anchored patches against this repo, so
 # tracking the branch is safe.
 # Override with: docker compose build --build-arg AUTOPILOT_REF=<sha|tag|branch>
+# Gated by INSTALL_AUTOPILOT (default true): set false to skip the clone. The
+# entrypoint already guards its install with `if [ -d "${AUTOPILOT_REPO}" ]`, so
+# skipping it here degrades gracefully — sessions just won't have /autopilot.
+ARG INSTALL_AUTOPILOT=true
 ARG AUTOPILOT_REF=multi-agent-support
 ENV AUTOPILOT_REPO=/opt/autopilot-multi
-RUN git init "${AUTOPILOT_REPO}" \
-    && cd "${AUTOPILOT_REPO}" \
-    && git remote add origin https://github.com/thaqiif/autopilot-multi \
-    && git fetch --depth 1 origin "${AUTOPILOT_REF}" \
-    && git checkout --detach FETCH_HEAD
+RUN set -eux; \
+    if [ "${INSTALL_AUTOPILOT}" = "true" ]; then \
+        git init "${AUTOPILOT_REPO}"; \
+        cd "${AUTOPILOT_REPO}"; \
+        git remote add origin https://github.com/thaqiif/autopilot-multi; \
+        git fetch --depth 1 origin "${AUTOPILOT_REF}"; \
+        git checkout --detach FETCH_HEAD; \
+    fi
 
 # ---- Non-root runtime user ----
 # Pre-create the home subdirectories that docker-compose mounts as named
