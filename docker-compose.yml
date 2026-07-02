@@ -14,6 +14,19 @@ services:
         # build-time patches stay in sync. Override here to build a different
         # commit SHA, tag, or branch (e.g. to try the latest):
         # AGENT_OS_REF: main
+        # Which AI coding agents to bake in (all default to true). Set any to
+        # false in .env to skip installing that CLI and shrink the image.
+        INSTALL_CLAUDE_CODE: ${INSTALL_CLAUDE_CODE:-true}
+        INSTALL_CODEX: ${INSTALL_CODEX:-true}
+        INSTALL_OPENCODE: ${INSTALL_OPENCODE:-true}
+        INSTALL_COMMAND_CODE: ${INSTALL_COMMAND_CODE:-true}
+        # Bake in a headless Chromium (+ system libs) so agents can render and
+        # screenshot frontends. Adds a few hundred MB; set false to skip it.
+        INSTALL_BROWSER: ${INSTALL_BROWSER:-true}
+        # Optional components (all default to true). Set false in .env to skip.
+        INSTALL_GH: ${INSTALL_GH:-true}                                 # GitHub CLI (gh)
+        INSTALL_JETBRAINS_MONO_FONT: ${INSTALL_JETBRAINS_MONO_FONT:-true} # self-hosted code font
+        INSTALL_AUTOPILOT: ${INSTALL_AUTOPILOT:-true}                   # autopilot-multi TDD workflow
     restart: unless-stopped
 
     # Optional: pass extra env (e.g. agent API keys) into the container.

@@ -52,6 +52,7 @@ A few principles this repo tries to honour:
 | 🤖 **Autopilot TDD workflow** | `autopilot-multi` slash commands & hooks baked in for every Claude login | [Autopilot](#autopilot-tdd-workflow) |
 | 🔤 **JetBrains Mono code font** | Terminal & UI code blocks render in self-hosted JetBrains Mono; xterm size still configurable from `.env` | [Font](#terminal--code-font) |
 | 🧰 **Bundled CLIs** | `gh`, `git`, `ripgrep`, `tmux`, `jq` preinstalled in every session | [Agents](#installed-agents) |
+| 🌐 **Headless browser** | Chromium + system libs baked in so agents can render & screenshot the frontends they build | [Browser](#browser-verification) |
 | 👤 **Host-matched file ownership** | `PUID`/`PGID` so files in your mounted workspace stay owned by *you* | [Permissions](#file-permissions-puid--pgid) |
 | 🩹 **Quality-of-life fixes** | Inline session rename works again (upstream Radix focus-restore bug) | [Font & fixes](#terminal--code-font) |
 | 📌 **Reproducible builds** | Upstream pinned to a commit; transparent patches that fail loudly on drift | [Pinning](#upstream-version-pinning) |
@@ -132,6 +133,21 @@ Build args (passed at **build** time, e.g. `docker compose build --build-arg NAM
 | `CLAUDE_PROFILES` | `a b c` | Compiled into the UI's harness list (also read from `.env`) |
 | `TERMINAL_FONT_SIZE` / `…_MOBILE` | `16` / `13` | Compiled into the client bundle |
 
+**Component toggles** — every optional piece is gated by an `INSTALL_*` build arg
+that **defaults to `true`**, so out of the box you get everything with no config.
+Set any to `false` in `.env` and rebuild to trim it from the image:
+
+| Build arg | Skips | Notes |
+|---|---|---|
+| `INSTALL_CLAUDE_CODE` | Claude Code CLI | Also disables the `claude`/`claude-*` harnesses — leave on unless you only use the other agents |
+| `INSTALL_CODEX` | OpenAI Codex CLI | |
+| `INSTALL_OPENCODE` | OpenCode CLI | |
+| `INSTALL_COMMAND_CODE` | Command Code CLI | |
+| `INSTALL_BROWSER` | Headless Chromium + libs | Biggest saving (~few hundred MB); see [Browser](#browser-verification) |
+| `INSTALL_GH` | GitHub CLI (`gh`) | No runtime dependency; interactive use only |
+| `INSTALL_JETBRAINS_MONO_FONT` | Self-hosted code font | Falls back to system monospace |
+| `INSTALL_AUTOPILOT` | autopilot-multi workflow | Entrypoint skips it gracefully; no `/autopilot` |
+
 > Anything **compiled into the bundle** (fonts, the profile harness list) needs a
 > rebuild — `docker compose up -d --build` — to take effect. Plain runtime
 > settings (`WORKSPACE_DIR`, `PUID`/`PGID`) only need `docker compose up -d`.
@@ -207,6 +223,64 @@ Plus a few supporting CLI tools on `PATH` inside every session:
   terminal multiplexer that drives AgentOS sessions.
 
 (AgentOS itself — the web UI — runs the whole thing.)
+
+Each agent CLI is **individually gated** so you don't ship (or wait on) tools you
+never use. All default to installed; flip any off in `.env` and rebuild:
+
+```env
+INSTALL_CLAUDE_CODE=true
+INSTALL_CODEX=false        # skip OpenAI Codex
+INSTALL_OPENCODE=true
+INSTALL_COMMAND_CODE=false # skip Command Code
+```
+
+> Leave `INSTALL_CLAUDE_CODE` on unless you only drive the other agents — turning
+> it off removes the `claude` binary, so the `claude`/`claude-*` harnesses and
+> profile wrappers stop working.
+
+## Browser verification
+
+Agents that build web frontends often want to *see* their work — render the page
+and take a screenshot to check layout and styling, not just lint the code. A
+plain Chromium binary can't do that here: it needs a stack of system libraries
+(`libglib`, `libnss3`, `libatk`, …) that only root can `apt-get install`, and
+agent sessions run as the non-root `agent` user with no `sudo`. Installing them
+at runtime is impossible.
+
+So the image ships a working headless Chromium, installed **at build time** (as
+root) via Playwright — both the browser and all its OS dependencies. It lives in
+a shared, world-readable path (`/opt/ms-playwright`, via
+`PLAYWRIGHT_BROWSERS_PATH`), so any agent can launch it without privileges.
+`playwright` is also on the global `npm` path.
+
+Agents can use it straight away — for example, a quick screenshot script:
+
+```js
+// screenshot.mjs — run with: node screenshot.mjs
+import { chromium } from 'playwright';
+const browser = await chromium.launch();          // headless by default
+const page = await browser.newPage();
+await page.goto('http://localhost:3000');         // the app under test
+await page.screenshot({ path: 'shot.png', fullPage: true });
+await browser.close();
+```
+
+or the CLI directly:
+
+```bash
+npx playwright screenshot http://localhost:3000 shot.png
+```
+
+Because the browser is on the shared path, `npm install playwright` inside a
+project reuses this Chromium instead of re-downloading it. Only Chromium is
+baked in; add Firefox/WebKit yourself with `npx playwright install <browser>` if
+a project needs them (that download doesn't need root). The Playwright version
+is pinned via the `PLAYWRIGHT_VERSION` build arg — override it with
+`docker compose build --build-arg PLAYWRIGHT_VERSION=<x.y.z>`.
+
+Bundling Chromium and its libraries adds a few hundred MB to the image. That's
+the cost of visual verification — so it's **gated**. It's on by default; skip it
+entirely by setting `INSTALL_BROWSER=false` in `.env` and rebuilding.
 
 ## Multiple Claude Code Logins
 
