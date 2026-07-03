@@ -26,6 +26,7 @@ mkdir -p \
     "${HOME}/.config" \
     "${HOME}/.claude" \
     "${HOME}/.codex" \
+    "${HOME}/.zero" \
     "${HOME}/.ssh" \
     "${HOME}/.gitstate" \
     "${HOME}/.local/bin"
