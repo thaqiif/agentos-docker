@@ -20,6 +20,7 @@ services:
         INSTALL_CODEX: ${INSTALL_CODEX:-true}
         INSTALL_OPENCODE: ${INSTALL_OPENCODE:-true}
         INSTALL_COMMAND_CODE: ${INSTALL_COMMAND_CODE:-true}
+        INSTALL_ZERO: ${INSTALL_ZERO:-true}
         # Bake in a headless Chromium (+ system libs) so agents can render and
         # screenshot frontends. Adds a few hundred MB; set false to skip it.
         INSTALL_BROWSER: ${INSTALL_BROWSER:-true}

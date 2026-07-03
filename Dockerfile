@@ -70,12 +70,14 @@ ARG INSTALL_CLAUDE_CODE=true
 ARG INSTALL_CODEX=true
 ARG INSTALL_OPENCODE=true
 ARG INSTALL_COMMAND_CODE=true
+ARG INSTALL_ZERO=true
 RUN set -eux; \
     pkgs=""; \
     if [ "${INSTALL_CLAUDE_CODE}" = "true" ]; then pkgs="${pkgs} @anthropic-ai/claude-code"; fi; \
     if [ "${INSTALL_CODEX}" = "true" ]; then pkgs="${pkgs} @openai/codex"; fi; \
     if [ "${INSTALL_OPENCODE}" = "true" ]; then pkgs="${pkgs} opencode-ai"; fi; \
     if [ "${INSTALL_COMMAND_CODE}" = "true" ]; then pkgs="${pkgs} command-code"; fi; \
+    if [ "${INSTALL_ZERO}" = "true" ]; then pkgs="${pkgs} @gitlawb/zero"; fi; \
     if [ -n "${pkgs}" ]; then npm install -g ${pkgs} && npm cache clean --force; fi
 
 # ---- Headless browser for AI-agent frontend verification ----
@@ -181,6 +183,7 @@ COPY patches/inject-raster-favicon.mjs /tmp/inject-raster-favicon.mjs
 COPY patches/inject-toolbar-uniform-buttons.mjs /tmp/inject-toolbar-uniform-buttons.mjs
 COPY patches/inject-ui-font-inter.mjs /tmp/inject-ui-font-inter.mjs
 COPY patches/inject-remove-ctrl-d.mjs /tmp/inject-remove-ctrl-d.mjs
+COPY patches/inject-zero-provider.mjs /tmp/inject-zero-provider.mjs
 RUN cd "${AGENT_OS_REPO}" \
     && CLAUDE_PROFILES="${CLAUDE_PROFILES}" node /tmp/inject-claude-profiles.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-commandcode-provider.mjs "${AGENT_OS_REPO}" \
@@ -200,6 +203,7 @@ RUN cd "${AGENT_OS_REPO}" \
     && node /tmp/inject-toolbar-uniform-buttons.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-ui-font-inter.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-remove-ctrl-d.mjs "${AGENT_OS_REPO}" \
+    && node /tmp/inject-zero-provider.mjs "${AGENT_OS_REPO}" \
     && npm run build \
     && npm cache clean --force
 
