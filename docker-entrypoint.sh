@@ -117,6 +117,18 @@ HOOKEOF
     done
 fi
 
+# ---- Docker socket access (Docker-out-of-Docker) -------------------------------
+# If the host docker socket is mounted, detect its group GID and add the agent
+# user to that group so `docker` commands work from inside the container.
+DOCKER_SOCK="${DOCKER_SOCK:-/var/run/docker.sock}"
+if [ -S "${DOCKER_SOCK}" ]; then
+    docker_gid="$(stat -c '%g' "${DOCKER_SOCK}" 2>/dev/null || true)"
+    if [ -n "${docker_gid}" ] && [ "${docker_gid}" != "0" ]; then
+        groupadd --force --gid "${docker_gid}" docker-sock-group 2>/dev/null || true
+        usermod --append --groups docker-sock-group agent 2>/dev/null || true
+    fi
+fi
+
 # Make sure the agent user owns its home (incl. mounted config/auth volumes) and
 # the app's writable build cache after any UID/GID change. node_modules and the
 # rest of /opt stay root-owned but world-readable, so no slow recursive chown.
@@ -139,8 +151,9 @@ gosu agent git config --global credential.helper \
 # it as AGENT_OS_PORT, so map it through here to keep that name working.
 export PORT="${AGENT_OS_PORT:-3011}"
 
+# Start as the agent user with all supplemental groups initialized (critical for
+# Docker socket access: the docker group membership set above is only effective
+# if initgroups() is called). setpriv is part of util-linux (Essential: yes on
+# Debian), so it's always available even in slim.
 cd "${AGENT_OS_REPO:-/opt/agent-os}"
-
-# Drop to the agent user and start the server in the foreground.
-# `npm start` runs: NODE_ENV=production tsx server.ts  (binds 0.0.0.0:$PORT)
-exec gosu agent npm start
+exec setpriv --reuid=agent --regid=agent --init-groups -- npm start
