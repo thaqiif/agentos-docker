@@ -12,7 +12,7 @@ services:
         TERMINAL_FONT_SIZE_MOBILE: ${TERMINAL_FONT_SIZE_MOBILE:-13}
         # Install Docker CLI inside the container so agents can talk to the
         # host Docker daemon via the mounted socket. Set to "true" to enable.
-        ENABLE_DOCKER: ${ENABLE_DOCKER:-false}
+        ENABLE_DOCKER: ${ENABLE_DOCKER:-true}
         # Upstream AgentOS is pinned to a commit SHA in the Dockerfile so our
         # build-time patches stay in sync. Override here to build a different
         # commit SHA, tag, or branch (e.g. to try the latest):

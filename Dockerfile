@@ -41,7 +41,7 @@ RUN apt-get update \
 # KEPT IN ITS OWN LAYER so the apt signing key + source list are separate from
 # the system deps above. Skipped entirely when ENABLE_DOCKER is false/unset.
 # Override ENABLE_DOCKER: docker compose build --build-arg ENABLE_DOCKER=true
-ARG ENABLE_DOCKER=false
+ARG ENABLE_DOCKER=true
 RUN if [ "${ENABLE_DOCKER}" = "true" ]; then \
         set -eux; \
         install -m 0755 -d /etc/apt/keyrings; \
