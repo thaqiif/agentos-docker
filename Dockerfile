@@ -36,6 +36,25 @@ RUN apt-get update \
         unzip \
     && rm -rf /var/lib/apt/lists/*
 
+# ---- Docker CLI (for Docker-out-of-Docker) ----
+# Install only the CLI — agents talk to the host daemon via a mounted socket.
+# KEPT IN ITS OWN LAYER so the apt signing key + source list are separate from
+# the system deps above. Skipped entirely when ENABLE_DOCKER is false/unset.
+# Override ENABLE_DOCKER: docker compose build --build-arg ENABLE_DOCKER=true
+ARG ENABLE_DOCKER=false
+RUN if [ "${ENABLE_DOCKER}" = "true" ]; then \
+        set -eux; \
+        install -m 0755 -d /etc/apt/keyrings; \
+        curl -fsSL https://download.docker.com/linux/debian/gpg \
+            -o /etc/apt/keyrings/docker.asc; \
+        chmod a+r /etc/apt/keyrings/docker.asc; \
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian bookworm stable" \
+            > /etc/apt/sources.list.d/docker.list; \
+        apt-get update; \
+        apt-get install -y --no-install-recommends docker-ce-cli docker-buildx-plugin docker-compose-plugin; \
+        rm -rf /var/lib/apt/lists/*; \
+    fi
+
 # ---- GitHub CLI (gh) ----
 # Installed from GitHub's official apt repo so the binary lives in /usr/bin
 # (root-owned, like the other tools) and ships with every build. Kept in its own

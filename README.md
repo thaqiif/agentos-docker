@@ -122,6 +122,7 @@ Runtime settings (in `.env`, applied with `docker compose up -d` — no rebuild)
 | `CLAUDE_PROFILES` | `a b c` | Extra Claude logins to generate (rebuild to change — it's also a build arg) |
 | `TERMINAL_FONT_SIZE` | `16` | Desktop xterm font size, px (rebuild to change) |
 | `TERMINAL_FONT_SIZE_MOBILE` | `13` | Mobile xterm font size, px (rebuild to change) |
+| `ENABLE_DOCKER` | `false` | Install Docker CLI and allow access to host Docker socket (rebuild to change) |
 
 Build args (passed at **build** time, e.g. `docker compose build --build-arg NAME=value`):
 
@@ -131,6 +132,7 @@ Build args (passed at **build** time, e.g. `docker compose build --build-arg NAM
 | `AUTOPILOT_REF` | `main` | Which [autopilot-multi](#autopilot-tdd-workflow) ref to bundle |
 | `JETBRAINS_MONO_REF` | `v2.304` | Which [JetBrains Mono](#terminal--code-font) release to self-host for the terminal/code font |
 | `CLAUDE_PROFILES` | `a b c` | Compiled into the UI's harness list (also read from `.env`) |
+| `ENABLE_DOCKER` | `false` | Whether to install Docker CLI (`true`/`false`) |
 | `TERMINAL_FONT_SIZE` / `…_MOBILE` | `16` / `13` | Compiled into the client bundle |
 
 **Component toggles** — every optional piece is gated by an `INSTALL_*` build arg
@@ -508,9 +510,36 @@ SHA, tag, or branch.
 
 ## Docker Socket (Optional)
 
-Uncomment the `/var/run/docker.sock` line under `volumes:` in `docker-compose.yml` if you want AgentOS sessions to control the host Docker daemon.
+Let agents run `docker`, `docker compose`, and `docker buildx` for their own
+testing. Three steps:
 
-> **Warning:** This gives the agent full control over Docker on your server.
+1. **Set `ENABLE_DOCKER=true` in `.env`:**
+   ```env
+   ENABLE_DOCKER=true
+   ```
+
+2. **Uncomment the socket mount** in `docker-compose.yml`:
+   ```yaml
+   volumes:
+     # ...
+     - /var/run/docker.sock:/var/run/docker.sock
+   ```
+
+3. **Rebuild** — the Docker CLI is only installed at build time:
+   ```bash
+   docker compose up -d --build
+   ```
+
+**How it works:** The image installs `docker-ce-cli`, `docker-buildx-plugin`,
+and `docker-compose-plugin` (gated on the `ENABLE_DOCKER` build arg). At
+startup, the entrypoint detects the mounted socket's group GID, creates a
+matching group, adds the `agent` user to it, and launches the server with
+`setpriv --init-groups` so that supplemental group membership takes effect.
+
+> **⚠️ Warning:** Mounting the Docker socket gives the agent full control over
+> Docker on your server — including the ability to run arbitrary containers,
+> access host files, and potentially escalate to root on the host. Only enable
+> this on a trusted, isolated server.
 
 ## Stopping
 
