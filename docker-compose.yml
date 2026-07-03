@@ -64,9 +64,10 @@ services:
       - ${WORKSPACE_DIR:-/developer}:/workspaces
 
       # Mount the host Docker socket so agents can run docker commands.
-      # Uncomment this line AND set ENABLE_DOCKER=true in .env (then rebuild).
+      # Controlled by the DOCKER_HOST_SOCKET env var (default /dev/null = off).
+      # Set it to /var/run/docker.sock in .env (alongside ENABLE_DOCKER=true).
       # WARNING: this gives the agent full control over Docker on your server.
-      # - /var/run/docker.sock:/var/run/docker.sock
+      - ${DOCKER_HOST_SOCKET:-/dev/null}:/var/run/docker.sock:ro
 
 volumes:
   agent_os_home:
