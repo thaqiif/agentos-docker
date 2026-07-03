@@ -22,7 +22,7 @@ services:
         required: false
 
     environment:
-      AGENT_OS_PORT: 3011
+      PORT: ${PORT:-3011}
       SHELL: /bin/bash
       # Run the container as your host user so files on the mounted /workspaces
       # are read/writable. Set PUID/PGID in .env to match `id` on the host.
@@ -33,8 +33,8 @@ services:
 
     ports:
       # Exposed on all interfaces by default — see the security note in README.
-      # For a safer default, bind to localhost: "127.0.0.1:3011:3011"
-      - "3011:3011"
+      # For a safer default, bind to localhost: "127.0.0.1:${PORT:-3011}:${PORT:-3011}"
+      - "${PORT:-3011}:${PORT:-3011}"
 
     volumes:
       # Persist the whole home directory in one volume. Each agent CLI scatters

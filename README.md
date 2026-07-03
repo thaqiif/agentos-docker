@@ -61,7 +61,7 @@ A few principles this repo tries to honour:
 > This setup exposes port 3011 to all network interfaces by default. Anyone on your network (or the internet, if the port is open) can access AgentOS and run AI agents on your machine. **Do not expose this to untrusted networks without proper protection.**
 >
 > Recommended mitigations:
-> - Bind to localhost only: change `ports` in `docker-compose.yml` to `"127.0.0.1:3011:3011"`
+> - Bind to localhost only: change `ports` in `docker-compose.yml` to `"127.0.0.1:${PORT:-3011}:${PORT:-3011}"`
 > - Use a firewall to restrict access to the port
 > - Use a VPN like [Tailscale](https://tailscale.com/) for remote access instead of exposing publicly
 > - Put it behind a reverse proxy with authentication
@@ -93,6 +93,9 @@ cp .env.example .env
 # Host directory mounted as /workspaces inside the container — your projects.
 WORKSPACE_DIR=/developer
 
+# Port exposed by AgentOS and published on the host.
+PORT=3011
+
 # Run the container as your host user so files under /workspaces stay
 # read/writable (see "File Permissions" below). Find yours with `id`.
 PUID=1000
@@ -117,6 +120,7 @@ Runtime settings (in `.env`, applied with `docker compose up -d` — no rebuild)
 | Variable | Default | What it does |
 |---|---|---|
 | `WORKSPACE_DIR` | `/developer` | Host directory mounted as `/workspaces` (your projects) |
+| `PORT` | `3011` | Port AgentOS listens on and Docker publishes on the host |
 | `PUID` / `PGID` | `1000` / `1000` | Host user/group IDs to run as, so workspace files stay yours |
 | `CLAUDE_PROFILES` | `a b c` | Extra Claude logins to generate (rebuild to change — it's also a build arg) |
 | `TERMINAL_FONT_SIZE` | `16` | Desktop xterm font size, px (rebuild to change) |

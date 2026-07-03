@@ -182,7 +182,7 @@ RUN useradd --create-home --shell /bin/bash --uid 1001 agent \
 
 ENV HOME=/home/agent \
     AGENT_OS_HOME=/home/agent/.agent-os \
-    AGENT_OS_PORT=3011 \
+    PORT=3011 \
     # AgentOS' SQLite DB (projects, sessions, messages) defaults to
     # <cwd>/agent-os.db, i.e. /opt/agent-os/agent-os.db — which lives in the
     # image build dir and gets wiped on every rebuild. Relocate it into the
@@ -210,6 +210,6 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 # Entrypoint starts as root to remap the user, then drops to agent via gosu.
 WORKDIR /opt/agent-os
 
-EXPOSE 3011
+EXPOSE ${PORT}
 
 ENTRYPOINT ["docker-entrypoint.sh"]

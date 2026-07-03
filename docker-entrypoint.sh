@@ -134,9 +134,8 @@ chown -R agent:agent "${AGENT_OS_REPO:-/opt/agent-os}/.next/cache"
 gosu agent git config --global credential.helper \
     "store --file=${HOME}/.gitstate/credentials"
 
-# AgentOS' server.ts reads the listening port from $PORT. Upstream's CLI exposes
-# it as AGENT_OS_PORT, so map it through here to keep that name working.
-export PORT="${AGENT_OS_PORT:-3011}"
+# AgentOS' server.ts reads the listening port from $PORT.
+export PORT="${PORT:-3011}"
 
 cd "${AGENT_OS_REPO:-/opt/agent-os}"
 
