@@ -18,7 +18,7 @@ ARG AGENT_OS_REF=378069fed63708179ae4dd9ddad1a2ce64f37d5d
 # tmux: drives the terminal sessions  |  ripgrep: code search
 # git/openssh: cloning & git integration  |  procps: process management for tmux
 # gosu: drop from root to the agent user after remapping its UID/GID at startup
-# jq: JSON processor used by the autopilot-multi CLI to read task status
+# jq: JSON processor used by the autopilotagent CLI to read task status
 # unzip: extract the self-hosted JetBrains Mono webfont at build time
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -226,19 +226,19 @@ RUN cd "${AGENT_OS_REPO}" \
     && npm run build \
     && npm cache clean --force
 
-# ---- autopilot-multi (TDD workflow commands/hooks for Claude Code) ----
+# ---- autopilotagent (multi-agent TDD workflow: Claude/Codex/OpenCode/cmd) ----
 # Baked into /opt (root-owned, world-readable) so it's NOT shadowed by the
-# persisted home volume — its installer symlinks the commands/hooks/CLIs into
-# ~/.claude and ~/.local/bin at runtime from the entrypoint, which is the only
-# place that reliably writes into the volume regardless of its age. Placed after
-# the agent-os build so bumping AUTOPILOT_REF doesn't invalidate that layer.
-# Defaults to `multi-agent-support` (latest on each rebuild): unlike
-# AGENT_OS_REF there are no source-anchored patches against this repo, so
-# tracking the branch is safe.
+# persisted home volume — the entrypoint symlinks commands/skills/hooks/CLIs
+# into every agent home (~/.claude, ~/.codex, ~/.agents/skills, …) at runtime,
+# which is the only place that reliably writes into the volume regardless of
+# its age. Placed after the agent-os build so bumping AUTOPILOT_REF doesn't
+# invalidate that layer. Defaults to `multi-agent-support` (latest on each
+# rebuild): unlike AGENT_OS_REF there are no source-anchored patches against
+# this repo, so tracking the branch is safe.
 # Override with: docker compose build --build-arg AUTOPILOT_REF=<sha|tag|branch>
 # Gated by INSTALL_AUTOPILOT (default true): set false to skip the clone. The
 # entrypoint already guards its install with `if [ -d "${AUTOPILOT_REPO}" ]`, so
-# skipping it here degrades gracefully — sessions just won't have /autopilot.
+# skipping it here degrades gracefully — sessions just won't have /autopilotagent.
 ARG INSTALL_AUTOPILOT=true
 ARG AUTOPILOT_REF=multi-agent-support
 ENV AUTOPILOT_REPO=/opt/autopilot-multi
@@ -260,10 +260,12 @@ RUN set -eux; \
 RUN useradd --create-home --shell /bin/bash --uid 1001 agent \
     && mkdir -p \
         /home/agent/.agent-os \
-        /home/agent/.config \
+        /home/agent/.agents/skills \
+        /home/agent/.config/opencode \
         /home/agent/.claude \
         /home/agent/.claude-profiles \
         /home/agent/.codex \
+        /home/agent/.commandcode \
         /home/agent/.ssh \
         /home/agent/.gitstate \
         /home/agent/.local/bin \

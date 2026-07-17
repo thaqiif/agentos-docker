@@ -49,7 +49,7 @@ A few principles this repo tries to honour:
 | 🔐 **Persistent logins & state** | Authenticate each agent once — logins, projects, and session history survive restarts and rebuilds | [Volumes](#volumes--persistence) |
 | 👥 **Multiple Claude accounts** | Run `claude`, `claude-a`, `claude-b`… side by side, each its own login, selectable in the UI | [Logins](#multiple-claude-code-logins) |
 | 📱 **Friendlier mobile keyboard** | Keyboard-overlap fix, plus toolbar keys for newline, ⇧Tab, and ⌃/⌥ modifiers | [Mobile](#mobile) |
-| 🤖 **Autopilot TDD workflow** | `autopilot-multi` slash commands & hooks baked in for every Claude login | [Autopilot](#autopilot-tdd-workflow) |
+| 🤖 **Autopilotagent TDD workflow** | `autopilotagent` skills/commands/hooks for Claude, Codex, OpenCode, Command Code | [Autopilotagent](#autopilotagent-tdd-workflow) |
 | 🔤 **JetBrains Mono code font** | Terminal & UI code blocks render in self-hosted JetBrains Mono; xterm size still configurable from `.env` | [Font](#terminal--code-font) |
 | 🧰 **Bundled CLIs** | `gh`, `git`, `ripgrep`, `tmux`, `jq` preinstalled in every session | [Agents](#installed-agents) |
 | 🌐 **Headless browser** | Chromium + system libs baked in so agents can render & screenshot the frontends they build | [Browser](#browser-verification) |
@@ -129,7 +129,7 @@ Build args (passed at **build** time, e.g. `docker compose build --build-arg NAM
 | Build arg | Default | What it does |
 |---|---|---|
 | `AGENT_OS_REF` | pinned commit SHA | Which upstream AgentOS ref to build — SHA, tag, or branch ([Pinning](#upstream-version-pinning)) |
-| `AUTOPILOT_REF` | `main` | Which [autopilot-multi](#autopilot-tdd-workflow) ref to bundle |
+| `AUTOPILOT_REF` | `multi-agent-support` | Which [autopilotagent](#autopilotagent-tdd-workflow) ref to bundle |
 | `JETBRAINS_MONO_REF` | `v2.304` | Which [JetBrains Mono](#terminal--code-font) release to self-host for the terminal/code font |
 | `CLAUDE_PROFILES` | `a b c` | Compiled into the UI's harness list (also read from `.env`) |
 | `ENABLE_DOCKER` | `false` | Whether to install Docker CLI (`true`/`false`) |
@@ -148,7 +148,7 @@ Set any to `false` in `.env` and rebuild to trim it from the image:
 | `INSTALL_BROWSER` | Headless Chromium + libs | Biggest saving (~few hundred MB); see [Browser](#browser-verification) |
 | `INSTALL_GH` | GitHub CLI (`gh`) | No runtime dependency; interactive use only |
 | `INSTALL_JETBRAINS_MONO_FONT` | Self-hosted code font | Falls back to system monospace |
-| `INSTALL_AUTOPILOT` | autopilot-multi workflow | Entrypoint skips it gracefully; no `/autopilot` |
+| `INSTALL_AUTOPILOT` | autopilotagent workflow | Entrypoint skips it gracefully; no `/autopilotagent` |
 
 > Anything **compiled into the bundle** (fonts, the profile harness list) needs a
 > rebuild — `docker compose up -d --build` — to take effect. Plain runtime
@@ -456,35 +456,41 @@ giving launchers that won't rasterise an SVG favicon a real image to fall back
 to. For a proper install, serve AgentOS over HTTPS (reverse proxy, Cloudflare
 Tunnel, or Tailscale Serve).
 
-## Autopilot (TDD workflow)
+## Autopilotagent (TDD workflow)
 
-[autopilot-multi](https://github.com/thaqiif/autopilot-multi) — a set of Claude
-Code slash commands, hooks, and CLIs for autonomous test-driven development — is
-baked into the image and wired up automatically. You get the `/prd`, `/tasks`,
-`/autopilot`, and `/analyze` slash commands inside Claude sessions, plus the
-`autopilot` and `autopilot-cleanup` terminal commands.
+[autopilot-multi](https://github.com/thaqiif/autopilot-multi) — autonomous
+test-driven development skills, commands, hooks, and CLIs — is baked into the
+image and wired up automatically for **every** supported agent (Claude Code,
+Codex, OpenCode, Command Code). You get:
+
+- Claude: `/prd`, `/tasks`, `/autopilotagent`, `/analyze`, … slash commands + skills + stop hook
+- Codex / OpenCode / Command Code: skills under each agent's skill path + shared `AGENTS.md` / command specs
+- Terminal: `autopilotagent` and `autopilotagent-cleanup` on `PATH`
 
 How it's installed: the repo is cloned into `/opt/autopilot-multi` at build time
-(so it isn't shadowed by the home volume), and the entrypoint symlinks the
-commands/hooks/CLIs into the persisted home volume on every boot. It needs no
-setup and survives restarts and rebuilds. (`jq`, its one dependency, ships in
-the image.)
+(so it isn't shadowed by the home volume), and the entrypoint symlinks
+commands/skills/hooks/CLIs into the persisted home volume on every boot. No
+setup; survives restarts and rebuilds. (`jq`, its one dependency, ships in the
+image.)
 
-The commands and hooks are installed into **every** Claude login, not just the
-default one — the default `~/.claude` plus each isolated profile config dir
-(`~/.claude-profiles/<name>`). So `/autopilot` works the same whether a session
-runs on `claude` or on `claude-a`/`claude-b`/… (the shared `autopilot` terminal
-CLI is on `PATH` for all of them).
+Claude installs into **every** login — default `~/.claude` plus each isolated
+profile (`~/.claude-profiles/<name>`). Non-Claude installs:
 
-It tracks autopilot's `main` by default — bumping it just needs a rebuild, since
-there are no source-anchored patches against it (unlike upstream AgentOS below).
-Pin it to a specific commit, tag, or branch if you want:
+| Agent | Skills | Specs |
+|---|---|---|
+| Codex | `~/.agents/skills/*` | `~/.codex/AGENTS.md`, `~/.codex/autopilotagent/commands` |
+| OpenCode | `~/.config/opencode/skills/*` | `~/.config/opencode/AGENTS.md`, `…/autopilotagent/commands` |
+| Command Code | `~/.commandcode/skills/*` | `~/.commandcode/AGENTS.md`, `…/autopilotagent/commands` |
+
+Tracks `multi-agent-support` by default — bump just needs a rebuild (no
+source-anchored patches against it). Pin if you want:
 
 ```bash
 docker compose build --build-arg AUTOPILOT_REF=<sha|tag|branch>
 ```
 
-Run `/autopilot init` in a project to set up its configuration.
+Run `/autopilotagent init` (or the matching skill) in a project to configure it.
+Terminal multi-agent runs: `autopilotagent tasks.json --agent codex`.
 
 ## Upstream Version (Pinning)
 
