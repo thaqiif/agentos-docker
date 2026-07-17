@@ -30,7 +30,7 @@ services:
         # Optional components (all default to true). Set false in .env to skip.
         INSTALL_GH: ${INSTALL_GH:-true}                                 # GitHub CLI (gh)
         INSTALL_JETBRAINS_MONO_FONT: ${INSTALL_JETBRAINS_MONO_FONT:-true} # self-hosted code font
-        INSTALL_AUTOPILOT: ${INSTALL_AUTOPILOT:-true}                   # autopilot-multi TDD workflow
+        INSTALL_AUTOPILOT: ${INSTALL_AUTOPILOT:-true}                   # autopilotagent TDD workflow (all agents)
     restart: unless-stopped
 
     # Optional: pass extra env (e.g. agent API keys) into the container.

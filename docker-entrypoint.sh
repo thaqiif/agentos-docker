@@ -23,9 +23,11 @@ fi
 # has its home in place regardless of volume age.
 mkdir -p \
     "${HOME}/.agent-os" \
-    "${HOME}/.config" \
+    "${HOME}/.agents/skills" \
+    "${HOME}/.config/opencode" \
     "${HOME}/.claude" \
     "${HOME}/.codex" \
+    "${HOME}/.commandcode" \
     "${HOME}/.zero" \
     "${HOME}/.ssh" \
     "${HOME}/.gitstate" \
@@ -53,56 +55,70 @@ EOF
     chmod +x "${wrapper}"
 done
 
-# ---- Install autopilot-multi into every Claude config dir --------------------
-# autopilot-multi is baked into /opt (unshadowed by the home volume). Its own
-# install.sh only wires up the DEFAULT profile (~/.claude) plus the shared CLIs.
-# Each extra Claude profile, though, runs with an isolated CLAUDE_CONFIG_DIR
-# (~/.claude-profiles/<name>), so it would NOT see the slash commands/hooks. So
-# we mirror the autopilot config into the default dir AND every profile dir, so
-# /autopilot works on whichever Claude login a session uses. Idempotent
-# (`ln -sfn`) and pointed at /opt, so a rebuild that bumps autopilot is picked up
-# automatically; the chown below gives the new links agent ownership.
+# ---- Install autopilotagent (multi-agent TDD workflow) -----------------------
+# Repo lives in /opt (not shadowed by home volume). Upstream install.sh only
+# wires the DEFAULT ~/.claude + shared agent homes; we also mirror into every
+# Claude profile dir (~/.claude-profiles/<name>) so /autopilotagent works on
+# any login. Idempotent (`ln -sfn`); rebuild that bumps AUTOPILOT_REF is picked
+# up on next boot. chown below gives new links agent ownership.
 AUTOPILOT_REPO="${AUTOPILOT_REPO:-/opt/autopilot-multi}"
 if [ -d "${AUTOPILOT_REPO}" ]; then
-    # Shared terminal CLIs — one copy on PATH, used by all profiles.
-    ln -sfn "${AUTOPILOT_REPO}/run.sh" "${BIN_DIR}/autopilot"
-    ln -sfn "${AUTOPILOT_REPO}/cleanup.sh" "${BIN_DIR}/autopilot-cleanup"
+    # Shared terminal CLIs — one copy on PATH for every agent.
+    ln -sfn "${AUTOPILOT_REPO}/run.sh" "${BIN_DIR}/autopilotagent"
+    ln -sfn "${AUTOPILOT_REPO}/cleanup.sh" "${BIN_DIR}/autopilotagent-cleanup"
+    # Drop pre-rename bin names so stale volumes don't keep the old CLI around.
+    rm -f "${BIN_DIR}/autopilot" "${BIN_DIR}/autopilot-cleanup"
 
-    # Mirror the per-config-dir bits (commands, hooks, AGENTS.md, hooks.json)
-    # into one Claude config dir. Mirrors autopilot's install.sh, kept minimal.
-    install_autopilot_config() {
-        cfg="$1"
-        mkdir -p "${cfg}/commands" "${cfg}/hooks"
-        # Clean slate: drop command symlinks left by a previous autopilot ref so
-        # switching branches can't leave behind commands that no longer exist
-        # upstream. Only links that resolve into AUTOPILOT_REPO are removed, so
-        # any user-added commands in this dir are preserved.
-        for link in "${cfg}/commands"/*; do
+    # link_agent_file SRC DST — symlink, replace prior autopilotagent link only.
+    link_agent_file() {
+        src="$1"
+        dst="$2"
+        [ -e "${src}" ] || return 0
+        mkdir -p "$(dirname "${dst}")"
+        ln -sfn "${src}" "${dst}"
+    }
+
+    # Drop stale symlinks under DIR that still point into AUTOPILOT_REPO.
+    clean_repo_links() {
+        dir="$1"
+        [ -d "${dir}" ] || return 0
+        for link in "${dir}"/*; do
             [ -L "${link}" ] || continue
             case "$(readlink "${link}")" in
                 "${AUTOPILOT_REPO}"/*) rm -f "${link}" ;;
             esac
         done
-        # Slash commands — enumerated, so commands autopilot adds are picked up.
+    }
+
+    # Claude config dir: slash commands, skills, hooks, AGENTS.md.
+    install_claude_config() {
+        cfg="$1"
+        mkdir -p "${cfg}/commands" "${cfg}/hooks" "${cfg}/skills"
+        clean_repo_links "${cfg}/commands"
+        clean_repo_links "${cfg}/skills"
         for f in "${AUTOPILOT_REPO}"/commands/*.md; do
-            if [ -e "${f}" ]; then
-                ln -sfn "${f}" "${cfg}/commands/$(basename "${f}")"
-            fi
+            [ -e "${f}" ] || continue
+            ln -sfn "${f}" "${cfg}/commands/$(basename "${f}")"
+        done
+        for skill_dir in "${AUTOPILOT_REPO}"/skills/*; do
+            [ -d "${skill_dir}" ] || continue
+            ln -sfn "${skill_dir}" "${cfg}/skills/$(basename "${skill_dir}")"
         done
         ln -sfn "${AUTOPILOT_REPO}/AGENTS.md" "${cfg}/AGENTS.md"
+        # New hook name; drop the pre-rename stop-hook symlink if present.
+        rm -f "${cfg}/hooks/autopilot-stop-hook.sh"
         ln -sfn "${AUTOPILOT_REPO}/hooks/stop-hook.sh" \
-            "${cfg}/hooks/autopilot-stop-hook.sh"
+            "${cfg}/hooks/autopilotagent-stop-hook.sh"
         ln -sfn "${AUTOPILOT_REPO}/hooks/git-commit" "${cfg}/hooks/git-commit"
-        # Register the stop hook, pointed at THIS dir's copy. Don't clobber an
-        # existing hooks.json — the user may have customised it.
+        # Register stop hook for THIS dir. Don't clobber a customised hooks.json.
         if [ ! -f "${cfg}/hooks.json" ]; then
             cat > "${cfg}/hooks.json" <<HOOKEOF
 {
   "hooks": {
     "stop": [
       {
-        "command": "${cfg}/hooks/autopilot-stop-hook.sh",
-        "description": "Autopilot loop mechanism"
+        "command": "${cfg}/hooks/autopilotagent-stop-hook.sh",
+        "description": "Autopilotagent loop mechanism"
       }
     ]
   }
@@ -111,10 +127,32 @@ HOOKEOF
         fi
     }
 
-    install_autopilot_config "${HOME}/.claude"
+    # Non-Claude agent home: AGENTS.md + command specs + skills.
+    # Skills dest differs per agent (Codex uses shared ~/.agents/skills).
+    install_agent_home() {
+        agent_home="$1"
+        skills_dest="$2"
+        mkdir -p "${agent_home}/autopilotagent" "${skills_dest}"
+        link_agent_file "${AUTOPILOT_REPO}/AGENTS.md" "${agent_home}/AGENTS.md"
+        link_agent_file "${AUTOPILOT_REPO}/commands" \
+            "${agent_home}/autopilotagent/commands"
+        clean_repo_links "${skills_dest}"
+        for skill_dir in "${AUTOPILOT_REPO}"/skills/*; do
+            [ -d "${skill_dir}" ] || continue
+            ln -sfn "${skill_dir}" "${skills_dest}/$(basename "${skill_dir}")"
+        done
+    }
+
+    # Claude — default + every isolated profile.
+    install_claude_config "${HOME}/.claude"
     for name in ${CLAUDE_PROFILES:-}; do
-        install_autopilot_config "${PROFILE_ROOT}/${name}"
+        install_claude_config "${PROFILE_ROOT}/${name}"
     done
+
+    # Codex / OpenCode / Command Code — skills + shared instructions.
+    install_agent_home "${HOME}/.codex" "${HOME}/.agents/skills"
+    install_agent_home "${HOME}/.config/opencode" "${HOME}/.config/opencode/skills"
+    install_agent_home "${HOME}/.commandcode" "${HOME}/.commandcode/skills"
 fi
 
 # ---- Docker socket access (Docker-out-of-Docker) -------------------------------
