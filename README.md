@@ -51,7 +51,7 @@ A few principles this repo tries to honour:
 | 📱 **Friendlier mobile keyboard** | Keyboard-overlap fix, plus toolbar keys for newline, ⇧Tab, and ⌃/⌥ modifiers | [Mobile](#mobile) |
 | 🤖 **Autopilotagent TDD workflow** | `autopilotagent` skills/commands/hooks for Claude, Codex, OpenCode, Command Code | [Autopilotagent](#autopilotagent-tdd-workflow) |
 | 🔤 **JetBrains Mono code font** | Terminal & UI code blocks render in self-hosted JetBrains Mono; xterm size still configurable from `.env` | [Font](#terminal--code-font) |
-| 🧰 **Bundled CLIs** | `gh`, `git`, `ripgrep`, `tmux`, `jq` preinstalled in every session | [Agents](#installed-agents) |
+| 🧰 **Bundled CLIs** | `gh`, `bun`, `git`, `ripgrep`, `tmux`, `jq` preinstalled in every session | [Agents](#installed-agents) |
 | 🌐 **Headless browser** | Chromium + system libs baked in so agents can render & screenshot the frontends they build | [Browser](#browser-verification) |
 | 👤 **Host-matched file ownership** | `PUID`/`PGID` so files in your mounted workspace stay owned by *you* | [Permissions](#file-permissions-puid--pgid) |
 | 🩹 **Quality-of-life fixes** | Inline session rename works again (upstream Radix focus-restore bug) | [Font & fixes](#terminal--code-font) |
@@ -147,6 +147,7 @@ Set any to `false` in `.env` and rebuild to trim it from the image:
 | `INSTALL_COMMAND_CODE` | Command Code CLI | |
 | `INSTALL_BROWSER` | Headless Chromium + libs | Biggest saving (~few hundred MB); see [Browser](#browser-verification) |
 | `INSTALL_GH` | GitHub CLI (`gh`) | No runtime dependency; interactive use only |
+| `INSTALL_BUN` | Bun JS runtime (`bun`) | Official installer; binary at `/usr/local/bin` |
 | `INSTALL_JETBRAINS_MONO_FONT` | Self-hosted code font | Falls back to system monospace |
 | `INSTALL_AUTOPILOT` | autopilotagent workflow | Entrypoint skips it gracefully; no `/autopilotagent` |
 
@@ -221,6 +222,10 @@ Plus a few supporting CLI tools on `PATH` inside every session:
   issues, and authenticated git over HTTPS. Run `gh auth login` once; the token
   lands in `~/.config`, which is in the persisted home volume, so it survives
   restarts.
+- **Bun (`bun`)** — JS runtime / package manager via the [official
+  installer](https://bun.com/docs/installation). Binary lands in
+  `/usr/local/bin` so every session sees it. Gated by `INSTALL_BUN` (default
+  `true`); set `false` and rebuild to skip.
 - **git**, **ripgrep (`rg`)**, **tmux** — version control, code search, and the
   terminal multiplexer that drives AgentOS sessions.
 
@@ -234,6 +239,7 @@ INSTALL_CLAUDE_CODE=true
 INSTALL_CODEX=false        # skip OpenAI Codex
 INSTALL_OPENCODE=true
 INSTALL_COMMAND_CODE=false # skip Command Code
+INSTALL_BUN=false          # skip Bun runtime
 ```
 
 > Leave `INSTALL_CLAUDE_CODE` on unless you only drive the other agents — turning

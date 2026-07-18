@@ -75,6 +75,19 @@ RUN set -eux; \
         rm -rf /var/lib/apt/lists/*; \
     fi
 
+# ---- Bun (JS runtime / package manager) ----
+# Single binary via the official installer. Land it under /usr/local (not
+# ~/.bun) so it stays on PATH for the non-root agent user and isn't shadowed by
+# the persisted home volume. unzip is already in the system-deps layer above
+# (required by the installer). Gated by INSTALL_BUN (default true): set false
+# to skip, e.g. docker compose build --build-arg INSTALL_BUN=false.
+ARG INSTALL_BUN=true
+RUN set -eux; \
+    if [ "${INSTALL_BUN}" = "true" ]; then \
+        curl -fsSL https://bun.com/install | BUN_INSTALL=/usr/local bash; \
+        bun --version; \
+    fi
+
 # ---- Pre-install the AI coding agents AgentOS can drive ----
 # Each agent is individually gated so you don't ship (and wait on) CLIs you'll
 # never use. All default to true = installed; set any to "false" via build arg
