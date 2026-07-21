@@ -62,7 +62,7 @@ services:
       # login at once instead of whack-a-mole per-tool volumes. Build artifacts
       # live in /opt (outside home), so nothing important is shadowed.
       - agent_os_home:/home/agent
-      - ${WORKSPACE_DIR:-/developer}:/workspaces
+      - ${WORKSPACE_DIR:-/srv/agentos-migrated-20260722/developer}:/workspaces
 
       # Mount the host Docker socket so agents can run docker commands.
       # Controlled by the DOCKER_HOST_SOCKET env var (default /dev/null = off).
