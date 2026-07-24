@@ -215,6 +215,7 @@ COPY patches/inject-raster-favicon.mjs /tmp/inject-raster-favicon.mjs
 COPY patches/inject-toolbar-uniform-buttons.mjs /tmp/inject-toolbar-uniform-buttons.mjs
 COPY patches/inject-ui-font-inter.mjs /tmp/inject-ui-font-inter.mjs
 COPY patches/inject-remove-ctrl-d.mjs /tmp/inject-remove-ctrl-d.mjs
+COPY patches/inject-toolbar-key-repeat.mjs /tmp/inject-toolbar-key-repeat.mjs
 COPY patches/inject-zero-provider.mjs /tmp/inject-zero-provider.mjs
 RUN cd "${AGENT_OS_REPO}" \
     && CLAUDE_PROFILES="${CLAUDE_PROFILES}" node /tmp/inject-claude-profiles.mjs "${AGENT_OS_REPO}" \
@@ -235,6 +236,7 @@ RUN cd "${AGENT_OS_REPO}" \
     && node /tmp/inject-toolbar-uniform-buttons.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-ui-font-inter.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-remove-ctrl-d.mjs "${AGENT_OS_REPO}" \
+    && node /tmp/inject-toolbar-key-repeat.mjs "${AGENT_OS_REPO}" \
     && node /tmp/inject-zero-provider.mjs "${AGENT_OS_REPO}" \
     && npm run build \
     && npm cache clean --force

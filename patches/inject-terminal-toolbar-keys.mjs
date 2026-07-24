@@ -38,7 +38,9 @@ let src = readFileSync(path, "utf8");
 const edits = [
   {
     name: "import useEffect",
-    marker: `import { useCallback, useEffect, useState } from "react";`,
+    // A later injector may add hooks between useEffect and useState. Matching
+    // the import prefix keeps this edit precise and idempotent across the chain.
+    marker: `import { useCallback, useEffect`,
     anchor: `import { useCallback, useState } from "react";`,
     insert: `import { useCallback, useEffect, useState } from "react";`,
   },

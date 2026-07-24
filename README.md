@@ -421,7 +421,18 @@ The toolbar buttons were also sized purely by their label, so narrow keys (arrow
 `^C`) looked skinnier than wide ones (`Esc`, `⇧Tab`).
 ([`inject-toolbar-uniform-buttons.mjs`](patches/inject-toolbar-uniform-buttons.mjs))
 gives every button a `min-w-[3.25rem]` floor and centers its content, so they all
-render the same width. The `^D` (Ctrl-D / EOF) key is also dropped from the toolbar
+render the same width. It also increases their vertical padding for a more
+comfortable mobile touch target.
+
+Key-sending buttons support **hold to repeat**
+([`inject-toolbar-key-repeat.mjs`](patches/inject-toolbar-key-repeat.mjs)):
+holding a stationary pointer for 300 ms sends the first key, then repeats every
+50 ms until release. Normal taps, keyboard activation, and assistive-technology
+clicks still send exactly one key. Moving 10 px before repeat begins cancels the
+hold without sending anything, so swiping the horizontally scrollable toolbar
+does not accidentally type into the terminal.
+
+The `^D` (Ctrl-D / EOF) key is also dropped from the toolbar
 ([`inject-remove-ctrl-d.mjs`](patches/inject-remove-ctrl-d.mjs)) — an easy mis-tap
 that logs you out of the shell.
 
