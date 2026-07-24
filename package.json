@@ -1,0 +1,11 @@
+{
+  "name": "agentos-docker",
+  "private": true,
+  "scripts": {
+    "lint": "find patches tests -type f -name '*.mjs' -exec node --check '{}' ';'",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.1"
+  }
+}
