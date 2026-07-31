@@ -56,10 +56,10 @@ official [docs](https://runagentos.com/docs).
 
 > **⚠️ Security Disclaimer**
 >
-> This setup exposes port 3011 to all network interfaces by default. Anyone on your network (or the internet, if the port is open) can access AgentOS and run AI agents on your machine. **Do not expose this to untrusted networks without proper protection.**
+> This setup exposes port `HOST_PORT` (default 3011) to all network interfaces by default. Anyone on your network (or the internet, if the port is open) can access AgentOS and run AI agents on your machine. **Do not expose this to untrusted networks without proper protection.**
 >
 > Recommended mitigations:
-> - Bind to localhost only: change `ports` in `docker-compose.yml` to `"127.0.0.1:3011:3011"`
+> - Bind to localhost only: change `ports` in `docker-compose.yml` to `"127.0.0.1:${HOST_PORT:-3011}:3011"`
 > - Use a firewall to restrict access to the port
 > - Use a VPN like [Tailscale](https://tailscale.com/) for remote access instead of exposing publicly
 > - Put it behind a reverse proxy with authentication
@@ -72,7 +72,8 @@ cd agentos-docker
 docker compose up -d
 ```
 
-Then open `http://localhost:3011` in your browser.
+Then open `http://localhost:3011` in your browser (or your `HOST_PORT` from
+`.env`, if you've set one — e.g. because 3011 is already taken on your host).
 
 The first build clones and compiles AgentOS from source, so it takes a few
 minutes. Follow the logs with `docker compose logs -f`.
@@ -115,6 +116,7 @@ Runtime settings (in `.env`, applied with `docker compose up -d` — no rebuild)
 | Variable | Default | What it does |
 |---|---|---|
 | `WORKSPACE_DIR` | `/developer` | Host directory mounted as `/workspaces` (your projects) |
+| `HOST_PORT` | `3011` | Host port AgentOS is reachable on (container always listens on 3011 internally) |
 | `PUID` / `PGID` | `1000` / `1000` | Host user/group IDs to run as, so workspace files stay yours |
 | `CLAUDE_PROFILES` | `a b c` | Extra `claude-<name>` login wrappers the entrypoint generates (rebuild to change — it's also a build arg) |
 | `ENABLE_DOCKER` | `false` | Install Docker CLI and allow access to host Docker socket (rebuild to change) |

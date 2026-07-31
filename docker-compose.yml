@@ -44,9 +44,12 @@ services:
       # can add/remove profiles without touching this file or rebuilding.
 
     ports:
-      # Exposed on all interfaces by default — see the security note in README.
-      # For a safer default, bind to localhost: "127.0.0.1:3011:3011"
-      - "3011:3011"
+      # Host port is configurable via HOST_PORT in .env (default 3011) — handy
+      # if 3011 is already taken on your host. The container always listens on
+      # 3011 internally. Exposed on all interfaces by default — see the
+      # security note in README. For a safer default, bind to localhost:
+      # "127.0.0.1:${HOST_PORT:-3011}:3011"
+      - "${HOST_PORT:-3011}:3011"
 
     volumes:
       # Persist the whole home directory in one volume. Each agent CLI scatters
