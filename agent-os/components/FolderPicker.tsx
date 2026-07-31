@@ -1,0 +1,201 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import {
+  X,
+  Folder,
+  ChevronLeft,
+  Loader2,
+  Home,
+  ChevronRight,
+  Check,
+  GitBranch,
+  Search,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useDirectoryBrowser } from "@/hooks/useDirectoryBrowser";
+
+const DIRS_ONLY = (f: { type: string }) => f.type === "directory";
+
+interface FolderPickerProps {
+  initialPath?: string;
+  onSelect: (path: string) => void;
+  onClose: () => void;
+}
+
+export function FolderPicker({
+  initialPath,
+  onSelect,
+  onClose,
+}: FolderPickerProps) {
+  const {
+    currentPath,
+    filteredFiles,
+    loading,
+    error,
+    search,
+    setSearch,
+    pathSegments,
+    navigateTo,
+    navigateUp,
+    navigateHome,
+  } = useDirectoryBrowser({ initialPath, filter: DIRS_ONLY });
+
+  // Git repo check for current directory
+  const [isGitRepo, setIsGitRepo] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/git/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: currentPath }),
+    })
+      .then((res) => res.json())
+      .then((data) => setIsGitRepo(data.isGitRepo || false))
+      .catch(() => setIsGitRepo(false));
+  }, [currentPath]);
+
+  const folderName = pathSegments[pathSegments.length - 1] || "root";
+
+  return (
+    <div className="bg-background fixed inset-0 z-[100] flex flex-col">
+      {/* Header */}
+      <div className="bg-background/95 flex items-center gap-2 p-3 shadow-sm backdrop-blur-sm">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={onClose}
+          className="h-9 w-9"
+        >
+          <X className="h-5 w-5" />
+        </Button>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-medium">Select Folder</h3>
+          <p className="text-muted-foreground truncate text-xs">
+            {currentPath}
+          </p>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="px-3 py-2">
+        <div className="relative">
+          <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2" />
+          <Input
+            type="text"
+            placeholder="Search folders..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-9 pl-9"
+          />
+        </div>
+      </div>
+
+      {/* Navigation bar */}
+      <div className="flex items-center gap-1 overflow-x-auto px-3 pb-2">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={navigateHome}
+          className="h-8 w-8 shrink-0"
+          title="Home"
+        >
+          <Home className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={navigateUp}
+          className="h-8 w-8 shrink-0"
+          title="Go up"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <div className="text-muted-foreground flex items-center gap-0.5 overflow-x-auto text-xs">
+          <span>/</span>
+          {pathSegments.map((segment, i) => (
+            <button
+              key={i}
+              onClick={() =>
+                navigateTo("/" + pathSegments.slice(0, i + 1).join("/"))
+              }
+              className="hover:text-foreground flex shrink-0 items-center transition-colors"
+            >
+              <span className="max-w-[100px] truncate">{segment}</span>
+              {i < pathSegments.length - 1 && (
+                <ChevronRight className="mx-0.5 h-3 w-3" />
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        {loading ? (
+          <div className="flex h-32 items-center justify-center">
+            <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="text-muted-foreground flex h-32 flex-col items-center justify-center p-4">
+            <p className="text-center text-sm">{error}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={navigateUp}
+              className="mt-2"
+            >
+              Go back
+            </Button>
+          </div>
+        ) : filteredFiles.length === 0 ? (
+          <div className="text-muted-foreground flex h-32 items-center justify-center">
+            <p className="text-sm">
+              {search ? "No matching folders" : "No subfolders"}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-0.5 px-2 pt-1">
+            {filteredFiles.map((node) => (
+              <button
+                key={node.path}
+                onClick={() => navigateTo(node.path)}
+                className="hover:bg-muted/50 flex w-full items-center gap-3 rounded-md px-3 py-3 text-left transition-colors"
+              >
+                <Folder className="text-muted-foreground h-5 w-5 shrink-0" />
+                <span className="min-w-0 flex-1 truncate text-sm">
+                  {node.name}
+                </span>
+                <ChevronRight className="text-muted-foreground h-4 w-4 shrink-0" />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Footer with select button */}
+      <div className="flex items-center justify-between gap-3 p-3 shadow-[0_-2px_8px_rgba(0,0,0,0.08)]">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <Folder className="text-primary h-5 w-5 shrink-0" />
+            <span className="truncate font-medium">{folderName}</span>
+            {isGitRepo && (
+              <span className="bg-muted text-muted-foreground flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs">
+                <GitBranch className="h-3 w-3" />
+                Git
+              </span>
+            )}
+          </div>
+        </div>
+        <Button
+          onClick={() => onSelect(currentPath)}
+          className="shrink-0 gap-2"
+        >
+          <Check className="h-4 w-4" />
+          Select
+        </Button>
+      </div>
+    </div>
+  );
+}
