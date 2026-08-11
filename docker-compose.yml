@@ -28,6 +28,12 @@ services:
         INSTALL_AUTOPILOT: ${INSTALL_AUTOPILOT:-true}                   # autopilotagent TDD workflow (all agents)
     restart: unless-stopped
 
+    # Run an init process as PID 1 so it reaps zombie children (tmux, gh,
+    # esbuild, etc. spawned by agent sessions) instead of `npm start` leaking
+    # them forever — without this, exited subprocess zombies accumulate
+    # indefinitely and can eventually hit the container's PID limit.
+    init: true
+
     # Optional: pass extra env (e.g. agent API keys) into the container.
     env_file:
       - path: .env
