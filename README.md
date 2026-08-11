@@ -13,16 +13,18 @@ your phone), fully self-hosted, with `docker compose up -d`.
 [@saadnvd1](https://github.com/saadnvd1)) is a lovely open-source, mobile-first
 web app that lets you start and manage AI coding-agent sessions from any browser.
 
-**This repo is not a fork or a replacement** — it's a packaging layer. It clones
-the upstream project at build time and ships it as a reproducible, self-hostable
-Docker image, then adds a handful of small, optional conveniences on top
-(persistent logins, multiple Claude accounts, a friendlier mobile keyboard, an
-autonomous TDD workflow, a couple of bundled CLIs).
+**This repo vendors a patched fork of AgentOS** (under [`agent-os/`](agent-os/),
+forked from commit
+[`378069f`](https://github.com/saadnvd1/agent-os/commit/378069fed63708179ae4dd9ddad1a2ce64f37d5d))
+and packages it as a self-contained, self-hostable Docker image, with a handful
+of small conveniences layered in (persistent logins, multiple Claude accounts, a
+friendlier mobile keyboard, an autonomous TDD workflow, a couple of bundled
+CLIs).
 
 It exists for one reason: to make AgentOS effortless to **self-host and keep
 running** — one command to start, your logins and history survive restarts, and
-your phone behaves. Nothing here changes what AgentOS *is*; upstream remains the
-source of truth.
+your phone behaves. The Docker/self-hosting layer is maintained here
+standalone, with no build-time dependency on the upstream repo.
 
 ## Credit & relationship to upstream
 
@@ -30,17 +32,12 @@ All the real work — the app, the design, the UX — is
 [@saadnvd1](https://github.com/saadnvd1)'s. If you find this useful, please go
 [⭐ star **agent-os**](https://github.com/saadnvd1/agent-os) first. 💛
 
-A few principles this repo tries to honour:
-
-- **Packaging, not forking.** We clone upstream and patch it transparently at
-  build time — we don't vendor a modified copy or hide changes.
-- **Additive & reversible.** Every enhancement is a small build-time codegen
-  patch (in [`patches/`](patches/)) that *anchors* on upstream code and **fails
-  loudly** if upstream changes, so nothing silently diverges.
-- **Fixes go home.** Where we fix a bug in AgentOS itself (e.g. the mobile
-  keyboard overlap), the goal is to contribute it back upstream.
-- **Upstream owns the app.** For questions about AgentOS itself, see the official
-  [docs](https://runagentos.com/docs).
+The `agent-os/` directory here is a fork of upstream at commit `378069f`, with
+our downstream UI patches applied directly to the source (see
+[Downstream patches](#downstream-patches--enhancements) below). It's maintained
+independently — it does not track upstream's `main` branch and isn't kept in
+sync automatically. For questions about AgentOS the app itself, see the
+official [docs](https://runagentos.com/docs).
 
 ## What this image adds over upstream
 
@@ -50,19 +47,19 @@ A few principles this repo tries to honour:
 | 👥 **Multiple Claude accounts** | Run `claude`, `claude-a`, `claude-b`… side by side, each its own login, selectable in the UI | [Logins](#multiple-claude-code-logins) |
 | 📱 **Friendlier mobile keyboard** | Keyboard-overlap fix, plus toolbar keys for newline, ⇧Tab, and ⌃/⌥ modifiers | [Mobile](#mobile) |
 | 🤖 **Autopilotagent TDD workflow** | `autopilotagent` skills/commands/hooks for Claude, Codex, OpenCode, Command Code | [Autopilotagent](#autopilotagent-tdd-workflow) |
-| 🔤 **JetBrains Mono code font** | Terminal & UI code blocks render in self-hosted JetBrains Mono; xterm size still configurable from `.env` | [Font](#terminal--code-font) |
+| 🔤 **JetBrains Mono code font** | Terminal & UI code blocks render in self-hosted JetBrains Mono | [Font](#terminal--code-font) |
 | 🧰 **Bundled CLIs** | `gh`, `bun`, `git`, `ripgrep`, `tmux`, `jq` preinstalled in every session | [Agents](#installed-agents) |
 | 🌐 **Headless browser** | Chromium + system libs baked in so agents can render & screenshot the frontends they build | [Browser](#browser-verification) |
 | 👤 **Host-matched file ownership** | `PUID`/`PGID` so files in your mounted workspace stay owned by *you* | [Permissions](#file-permissions-puid--pgid) |
 | 🩹 **Quality-of-life fixes** | Inline session rename works again (upstream Radix focus-restore bug) | [Font & fixes](#terminal--code-font) |
-| 📌 **Reproducible builds** | Upstream pinned to a commit; transparent patches that fail loudly on drift | [Pinning](#upstream-version-pinning) |
+| 📦 **Standalone build** | Patched source vendored in-repo — no network fetch of upstream at build time | [Vendored source](#vendored-source) |
 
 > **⚠️ Security Disclaimer**
 >
-> This setup exposes port 3011 to all network interfaces by default. Anyone on your network (or the internet, if the port is open) can access AgentOS and run AI agents on your machine. **Do not expose this to untrusted networks without proper protection.**
+> This setup exposes port `HOST_PORT` (default 3011) to all network interfaces by default. Anyone on your network (or the internet, if the port is open) can access AgentOS and run AI agents on your machine. **Do not expose this to untrusted networks without proper protection.**
 >
 > Recommended mitigations:
-> - Bind to localhost only: change `ports` in `docker-compose.yml` to `"127.0.0.1:3011:3011"`
+> - Bind to localhost only: change `ports` in `docker-compose.yml` to `"127.0.0.1:${HOST_PORT:-3011}:3011"`
 > - Use a firewall to restrict access to the port
 > - Use a VPN like [Tailscale](https://tailscale.com/) for remote access instead of exposing publicly
 > - Put it behind a reverse proxy with authentication
@@ -75,7 +72,8 @@ cd agentos-docker
 docker compose up -d
 ```
 
-Then open `http://localhost:3011` in your browser.
+Then open `http://localhost:3011` in your browser (or your `HOST_PORT` from
+`.env`, if you've set one — e.g. because 3011 is already taken on your host).
 
 The first build clones and compiles AgentOS from source, so it takes a few
 minutes. Follow the logs with `docker compose logs -f`.
@@ -118,22 +116,23 @@ Runtime settings (in `.env`, applied with `docker compose up -d` — no rebuild)
 | Variable | Default | What it does |
 |---|---|---|
 | `WORKSPACE_DIR` | `/developer` | Host directory mounted as `/workspaces` (your projects) |
+| `HOST_PORT` | `3011` | Host port AgentOS is reachable on (container always listens on 3011 internally) |
 | `PUID` / `PGID` | `1000` / `1000` | Host user/group IDs to run as, so workspace files stay yours |
-| `CLAUDE_PROFILES` | `a b c` | Extra Claude logins to generate (rebuild to change — it's also a build arg) |
-| `TERMINAL_FONT_SIZE` | `16` | Desktop xterm font size, px (rebuild to change) |
-| `TERMINAL_FONT_SIZE_MOBILE` | `13` | Mobile xterm font size, px (rebuild to change) |
+| `CLAUDE_PROFILES` | `a b c` | Extra `claude-<name>` login wrappers the entrypoint generates (rebuild to change — it's also a build arg) |
 | `ENABLE_DOCKER` | `false` | Install Docker CLI and allow access to host Docker socket (rebuild to change) |
 
 Build args (passed at **build** time, e.g. `docker compose build --build-arg NAME=value`):
 
 | Build arg | Default | What it does |
 |---|---|---|
-| `AGENT_OS_REF` | pinned commit SHA | Which upstream AgentOS ref to build — SHA, tag, or branch ([Pinning](#upstream-version-pinning)) |
 | `AUTOPILOT_REF` | `multi-agent-support` | Which [autopilotagent](#autopilotagent-tdd-workflow) ref to bundle |
-| `JETBRAINS_MONO_REF` | `v2.304` | Which [JetBrains Mono](#terminal--code-font) release to self-host for the terminal/code font |
-| `CLAUDE_PROFILES` | `a b c` | Compiled into the UI's harness list (also read from `.env`) |
+| `CLAUDE_PROFILES` | `a b c` | `claude-<name>` login wrapper names (also read from `.env`) — does **not** change the UI's harness list, see below |
 | `ENABLE_DOCKER` | `false` | Whether to install Docker CLI (`true`/`false`) |
-| `TERMINAL_FONT_SIZE` / `…_MOBILE` | `16` / `13` | Compiled into the client bundle |
+
+The terminal font size (16px desktop / 13px mobile), JetBrains Mono webfont,
+and the UI's `claude-a`/`claude-b`/`claude-c` harness list are baked directly
+into the vendored source in [`agent-os/`](agent-os/) rather than driven by
+build args — see [Vendored source](#vendored-source) for how to change them.
 
 **Component toggles** — every optional piece is gated by an `INSTALL_*` build arg
 that **defaults to `true`**, so out of the box you get everything with no config.
@@ -148,7 +147,6 @@ Set any to `false` in `.env` and rebuild to trim it from the image:
 | `INSTALL_BROWSER` | Headless Chromium + libs | Biggest saving (~few hundred MB); see [Browser](#browser-verification) |
 | `INSTALL_GH` | GitHub CLI (`gh`) | No runtime dependency; interactive use only |
 | `INSTALL_BUN` | Bun JS runtime (`bun`) | Official installer; binary at `/usr/local/bin` |
-| `INSTALL_JETBRAINS_MONO_FONT` | Self-hosted code font | Falls back to system monospace |
 | `INSTALL_AUTOPILOT` | autopilotagent workflow | Entrypoint skips it gracefully; no `/autopilotagent` |
 
 > Anything **compiled into the bundle** (fonts, the profile harness list) needs a
@@ -327,11 +325,12 @@ Removing a name does **not** delete its saved login: the config is kept in the
 profile exactly as it was.
 
 Under the hood each `claude-<name>` wrapper just sets `CLAUDE_CONFIG_DIR` to a
-separate directory, so the official `claude` CLI does all the work. A build-time
-codegen step ([`inject-claude-profiles.mjs`](patches/inject-claude-profiles.mjs))
-registers each profile as an AgentOS provider.
+separate directory, so the official `claude` CLI does all the work. Registering
+each profile as an AgentOS provider (`inject-claude-profiles.mjs`, applied
+directly to the vendored source) is what makes it selectable in the UI.
 
-(All these build-time patch scripts live in [`patches/`](patches/).)
+(See [Vendored source](#vendored-source) for where these patches live and how
+to change them.)
 
 ## Terminal & Code Font
 
@@ -339,46 +338,34 @@ registers each profile as an AgentOS provider.
 [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono). Upstream's xterm
 config already names it first, but the font isn't actually shipped — so without
 this it falls back to a system monospace. The rest of the UI keeps its Geist sans
-typeface. The font is **self-hosted** — the build downloads the official release
-`woff2` webfonts and serves them from the app, so there's no runtime CDN
-dependency. Pinned via the `JETBRAINS_MONO_REF` build arg (default `v2.304`).
+typeface. The font is **self-hosted** — the `.woff2` webfonts are vendored under
+`agent-os/public/fonts` and served from the app, so there's no runtime CDN
+dependency.
 
-**Configurable size.** The xterm.js font size is set via `.env`:
-
-```env
-TERMINAL_FONT_SIZE=16          # desktop viewports
-TERMINAL_FONT_SIZE_MOBILE=13   # mobile viewports (< 768px wide)
-```
-
-Upstream hardcodes these at `14` / `11`; the defaults here bump them up a little.
-Both the font swap and the size are **compiled into the client bundle**, so
-changes take effect on a rebuild:
+**Configurable size.** The xterm.js font size is `16px` desktop / `13px`
+mobile (upstream hardcodes `14` / `11`). Both the font swap and the size are
+**compiled into the vendored source and client bundle** — to change them, edit
+`agent-os/app/globals.css` (font) or the xterm config directly, then rebuild:
 
 ```bash
 docker compose up -d --build
 ```
 
-Build-time codegen steps patch the upstream source before the build:
-[`inject-jetbrains-mono-font.mjs`](patches/inject-jetbrains-mono-font.mjs) wires up
-the `@font-face` rules + `--font-mono` token, and
-[`inject-terminal-font.mjs`](patches/inject-terminal-font.mjs) sets the sizes.
-
-The UI (sans) font is also swapped from upstream's Geist to **Inter**
-([`inject-ui-font-inter.mjs`](patches/inject-ui-font-inter.mjs)) — still loaded via
-`next/font/google` (self-hosted at build, no runtime CDN), reusing the existing
-`--font-geist-sans` variable so nothing else changes. The terminal/mono font is
-untouched.
+The UI (sans) font is also swapped from upstream's Geist to **Inter**, still
+loaded via `next/font/google` (self-hosted at build, no runtime CDN), reusing
+the existing `--font-geist-sans` variable so nothing else changes. The
+terminal/mono font is untouched.
 
 ### Bug fixes
 
-We also patch a couple of upstream rough edges (same anchor-checked codegen
-approach, so they no-op cleanly if upstream fixes them first):
+We also patch a couple of upstream rough edges (applied directly to the
+vendored source, before we forked):
 
 - **Inline session rename.** Renaming a session from its menu used to snap the
   text field straight back to read-only before you could type. The "Rename" item
   lives in a Radix menu whose default close behaviour restores focus to the
   trigger, which blurred the freshly-opened input.
-  [`inject-session-rename-fix.mjs`](patches/inject-session-rename-fix.mjs) stops
+  `inject-session-rename-fix.mjs` stopped
   that focus restoration so the field stays editable on both desktop and mobile.
 
 ## Mobile
@@ -388,7 +375,7 @@ toolbar** — Esc, Tab, Ctrl-C, Ctrl-D, arrow keys, plus paste/mic/copy — for 
 a touch keyboard lacks. It appears automatically; there's nothing to enable.
 
 This image adds a few more keys to that toolbar
-([`inject-terminal-toolbar-keys.mjs`](patches/inject-terminal-toolbar-keys.mjs)):
+(`inject-terminal-toolbar-keys.mjs`):
 
 - **⇧Tab** — sends the ANSI back-tab sequence (`\x1b[Z`), which is what Claude
   Code uses to cycle its modes (plan / auto-accept). There's no other way to send
@@ -412,20 +399,17 @@ This image also carries a downstream fix for upstream's mobile layout: the
 `MobileView` root uses a fixed `h-screen` (`100vh`), which on mobile pushes the
 terminal's bottom (your prompt **and** the toolbar) *behind* the on-screen
 keyboard, so you can't see what you type. The app already tracks the keyboard via
-`useViewportHeight()` → `--app-height`, so a build-time codegen step
-([`inject-mobile-viewport-fix.mjs`](patches/inject-mobile-viewport-fix.mjs)) switches the
+`useViewportHeight()` → `--app-height`, so `inject-mobile-viewport-fix.mjs` switches the
 root to the keyboard-aware `h-app` height. The prompt and toolbar then stay above
 the keyboard.
 
 The toolbar buttons were also sized purely by their label, so narrow keys (arrows,
-`^C`) looked skinnier than wide ones (`Esc`, `⇧Tab`).
-([`inject-toolbar-uniform-buttons.mjs`](patches/inject-toolbar-uniform-buttons.mjs))
+`^C`) looked skinnier than wide ones (`Esc`, `⇧Tab`). `inject-toolbar-uniform-buttons.mjs`
 gives every button a `min-w-[3.25rem]` floor and centers its content, so they all
 render the same width. It also increases their vertical padding for a more
 comfortable mobile touch target.
 
-Key-sending buttons support **hold to repeat**
-([`inject-toolbar-key-repeat.mjs`](patches/inject-toolbar-key-repeat.mjs)):
+Key-sending buttons support **hold to repeat** (`inject-toolbar-key-repeat.mjs`):
 holding a stationary pointer for 300 ms sends the first key, then repeats every
 50 ms until release. Normal taps, keyboard activation, and assistive-technology
 clicks still send exactly one key. Moving 10 px before repeat begins cancels the
@@ -433,23 +417,21 @@ hold without sending anything, so swiping the horizontally scrollable toolbar
 does not accidentally type into the terminal.
 
 The `^D` (Ctrl-D / EOF) key is also dropped from the toolbar
-([`inject-remove-ctrl-d.mjs`](patches/inject-remove-ctrl-d.mjs)) — an easy mis-tap
+(`inject-remove-ctrl-d.mjs`) — an easy mis-tap
 that logs you out of the shell.
 
 It also carries a safe-area fix for installing AgentOS as a home-screen **web app
 (PWA)**: launched standalone, the page gets the full screen (the layout sets
 `viewportFit: "cover"`), so the mobile top bar — the `bg-muted` row with the
 hamburger and tab navigation — would render *under* the device status bar / notch
-and overlap it. A build-time codegen step
-([`inject-safe-area-top-fix.mjs`](patches/inject-safe-area-top-fix.mjs)) adds
+and overlap it. `inject-safe-area-top-fix.mjs` adds
 `env(safe-area-inset-top)` to that bar's top padding, so it sits below the status
 bar. On devices/browsers with no inset, `env()` resolves to 0 and nothing changes.
 
 The mobile side drawer (`SwipeSidebar`) had the same problem at the top: it's
 `fixed top-0 bottom-0` and already pads the *bottom* inset, but its header (the
 session list's add-project / add buttons) rendered under the status bar in a PWA.
-([`inject-mobile-drawer-safearea.mjs`](patches/inject-mobile-drawer-safearea.mjs))
-adds a matching `env(safe-area-inset-top)` spacer above the drawer content so the
+`inject-mobile-drawer-safearea.mjs` adds a matching `env(safe-area-inset-top)` spacer above the drawer content so the
 buttons clear the status bar.
 
 Related: upstream sets the PWA `theme_color` to blue (`#3B82F6`) in both the web
@@ -457,7 +439,7 @@ manifest and `viewport.themeColor`. On an **installed** app — most visibly the
 desktop app window — the browser tints the title bar / window chrome with that
 colour, so you get a blue title bar above AgentOS's dark UI. AgentOS defaults to
 the dark theme (`--background: #0a0a0a`), so
-([`inject-pwa-theme-color.mjs`](patches/inject-pwa-theme-color.mjs)) rewrites the
+`inject-pwa-theme-color.mjs` rewrites the
 manifest `theme_color`/`background_color` and `viewport.themeColor` to that
 background, so the installed window chrome and splash match the app.
 
@@ -467,7 +449,7 @@ standalone), which uses the manifest icons, requires a **secure HTTPS origin**
 absolute `/icons/...` paths — a subpath deployment 404s them). Over plain HTTP
 the browser adds a mere *shortcut* and may show a generated letter tile. As
 cheap insurance for that shortcut case,
-([`inject-raster-favicon.mjs`](patches/inject-raster-favicon.mjs)) drops a PNG
+`inject-raster-favicon.mjs` drops a PNG
 `app/icon.png` so Next emits a raster `<link rel="icon">` alongside the SVG one,
 giving launchers that won't rasterise an SVG favicon a real image to fall back
 to. For a proper install, serve AgentOS over HTTPS (reverse proxy, Cloudflare
@@ -509,27 +491,33 @@ docker compose build --build-arg AUTOPILOT_REF=<sha|tag|branch>
 Run `/autopilotagent init` (or the matching skill) in a project to configure it.
 Terminal multi-agent runs: `autopilotagent tasks.json --agent codex`.
 
-## Upstream Version (Pinning)
+## Vendored Source
 
-The build is pinned to a specific upstream AgentOS **commit SHA** via
-`ARG AGENT_OS_REF` in the [`Dockerfile`](Dockerfile), not a moving branch like
-`main`. This is deliberate: the build-time patches above
-([`inject-*.mjs`](Dockerfile)) match the source they were written against by
-*anchoring* on specific upstream code. If upstream refactored a patched file, an
-anchor would no longer match and the build would **fail loudly** rather than
-silently skip the patch — good, but it means an un-pinned `main` could break a
-rebuild at any time.
+[`agent-os/`](agent-os/) is a fork of upstream AgentOS, taken from commit
+[`378069f`](https://github.com/saadnvd1/agent-os/commit/378069fed63708179ae4dd9ddad1a2ce64f37d5d)
+and committed here as a flat snapshot (no upstream git history), with all of
+this repo's downstream patches applied directly to the source. The Dockerfile
+just `COPY`s it in and builds — no network fetch of the upstream repo, no
+build-time codegen, fully self-contained.
 
-To move to a newer upstream version, bump `AGENT_OS_REF` (to a newer SHA, tag, or
-branch) and rebuild:
+This is a **one-time fork**, not a tracked mirror: it does not sync against
+upstream's `main` automatically, and there's currently no plan to rebase it
+forward. If you want to pick up newer upstream changes, you'd re-fork
+manually — diff `agent-os/` against a fresh checkout of upstream `main` (or a
+newer commit) and re-apply the changes you want to keep.
+
+To change something that's baked into the vendored source (the Claude profile
+harness list, terminal font size, JetBrains Mono font, or any of the other UI
+patches described above), edit the relevant file under `agent-os/` directly,
+then rebuild:
 
 ```bash
-docker compose build --build-arg AGENT_OS_REF=main   # or a specific SHA/tag
+docker compose up -d --build
 ```
 
-If an injector's anchor check fails after a bump, that file changed upstream —
-update the matching `inject-*.mjs` script, then rebuild. The ref accepts a commit
-SHA, tag, or branch.
+The original patch scripts that produced this source (for reference, e.g. if
+you want to regenerate a similar patch against a newer fork) are preserved in
+this repo's git history — see the commit that introduced `agent-os/`.
 
 ## Docker Socket (Optional)
 

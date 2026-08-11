@@ -3,20 +3,15 @@ services:
     build:
       context: .
       args:
-        # Bake the configured Claude profiles into the UI's harness list.
-        # Read from .env so it stays the single source of truth.
+        # Extra Claude Code profile names the entrypoint generates claude-a,
+        # claude-b, ... login wrappers for at runtime. Read from .env so it
+        # stays the single source of truth. Note: the UI's session-provider
+        # harness list is baked into the vendored agent-os/ source (a, b, c)
+        # and is NOT driven by this — see README for changing it.
         CLAUDE_PROFILES: ${CLAUDE_PROFILES:-a b c}
-        # Terminal font size (px). Compiled into the client bundle, so changing
-        # these needs a rebuild: `docker compose up -d --build`.
-        TERMINAL_FONT_SIZE: ${TERMINAL_FONT_SIZE:-16}
-        TERMINAL_FONT_SIZE_MOBILE: ${TERMINAL_FONT_SIZE_MOBILE:-13}
         # Install Docker CLI inside the container so agents can talk to the
         # host Docker daemon via the mounted socket. Set to "true" to enable.
         ENABLE_DOCKER: ${ENABLE_DOCKER:-true}
-        # Upstream AgentOS is pinned to a commit SHA in the Dockerfile so our
-        # build-time patches stay in sync. Override here to build a different
-        # commit SHA, tag, or branch (e.g. to try the latest):
-        # AGENT_OS_REF: main
         # Which AI coding agents to bake in (all default to true). Set any to
         # false in .env to skip installing that CLI and shrink the image.
         INSTALL_CLAUDE_CODE: ${INSTALL_CLAUDE_CODE:-true}
@@ -30,9 +25,14 @@ services:
         # Optional components (all default to true). Set false in .env to skip.
         INSTALL_GH: ${INSTALL_GH:-true}                                 # GitHub CLI (gh)
         INSTALL_BUN: ${INSTALL_BUN:-true}                               # Bun JS runtime / package manager
-        INSTALL_JETBRAINS_MONO_FONT: ${INSTALL_JETBRAINS_MONO_FONT:-true} # self-hosted code font
         INSTALL_AUTOPILOT: ${INSTALL_AUTOPILOT:-true}                   # autopilotagent TDD workflow (all agents)
     restart: unless-stopped
+
+    # Run an init process as PID 1 so it reaps zombie children (tmux, gh,
+    # esbuild, etc. spawned by agent sessions) instead of `npm start` leaking
+    # them forever — without this, exited subprocess zombies accumulate
+    # indefinitely and can eventually hit the container's PID limit.
+    init: true
 
     # Optional: pass extra env (e.g. agent API keys) into the container.
     env_file:
@@ -50,9 +50,12 @@ services:
       # can add/remove profiles without touching this file or rebuilding.
 
     ports:
-      # Exposed on all interfaces by default — see the security note in README.
-      # For a safer default, bind to localhost: "127.0.0.1:3011:3011"
-      - "3011:3011"
+      # Host port is configurable via HOST_PORT in .env (default 3011) — handy
+      # if 3011 is already taken on your host. The container always listens on
+      # 3011 internally. Exposed on all interfaces by default — see the
+      # security note in README. For a safer default, bind to localhost:
+      # "127.0.0.1:${HOST_PORT:-3011}:3011"
+      - "${HOST_PORT:-3011}:3011"
 
     volumes:
       # Persist the whole home directory in one volume. Each agent CLI scatters

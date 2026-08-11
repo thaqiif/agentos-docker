@@ -1,0 +1,320 @@
+/**
+ * Provider Registry
+ *
+ * Centralized configuration for all AI coding agent providers.
+ */
+
+export const PROVIDER_IDS = [
+  "claude-a",
+  "claude-b",
+  "claude-c",
+  "claude",
+  "commandcode",
+  "zero",
+  "codex",
+  "opencode",
+  "kilocode",
+  "gemini",
+  "aider",
+  "cursor",
+  "amp",
+  "pi",
+  "omp",
+  "shell",
+] as const;
+
+export type ProviderId = (typeof PROVIDER_IDS)[number];
+
+/**
+ * Provider Definition
+ * Declarative configuration for each agent provider
+ */
+export interface ProviderDefinition {
+  id: ProviderId;
+  name: string;
+  description: string;
+
+  // CLI configuration
+  cli: string; // Command name (e.g., 'claude', 'codex')
+  configDir: string; // Config directory path
+
+  // Auto-approve configuration
+  autoApproveFlag?: string; // Flag to skip permission prompts
+
+  // Session management
+  supportsResume: boolean;
+  supportsFork: boolean;
+  resumeFlag?: string; // Flag for resuming sessions
+
+  // Model configuration
+  modelFlag?: string; // Flag for specifying model
+
+  // Initial prompt configuration
+  // undefined = no support, '' = positional arg, string = flag (e.g., '--prompt')
+  initialPromptFlag?: string;
+
+  // Default arguments
+  defaultArgs?: string[]; // Always passed to CLI
+}
+
+/**
+ * Provider Registry
+ * All supported agent providers with their configurations
+ */
+export const PROVIDERS: ProviderDefinition[] = [
+  {
+    id: "claude-a",
+    name: "Claude (a)",
+    description: "Claude Code — a profile",
+    cli: "claude-a",
+    configDir: "~/.claude-profiles/a",
+    autoApproveFlag: "--dangerously-skip-permissions",
+    supportsResume: true,
+    supportsFork: true,
+    resumeFlag: "--resume",
+    initialPromptFlag: "",
+  },
+  {
+    id: "claude-b",
+    name: "Claude (b)",
+    description: "Claude Code — b profile",
+    cli: "claude-b",
+    configDir: "~/.claude-profiles/b",
+    autoApproveFlag: "--dangerously-skip-permissions",
+    supportsResume: true,
+    supportsFork: true,
+    resumeFlag: "--resume",
+    initialPromptFlag: "",
+  },
+  {
+    id: "claude-c",
+    name: "Claude (c)",
+    description: "Claude Code — c profile",
+    cli: "claude-c",
+    configDir: "~/.claude-profiles/c",
+    autoApproveFlag: "--dangerously-skip-permissions",
+    supportsResume: true,
+    supportsFork: true,
+    resumeFlag: "--resume",
+    initialPromptFlag: "",
+  },
+  {
+    id: "claude",
+    name: "Claude Code",
+    description: "Anthropic's official CLI",
+    cli: "claude",
+    configDir: "~/.claude",
+    autoApproveFlag: "--dangerously-skip-permissions",
+    supportsResume: true,
+    supportsFork: true,
+    resumeFlag: "--resume",
+    modelFlag: undefined, // Claude doesn't expose model flag
+    initialPromptFlag: "", // Positional argument
+  },
+  {
+    id: "commandcode",
+    name: "Command Code",
+    description: "Coding agent that learns your taste",
+    cli: "commandcode",
+    configDir: "~/.commandcode",
+    autoApproveFlag: "--yolo",
+    supportsResume: true,
+    supportsFork: true,
+    resumeFlag: "--resume",
+    modelFlag: "--model",
+    initialPromptFlag: "", // Positional argument
+  },
+  {
+    id: "zero",
+    name: "Zero",
+    description: "Terminal coding agent you own",
+    cli: "zero",
+    configDir: "~/.config/zero",
+    autoApproveFlag: "--skip-permissions-unsafe",
+    supportsResume: true,
+    supportsFork: true,
+    resumeFlag: "--resume",
+    modelFlag: "--model",
+    initialPromptFlag: "", // Positional argument
+  },
+  {
+    id: "codex",
+    name: "Codex",
+    description: "OpenAI's CLI",
+    cli: "codex",
+    configDir: "~/.codex",
+    autoApproveFlag: "--dangerously-bypass-approvals-and-sandbox",
+    supportsResume: false,
+    supportsFork: false,
+    modelFlag: "--model",
+    initialPromptFlag: "", // Positional argument
+  },
+  {
+    id: "opencode",
+    name: "OpenCode",
+    description: "Multi-provider AI CLI",
+    cli: "opencode",
+    configDir: "~/.opencode.json",
+    autoApproveFlag: undefined, // OpenCode manages this via config
+    supportsResume: false,
+    supportsFork: false,
+    initialPromptFlag: "--prompt",
+  },
+  {
+    id: "kilocode",
+    name: "Kilo Code",
+    description: "Kilo's AI coding CLI",
+    cli: "kilo",
+    configDir: "~/.config/kilo/kilo.json",
+    autoApproveFlag: undefined, // Kilo manages this via config
+    supportsResume: true,
+    supportsFork: true,
+    resumeFlag: "--session",
+    initialPromptFlag: "--prompt",
+  },
+  {
+    id: "gemini",
+    name: "Gemini CLI",
+    description: "Google's AI CLI",
+    cli: "gemini",
+    configDir: "~/.gemini",
+    autoApproveFlag: "--yolo",
+    supportsResume: false,
+    supportsFork: false,
+    modelFlag: "-m",
+    initialPromptFlag: "-p",
+  },
+  {
+    id: "aider",
+    name: "Aider",
+    description: "AI pair programming",
+    cli: "aider",
+    configDir: "~/.aider",
+    autoApproveFlag: "--yes",
+    supportsResume: false,
+    supportsFork: false,
+    modelFlag: "--model",
+  },
+  {
+    id: "cursor",
+    name: "Cursor CLI",
+    description: "Cursor's AI agent",
+    cli: "cursor-agent",
+    configDir: "~/.cursor",
+    autoApproveFlag: undefined, // -p requires a prompt, not auto-approve
+    supportsResume: false,
+    supportsFork: false,
+    modelFlag: "--model",
+  },
+  {
+    id: "amp",
+    name: "Amp",
+    description: "Multi-model coding agent",
+    cli: "amp",
+    configDir: "~/.config/amp",
+    autoApproveFlag: "--dangerously-allow-all",
+    supportsResume: false,
+    supportsFork: false,
+    initialPromptFlag: "", // Positional argument
+  },
+  {
+    id: "pi",
+    name: "Pi",
+    description: "Extensible coding harness",
+    cli: "pi",
+    configDir: "~/.pi/agent",
+    supportsResume: false,
+    supportsFork: false,
+    modelFlag: "--model",
+    initialPromptFlag: "", // Positional argument
+  },
+  {
+    id: "omp",
+    name: "Oh My Pi",
+    description: "Enhanced Pi coding harness",
+    cli: "omp",
+    configDir: "~/.omp",
+    autoApproveFlag: undefined,
+    supportsResume: false,
+    supportsFork: false,
+    modelFlag: "--model",
+    initialPromptFlag: "", // Positional argument
+  },
+  {
+    id: "shell",
+    name: "Terminal",
+    description: "Plain shell terminal",
+    cli: "", // No CLI command - just shell
+    configDir: "",
+    autoApproveFlag: undefined,
+    supportsResume: false,
+    supportsFork: false,
+  },
+];
+
+/**
+ * Provider Map
+ * Efficient lookup by provider ID
+ */
+export const PROVIDER_MAP = new Map<ProviderId, ProviderDefinition>(
+  PROVIDERS.map((provider) => [provider.id, provider])
+);
+
+/**
+ * Get provider definition by ID
+ */
+export function getProviderDefinition(id: ProviderId): ProviderDefinition {
+  const provider = PROVIDER_MAP.get(id);
+  if (!provider) {
+    throw new Error(`Unknown provider: ${id}`);
+  }
+  return provider;
+}
+
+/**
+ * Get all provider definitions
+ */
+export function getAllProviderDefinitions(): ProviderDefinition[] {
+  return PROVIDERS;
+}
+
+/**
+ * Check if a string is a valid provider ID
+ */
+export function isValidProviderId(value: string): value is ProviderId {
+  return PROVIDER_MAP.has(value as ProviderId);
+}
+
+/**
+ * Get regex pattern for matching AgentOS-managed tmux session names
+ * Format: {provider}-{uuid}
+ */
+export function getManagedSessionPattern(): RegExp {
+  const providerPattern = PROVIDER_IDS.join("|");
+  return new RegExp(
+    `^(${providerPattern})-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`,
+    "i"
+  );
+}
+
+/**
+ * Get provider ID from a session name (e.g., "claude-abc123" -> "claude")
+ */
+export function getProviderIdFromSessionName(
+  sessionName: string
+): ProviderId | null {
+  for (const id of PROVIDER_IDS) {
+    if (sessionName.startsWith(`${id}-`)) {
+      return id;
+    }
+  }
+  return null;
+}
+
+/**
+ * Extract the UUID from a session name (e.g., "claude-abc123" -> "abc123")
+ */
+export function getSessionIdFromName(sessionName: string): string {
+  const providerPattern = PROVIDER_IDS.join("|");
+  return sessionName.replace(new RegExp(`^(${providerPattern})-`, "i"), "");
+}
