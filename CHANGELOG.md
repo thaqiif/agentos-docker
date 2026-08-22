@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-08-22 (2)
+
+### Added
+
+- Live two-line session rows: title on the first line, live harness status
+  plus terminal tail (`working / needs input / idle / error / stopped` and
+  current pane activity) on the second, fed by the 5-second status poll.
+- Harness-agnostic status detection in `status-detector.ts`: provider parsed
+  from tmux session names; full braille spinner range, cross-harness
+  interrupt hints, broadened consent-prompt patterns, and a universal
+  "quiet session asking a question" waiting heuristic for all 16 supported
+  agent harnesses.
+
+### Changed
+
+- Increased project accordion header spacing between chevron and title.
+- Claude whimsical-verb busy detection now gated to claude-family sessions.
+
+### Removed
+
+- LumifyHub link from the sidebar footer.
+
 ## 2026-08-22
 
 ### Changed

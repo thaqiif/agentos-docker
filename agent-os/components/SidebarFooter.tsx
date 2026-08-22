@@ -28,27 +28,6 @@ export function SidebarFooter() {
             <p>Desktop terminal workspace for AI coding agents</p>
           </TooltipContent>
         </Tooltip>
-        <span className="mx-1.5">·</span>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <a
-              href="https://lumifyhub.io"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-muted-foreground transition-colors"
-            >
-              LumifyHub
-            </a>
-          </TooltipTrigger>
-          <TooltipContent side="top">
-            <p className="flex items-center gap-1.5">
-              Team collaboration with chat and documentation
-              <span className="border-primary/50 bg-primary/10 text-primary border px-1 py-px font-mono text-[9px] tracking-[0.08em] uppercase">
-                Sponsor
-              </span>
-            </p>
-          </TooltipContent>
-        </Tooltip>
       </div>
     </div>
   );

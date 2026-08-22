@@ -16,6 +16,7 @@
 
 import { exec } from "child_process";
 import { promisify } from "util";
+import { getProviderIdFromSessionName } from "@/lib/providers/registry";
 
 const execAsync = promisify(exec);
 
@@ -29,13 +30,31 @@ const CONFIG = {
 } as const;
 
 // Detection patterns
-const BUSY_INDICATORS = [
+
+/** Providers whose busy state uses the whimsical-verbs + token counter UI */
+const CLAUDE_FAMILY = new Set(["claude", "claude-a", "claude-b", "claude-c"]);
+
+/**
+ * Busy indicators shared across terminal agent harnesses.
+ * Kept conservative: only phrases shown while work streams, never in
+ * approval dialogs (those belong to WAITING_PATTERNS).
+ */
+const GENERIC_BUSY_INDICATORS = [
   "esc to interrupt",
   "(esc to interrupt)",
   "· esc to interrupt",
+  "ctrl+c to interrupt",
+  "(ctrl-c to interrupt)",
 ];
 
-const SPINNER_CHARS = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+function hasSpinner(text: string): boolean {
+  for (const ch of text) {
+    const code = ch.codePointAt(0);
+    // Braille spinner block (U+2800–U+28FF) used by most TUI harnesses
+    if (code !== undefined && code >= 0x2800 && code <= 0x28ff) return true;
+  }
+  return false;
+}
 
 const WHIMSICAL_WORDS = [
   "accomplishing",
@@ -130,13 +149,20 @@ const WHIMSICAL_WORDS = [
   "wrangling",
 ];
 
+/**
+ * Waiting patterns: consent/choice prompts. Word-anchored and
+ * question-shaped so transcript prose doesn't false-positive.
+ */
 const WAITING_PATTERNS = [
   /\[Y\/n\]/i,
   /\[y\/N\]/i,
+  /\(y\/n\)/i,
+  /\by\/n\b/i,
   /Allow\?/i,
   /Approve\?/i,
   /Continue\?/i,
   /Press Enter to/i,
+  /Press (enter|return|any key)/i,
   /waiting for input/i,
   /\(yes\/no\)/i,
   /Do you want to/i,
@@ -145,6 +171,11 @@ const WAITING_PATTERNS = [
   /Yes, allow all/i,
   /allow all edits/i,
   /allow all commands/i,
+  // Harness-agnostic consent phrasing (Codex/Aider/Cursor/OpenCode/etc.)
+  /(allow|approve|proceed|confirm|continue|trust)[^\n]{0,60}\?/i,
+  /\bapprove command\b/i,
+  /\bto approve\b/i,
+  /\brun this command\b/i,
 ];
 
 export type SessionStatus = "running" | "waiting" | "idle" | "dead";
@@ -163,30 +194,47 @@ interface SessionCache {
 }
 
 // Content analysis helpers
-function checkBusyIndicators(content: string): boolean {
+function checkBusyIndicators(content: string, providerId: string | null): boolean {
   const lines = content.split("\n");
   // Focus on last 10 lines to avoid old scrollback false positives
   const recentContent = lines.slice(-10).join("\n").toLowerCase();
 
-  // Check text indicators in recent lines
-  if (BUSY_INDICATORS.some((ind) => recentContent.includes(ind))) return true;
+  // Text indicators in recent lines (generic across harnesses)
+  if (GENERIC_BUSY_INDICATORS.some((ind) => recentContent.includes(ind)))
+    return true;
 
-  // Check whimsical words + "tokens" pattern in recent lines
+  // Claude family: whimsical verb + token counter pattern in recent lines
   if (
+    (providerId === null || CLAUDE_FAMILY.has(providerId)) &&
     recentContent.includes("tokens") &&
     WHIMSICAL_WORDS.some((w) => recentContent.includes(w))
   )
     return true;
 
-  // Check spinners in last 5 lines
+  // Spinners in last 5 lines (braille block, shared by most TUI harnesses)
   const last5 = lines.slice(-5).join("");
-  if (SPINNER_CHARS.some((s) => last5.includes(s))) return true;
+  if (hasSpinner(last5)) return true;
 
   return false;
 }
 
-function checkWaitingPatterns(content: string): boolean {
+function checkWaitingPatterns(
+  content: string,
+  allowQuestionHeuristic: boolean
+): boolean {
   const recentLines = content.split("\n").slice(-5).join("\n");
+
+  // Universal heuristic: a quiet session whose last visible line is a
+  // question is asking for input regardless of harness phrasing.
+  // Suppressed right after activity bursts to avoid catching streamed
+  // transcript text mid-output.
+  if (allowQuestionHeuristic) {
+    const lastLine = [...content.split("\n")]
+      .reverse()
+      .find((l) => l.trim().length > 0);
+    if (lastLine && lastLine.trimEnd().endsWith("?")) return true;
+  }
+
   return WAITING_PATTERNS.some((p) => p.test(recentLines));
 }
 
@@ -312,6 +360,7 @@ class SessionStatusDetector {
 
   async getStatus(sessionName: string): Promise<SessionStatus> {
     await this.refreshCache();
+    const providerId = getProviderIdFromSessionName(sessionName);
 
     // Dead check
     if (!this.sessionExists(sessionName)) {
@@ -323,16 +372,19 @@ class SessionStatusDetector {
     const tracker = this.getTracker(sessionName, timestamp);
     const content = await this.capturePane(sessionName);
 
-    // 1. Busy indicators in last 10 lines (highest priority - Claude is actively working)
+    // 1. Busy indicators in last 10 lines (highest priority - harness is actively working)
     // No activity timestamp check needed since we only look at recent terminal lines
-    if (checkBusyIndicators(content)) {
+    if (checkBusyIndicators(content, providerId)) {
       tracker.lastChangeTime = Date.now();
       tracker.acknowledged = false;
       return "running";
     }
 
-    // 2. Waiting patterns (only if not actively running)
-    if (checkWaitingPatterns(content)) return "waiting";
+    // 2. Waiting patterns (only if not actively running). The generic
+    //    "last line is a question" heuristic stays off while the session
+    //    shows fresh activity so streamed transcript text can't trip it.
+    if (checkWaitingPatterns(content, !this.isInCooldown(tracker)))
+      return "waiting";
 
     // 3. Spike detection
     const spikeResult = this.processSpikeDetection(tracker, timestamp);

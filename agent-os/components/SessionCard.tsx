@@ -51,6 +51,8 @@ interface SessionCardProps {
   isActive?: boolean;
   isSummarizing?: boolean;
   tmuxStatus?: TmuxStatus;
+  /** Live tail of the session's terminal (tmux last line) for the status row */
+  statusDetail?: string;
   groups?: Group[];
   projects?: ProjectWithDevServers[];
   // Selection props
@@ -82,12 +84,12 @@ const statusConfig: Record<
   },
   running: {
     color: "text-status-running",
-    label: "running",
+    label: "working",
     icon: <Circle className="h-2 w-2 rounded-full bg-current" />,
   },
   waiting: {
     color: "text-status-waiting animate-status-pulse",
-    label: "waiting",
+    label: "needs input",
     icon: <AlertCircle className="h-3 w-3" />,
   },
   error: {
@@ -102,11 +104,26 @@ const statusConfig: Record<
   },
 };
 
+/** Statuses whose terminal tail is worth surfacing on the status row */
+const DETAIL_STATUSES = new Set<TmuxStatus>(["running", "waiting", "error"]);
+
+function cleanPaneLine(line?: string | null): string | null {
+  if (!line) return null;
+  const cleaned = line
+    .replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, "")
+    .replace(/[\u2500-\u257F]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!cleaned) return null;
+  return cleaned.length > 64 ? `${cleaned.slice(0, 63).trimEnd()}…` : cleaned;
+}
+
 export function SessionCard({
   session,
   isActive,
   isSummarizing,
   tmuxStatus,
+  statusDetail,
   groups = [],
   projects = [],
   isSelected,
@@ -127,6 +144,13 @@ export function SessionCard({
   const timeAgo = getTimeAgo(session.updated_at);
   const status = tmuxStatus || "dead";
   const config = statusConfig[status];
+  // First class is the color; drops the pulse animation class for text use
+  const statusTextColor =
+    status === "running" || status === "waiting" || status === "error"
+      ? config.color.split(" ")[0]
+      : "text-muted-foreground";
+  const liveDetail = cleanPaneLine(statusDetail);
+  const showDetail = DETAIL_STATUSES.has(status) && liveDetail;
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(session.name);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -403,81 +427,110 @@ export function SessionCard({
         </Tooltip>
       )}
 
-      {/* Session name */}
-      {isEditing ? (
-        <input
-          ref={inputRef}
-          type="text"
-          value={editName}
-          onChange={(e) => setEditName(e.target.value)}
-          onBlur={handleRename}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleRename();
-            if (e.key === "Escape") {
-              setEditName(session.name);
-              setIsEditing(false);
-            }
-          }}
-          onClick={(e) => e.stopPropagation()}
-          className="min-w-0 flex-1 border-b border-primary bg-transparent font-mono text-xs outline-none"
-        />
-      ) : (
-        <span className="min-w-0 flex-1 truncate text-sm">{session.name}</span>
-      )}
-
-      {/* Fork indicator */}
-      {session.parent_session_id && (
-        <GitFork className="text-muted-foreground h-3 w-3 flex-shrink-0" />
-      )}
-
-      {/* PR status badge */}
-      {session.pr_status && (
-        <a
-          href={session.pr_url || "#"}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className={cn(
-            "flex flex-shrink-0 items-center gap-0.5 border border-border px-1 font-mono text-[9px] uppercase",
-            session.pr_status === "open" && "text-status-running",
-            session.pr_status === "merged" && "text-primary",
-            session.pr_status === "closed" && "text-status-error"
+      {/* Two-line content: title row + live status row */}
+      <div className="min-w-0 flex-1">
+        {/* Line 1 — session name + inline meta/actions */}
+        <div className="flex items-center gap-2">
+          {isEditing ? (
+            <input
+              ref={inputRef}
+              type="text"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onBlur={handleRename}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleRename();
+                if (e.key === "Escape") {
+                  setEditName(session.name);
+                  setIsEditing(false);
+                }
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className="min-w-0 flex-1 border-b border-primary bg-transparent font-mono text-xs outline-none"
+            />
+          ) : (
+            <span className="min-w-0 flex-1 truncate text-sm leading-4">
+              {session.name}
+            </span>
           )}
-          title={`PR #${session.pr_number}: ${session.pr_status}`}
-        >
-          <GitPullRequest className="h-2.5 w-2.5" />
-          <span>
-            {session.pr_status === "merged"
-              ? "M"
-              : session.pr_status === "closed"
-                ? "X"
-                : "O"}
-          </span>
-        </a>
-      )}
 
-      {/* Time ago */}
-      <span className="hidden flex-shrink-0 font-mono text-[10px] text-muted-foreground group-hover:hidden sm:block">
-        {timeAgo}
-      </span>
+          {/* Fork indicator */}
+          {session.parent_session_id && (
+            <GitFork className="text-muted-foreground h-3 w-3 flex-shrink-0" />
+          )}
 
-      {/* Actions menu (button) */}
-      {hasActions && (
-        <DropdownMenu onOpenChange={handleMenuOpenChange}>
-          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="h-6 w-6 flex-shrink-0 opacity-100 md:h-5 md:w-5 md:opacity-0 md:group-hover:opacity-100"
+          {/* PR status badge */}
+          {session.pr_status && (
+            <a
+              href={session.pr_url || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className={cn(
+                "flex flex-shrink-0 items-center gap-0.5 border border-border px-1 font-mono text-[9px] uppercase",
+                session.pr_status === "open" && "text-status-running",
+                session.pr_status === "merged" && "text-primary",
+                session.pr_status === "closed" && "text-status-error"
+              )}
+              title={`PR #${session.pr_number}: ${session.pr_status}`}
             >
-              <MoreHorizontal className="h-3 w-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" onCloseAutoFocus={(e) => e.preventDefault()} onClick={(e) => e.stopPropagation()}>
-            {renderMenuItems(false)}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
+              <GitPullRequest className="h-2.5 w-2.5" />
+              <span>
+                {session.pr_status === "merged"
+                  ? "M"
+                  : session.pr_status === "closed"
+                    ? "X"
+                    : "O"}
+              </span>
+            </a>
+          )}
+
+          {/* Time ago */}
+          <span className="hidden flex-shrink-0 font-mono text-[10px] text-muted-foreground group-hover:hidden sm:block">
+            {timeAgo}
+          </span>
+
+          {/* Actions menu (button) */}
+          {hasActions && (
+            <DropdownMenu onOpenChange={handleMenuOpenChange}>
+              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="h-6 w-6 flex-shrink-0 opacity-100 md:h-5 md:w-5 md:opacity-0 md:group-hover:opacity-100"
+                >
+                  <MoreHorizontal className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" onCloseAutoFocus={(e) => e.preventDefault()} onClick={(e) => e.stopPropagation()}>
+                {renderMenuItems(false)}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+
+        {/* Line 2 — live harness status */}
+        {!isInSelectMode && (
+          <div className="mt-0.5 flex min-w-0 items-baseline gap-1.5">
+            <span
+              className={cn(
+                "shrink-0 font-mono text-[9px] uppercase tracking-[0.14em]",
+                statusTextColor
+              )}
+            >
+              {config.label}
+            </span>
+            {showDetail && (
+              <span
+                className="truncate font-mono text-[10px] normal-case tracking-normal text-muted-foreground"
+                title={liveDetail ?? undefined}
+              >
+                {liveDetail}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 

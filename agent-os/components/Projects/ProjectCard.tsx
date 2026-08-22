@@ -181,13 +181,13 @@ export function ProjectCard({
     <div
       onClick={handleClick}
       className={cn(
-        "group relative flex cursor-pointer items-center gap-1 overflow-hidden rounded-none px-2 py-1.5",
+        "group relative flex cursor-pointer items-center gap-2 overflow-hidden rounded-none px-2 py-1.5",
         "min-h-[36px] md:min-h-[28px]",
         "hover:bg-accent/50"
       )}
     >
       {/* Expand/collapse toggle */}
-      <button className="flex-shrink-0 p-0.5">
+      <button className="mr-0.5 flex-shrink-0 p-0.5">
         {project.expanded ? (
           <ChevronDown className="text-muted-foreground h-3.5 w-3.5" />
         ) : (
