@@ -87,22 +87,19 @@ const VARIANT_CLASSES = {
 };
 
 const HIGHLIGHT_CLASSES: Record<AIconButtonHighlight, string> = {
-  blue: "text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300",
-  green:
-    "text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300",
-  red: "text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300",
-  orange:
-    "text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300",
-  purple:
-    "text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300",
+  blue: "text-status-info hover:text-status-info/80",
+  green: "text-status-running hover:text-status-running/80",
+  red: "text-status-error hover:text-status-error/80",
+  orange: "text-status-waiting hover:text-status-waiting/80",
+  purple: "text-primary hover:text-primary/80",
 };
 
 const DOT_COLORS: Record<AIconButtonHighlight, string> = {
-  blue: "bg-blue-500 dark:bg-blue-400",
-  green: "bg-green-500 dark:bg-green-400",
-  red: "bg-red-500 dark:bg-red-400",
-  orange: "bg-orange-500 dark:bg-orange-400",
-  purple: "bg-purple-500 dark:bg-purple-400",
+  blue: "bg-status-info",
+  green: "bg-status-running",
+  red: "bg-status-error",
+  orange: "bg-status-waiting",
+  purple: "bg-primary",
 };
 
 export const AIconButton = forwardRef<HTMLButtonElement, AIconButtonProps>(

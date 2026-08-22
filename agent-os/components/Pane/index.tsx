@@ -268,7 +268,7 @@ export const Pane = memo(function Pane({
     <div
       className={cn(
         "flex h-full w-full flex-col overflow-hidden",
-        !isMobile && "rounded-lg shadow-lg shadow-black/10 dark:shadow-black/30"
+        !isMobile && "bg-background"
       )}
       onClick={handleFocus}
     >

@@ -99,7 +99,11 @@ export default function RootLayout({
           position="top-center"
           closeButton
           toastOptions={{
-            className: "!bg-card !border-border !text-foreground !shadow-lg",
+            className:
+              "!border !border-border-strong !bg-popover !text-foreground !rounded-lg !font-mono !text-xs !shadow-md !shadow-black/30",
+            classNames: {
+              description: "!text-muted-foreground",
+            },
           }}
         />
       </body>

@@ -4,6 +4,7 @@ import { Fragment } from "react";
 import { Panel, Group, Separator } from "react-resizable-panels";
 import type { PaneLayout as PaneLayoutType } from "@/lib/panes";
 import { usePanes } from "@/contexts/PaneContext";
+import { cn } from "@/lib/utils";
 
 interface PaneLayoutProps {
   layout: PaneLayoutType;
@@ -30,7 +31,12 @@ function LayoutRenderer({ layout, renderPane }: PaneLayoutProps) {
           </Panel>
           {index < layout.children.length - 1 && (
             <Separator
-              className={` ${orientation === "horizontal" ? "w-0.5 cursor-col-resize" : "h-0.5 cursor-row-resize"} bg-border hover:bg-primary/40 active:bg-primary/60 rounded-full transition-colors`}
+              className={cn(
+                "bg-border hover:bg-primary/60 active:bg-primary relative transition-colors",
+                orientation === "horizontal"
+                  ? "w-px cursor-col-resize before:absolute before:inset-y-0 before:-inset-x-1 before:content-['']"
+                  : "h-px cursor-row-resize before:absolute before:inset-x-0 before:-inset-y-1 before:content-['']"
+              )}
             />
           )}
         </Fragment>

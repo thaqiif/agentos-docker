@@ -78,7 +78,7 @@ export function DesktopSidebar({
 
   if (isPinned) {
     return (
-      <div className="bg-sidebar-background w-60 flex-shrink-0 overflow-hidden shadow-xl shadow-black/10 transition-all duration-200 dark:shadow-black/30">
+      <div className="bg-sidebar-background border-sidebar-border w-60 flex-shrink-0 overflow-hidden border-r transition-all duration-200">
         {content}
       </div>
     );
@@ -95,7 +95,7 @@ export function DesktopSidebar({
         onMouseEnter={revealNow}
         onMouseLeave={scheduleCollapse}
         className={cn(
-          "bg-sidebar-background fixed top-0 left-0 z-40 h-full w-60 overflow-hidden shadow-2xl transition-transform duration-200 ease-out dark:shadow-black/50",
+          "bg-sidebar-background border-sidebar-border fixed top-0 left-0 z-40 h-full w-60 overflow-hidden border-r transition-transform duration-200 ease-out",
           revealed ? "translate-x-0" : "-translate-x-full"
         )}
       >

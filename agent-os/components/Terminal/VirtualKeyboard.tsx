@@ -96,9 +96,7 @@ const Key = memo(function Key({
     <button
       data-key={dataKey ?? char}
       className={cn(
-        "flex h-[44px] flex-1 touch-manipulation items-center justify-center rounded-md text-sm font-medium",
-        "bg-secondary text-secondary-foreground",
-        "active:bg-primary active:text-primary-foreground",
+        "border-border bg-surface-raised text-foreground active:bg-accent flex h-[44px] flex-1 touch-manipulation items-center justify-center border font-mono text-xs",
         "min-w-[32px] select-none",
         className
       )}
@@ -195,13 +193,16 @@ function PasteModal({
       onClick={onClose}
     >
       <div
-        className="bg-background w-full max-w-lg rounded-t-xl p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+        className="bg-popover border-border-strong w-full max-w-lg border p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
-          <span className="text-sm font-medium">Paste text</span>
-          <button onClick={onClose} className="hover:bg-muted rounded-md p-1">
-            <X className="h-5 w-5" />
+          <span className="tech-label">//paste</span>
+          <button
+            onClick={onClose}
+            className="text-muted-foreground hover:bg-accent/50 hover:text-foreground p-1 transition-colors"
+          >
+            <X className="h-4 w-4" />
           </button>
         </div>
         <textarea
@@ -219,14 +220,14 @@ function PasteModal({
           placeholder="Tap here, then long-press to paste..."
           autoFocus
           inputMode="text"
-          className="bg-muted focus:ring-primary h-24 w-full resize-none rounded-lg px-3 py-2 text-sm focus:ring-2 focus:outline-none"
+          className="border-border bg-background placeholder:text-foreground-subtle focus:border-primary focus:ring-primary h-24 w-full resize-none border px-3 py-2 font-mono text-xs focus:ring-1 focus:outline-none"
         />
         <button
           onClick={handleSend}
           disabled={!text}
-          className="bg-primary text-primary-foreground mt-3 flex w-full items-center justify-center gap-2 rounded-lg py-2.5 font-medium disabled:opacity-50"
+          className="border-primary/60 bg-primary/10 text-primary hover:bg-primary/20 mt-3 flex w-full items-center justify-center gap-2 border py-2.5 font-mono text-[10px] tracking-[0.12em] uppercase transition-colors disabled:pointer-events-none disabled:opacity-40"
         >
-          <Send className="h-4 w-4" />
+          <Send className="h-3.5 w-3.5" />
           Send to Terminal
         </button>
       </div>
@@ -295,29 +296,29 @@ function TerminalShortcutsBar({
         onClose={() => setShowPasteModal(false)}
         onPaste={handleModalPaste}
       />
-      <div className="scrollbar-none flex items-center gap-1.5 overflow-x-auto px-2 py-1.5">
+      <div className="border-border scrollbar-none flex items-center gap-1 overflow-x-auto border-b px-2 py-1.5">
         {/* Paste button */}
         <FastButton
           onPress={handlePaste}
-          className="bg-secondary text-secondary-foreground active:bg-primary active:text-primary-foreground flex-shrink-0 touch-manipulation rounded-md px-3 py-1.5 text-xs font-medium select-none"
+          className="border-border bg-surface-raised text-muted-foreground active:bg-accent active:text-foreground flex-shrink-0 touch-manipulation border px-3 py-1.5 font-mono text-[10px] tracking-[0.12em] uppercase select-none"
         >
-          <Clipboard className="h-4 w-4" />
+          <Clipboard className="h-3.5 w-3.5" />
         </FastButton>
         {/* Mic button - always visible when supported */}
         {isMicSupported && onMicToggle && (
           <FastButton
             onPress={onMicToggle}
             className={cn(
-              "flex-shrink-0 touch-manipulation rounded-md px-3 py-1.5 text-xs font-medium select-none",
+              "border-border bg-surface-raised flex-shrink-0 touch-manipulation border px-3 py-1.5 font-mono text-[10px] tracking-[0.12em] uppercase select-none",
               isListening
-                ? "animate-pulse bg-red-500 text-white"
-                : "bg-secondary text-secondary-foreground active:bg-primary active:text-primary-foreground"
+                ? "animate-pulse text-destructive"
+                : "text-muted-foreground active:bg-accent active:text-foreground"
             )}
           >
             {isListening ? (
-              <MicOff className="h-4 w-4" />
+              <MicOff className="h-3.5 w-3.5" />
             ) : (
-              <Mic className="h-4 w-4" />
+              <Mic className="h-3.5 w-3.5" />
             )}
           </FastButton>
         )}
@@ -326,11 +327,10 @@ function TerminalShortcutsBar({
             key={shortcut.label}
             onPress={() => onKeyPress(shortcut.key)}
             className={cn(
-              "flex-shrink-0 touch-manipulation rounded-md px-3 py-1.5 text-xs font-medium select-none",
-              "active:bg-primary active:text-primary-foreground",
+              "border-border bg-surface-raised active:bg-accent active:text-foreground flex-shrink-0 touch-manipulation border px-3 py-1.5 font-mono text-[10px] tracking-[0.12em] uppercase select-none",
               shortcut.highlight
-                ? "bg-red-500/20 text-red-500"
-                : "bg-secondary text-secondary-foreground"
+                ? "text-destructive"
+                : "text-muted-foreground"
             )}
           >
             {shortcut.label}
@@ -450,7 +450,7 @@ export function VirtualKeyboard({
     return (
       <div
         ref={keyboardRef}
-        className="bg-background flex flex-col select-none"
+        className="bg-surface border-border flex flex-col select-none border-t"
       >
         {/* Terminal shortcuts */}
         <TerminalShortcutsBar
@@ -462,25 +462,25 @@ export function VirtualKeyboard({
 
         <div className="flex flex-col gap-1.5 px-2 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
           {/* Mode tabs + common keys */}
-          <div className="flex gap-1.5">
+          <div className="flex gap-1">
             <FastKey
               dataKey="MODE_ABC"
-              className="bg-muted text-muted-foreground active:bg-primary active:text-primary-foreground flex h-[44px] flex-1 touch-manipulation items-center justify-center rounded-md text-xs font-medium select-none"
+              className="border-border bg-surface-raised text-muted-foreground active:bg-accent active:text-foreground flex h-[44px] flex-1 touch-manipulation items-center justify-center border font-mono text-xs uppercase select-none"
             >
               ABC
             </FastKey>
             <FastKey
               dataKey="MODE_NUM"
-              className="bg-muted text-muted-foreground active:bg-primary active:text-primary-foreground flex h-[44px] flex-1 touch-manipulation items-center justify-center rounded-md text-xs font-medium select-none"
+              className="border-border bg-surface-raised text-muted-foreground active:bg-accent active:text-foreground flex h-[44px] flex-1 touch-manipulation items-center justify-center border font-mono text-xs uppercase select-none"
             >
               123
             </FastKey>
             {onImagePick && (
               <FastKey
                 dataKey="IMAGE"
-                className="bg-muted text-muted-foreground active:bg-primary active:text-primary-foreground flex h-[44px] w-[44px] touch-manipulation items-center justify-center rounded-md select-none"
+                className="border-border bg-surface-raised text-muted-foreground active:bg-accent active:text-foreground flex h-[44px] w-[44px] touch-manipulation items-center justify-center border select-none"
               >
-                <ImagePlus className="h-5 w-5" />
+                <ImagePlus className="h-4 w-4" />
               </FastKey>
             )}
             <div className="flex-1" />
@@ -491,45 +491,45 @@ export function VirtualKeyboard({
               onMouseDown={startBackspace}
               onMouseUp={stopBackspace}
               onMouseLeave={stopBackspace}
-              className="bg-muted text-muted-foreground active:bg-primary active:text-primary-foreground flex h-[44px] w-[56px] touch-manipulation items-center justify-center rounded-md text-sm font-medium select-none"
+              className="border-border bg-surface-raised text-muted-foreground active:bg-accent active:text-foreground flex h-[44px] w-[56px] touch-manipulation items-center justify-center border font-mono text-sm select-none"
             >
               ⌫
             </button>
           </div>
 
           {/* Arrow keys + Enter */}
-          <div className="flex gap-1.5">
+          <div className="flex gap-1">
             <FastKey
               dataKey="LEFT"
-              className="bg-muted text-muted-foreground active:bg-primary active:text-primary-foreground flex h-[44px] w-[44px] touch-manipulation items-center justify-center rounded-md select-none"
+              className="border-border bg-surface-raised text-muted-foreground active:bg-accent active:text-foreground flex h-[44px] w-[44px] touch-manipulation items-center justify-center border select-none"
             >
-              <ChevronLeft className="h-6 w-6" />
+              <ChevronLeft className="h-4 w-4" />
             </FastKey>
             <div className="flex flex-col gap-1">
               <FastKey
                 dataKey="UP"
-                className="bg-muted text-muted-foreground active:bg-primary active:text-primary-foreground flex h-[20px] w-[44px] touch-manipulation items-center justify-center rounded-md select-none"
+                className="border-border bg-surface-raised text-muted-foreground active:bg-accent active:text-foreground flex h-[20px] w-[44px] touch-manipulation items-center justify-center border select-none"
               >
-                <ChevronUp className="h-4 w-4" />
+                <ChevronUp className="h-3 w-3" />
               </FastKey>
               <FastKey
                 dataKey="DOWN"
-                className="bg-muted text-muted-foreground active:bg-primary active:text-primary-foreground flex h-[20px] w-[44px] touch-manipulation items-center justify-center rounded-md select-none"
+                className="border-border bg-surface-raised text-muted-foreground active:bg-accent active:text-foreground flex h-[20px] w-[44px] touch-manipulation items-center justify-center border select-none"
               >
-                <ChevronDown className="h-4 w-4" />
+                <ChevronDown className="h-3 w-3" />
               </FastKey>
             </div>
             <FastKey
               dataKey="RIGHT"
-              className="bg-muted text-muted-foreground active:bg-primary active:text-primary-foreground flex h-[44px] w-[44px] touch-manipulation items-center justify-center rounded-md select-none"
+              className="border-border bg-surface-raised text-muted-foreground active:bg-accent active:text-foreground flex h-[44px] w-[44px] touch-manipulation items-center justify-center border select-none"
             >
-              <ChevronRight className="h-6 w-6" />
+              <ChevronRight className="h-4 w-4" />
             </FastKey>
             <div className="flex-1" />
             <Key
               char="⏎"
               dataKey="ENTER"
-              className="bg-primary/30 text-primary w-[68px]"
+              className="border-primary/40 text-primary w-[68px]"
             />
           </div>
         </div>
@@ -542,7 +542,7 @@ export function VirtualKeyboard({
     return (
       <div
         ref={keyboardRef}
-        className="bg-background flex flex-col select-none"
+        className="bg-surface border-border flex flex-col select-none border-t"
       >
         {/* Terminal shortcuts */}
         <TerminalShortcutsBar
@@ -576,10 +576,10 @@ export function VirtualKeyboard({
             <FastKey
               dataKey="SHIFT"
               className={cn(
-                "flex h-[44px] w-[48px] touch-manipulation items-center justify-center rounded-md text-sm font-medium select-none",
+                "flex h-[44px] w-[48px] touch-manipulation items-center justify-center border font-mono text-sm select-none",
                 shifted
-                  ? "bg-primary/30 text-primary active:bg-primary active:text-primary-foreground"
-                  : "bg-muted text-muted-foreground active:bg-primary active:text-primary-foreground"
+                  ? "border-primary/60 bg-primary/10 text-primary active:bg-accent active:text-foreground"
+                  : "border-border bg-surface-raised text-muted-foreground active:bg-accent active:text-foreground"
               )}
             >
               ⇧
@@ -598,7 +598,7 @@ export function VirtualKeyboard({
               onMouseDown={startBackspace}
               onMouseUp={stopBackspace}
               onMouseLeave={stopBackspace}
-              className="bg-muted text-muted-foreground active:bg-primary active:text-primary-foreground flex h-[44px] w-[48px] touch-manipulation items-center justify-center rounded-md text-sm font-medium select-none"
+              className="border-border bg-surface-raised text-muted-foreground active:bg-accent active:text-foreground flex h-[44px] w-[48px] touch-manipulation items-center justify-center border font-mono text-sm select-none"
             >
               ⌫
             </button>
@@ -608,25 +608,25 @@ export function VirtualKeyboard({
           <div className="flex gap-1">
             <FastKey
               dataKey="MODE_QUICK"
-              className="bg-muted text-muted-foreground active:bg-primary active:text-primary-foreground flex h-[44px] w-[56px] touch-manipulation items-center justify-center rounded-md text-xs font-medium select-none"
+              className="border-border bg-surface-raised text-destructive active:bg-accent flex h-[44px] w-[56px] touch-manipulation items-center justify-center border font-mono text-xs uppercase select-none"
             >
               ^C
             </FastKey>
             <FastKey
               dataKey="MODE_NUM"
-              className="bg-muted text-muted-foreground active:bg-primary active:text-primary-foreground flex h-[44px] w-[48px] touch-manipulation items-center justify-center rounded-md text-xs font-medium select-none"
+              className="border-border bg-surface-raised text-muted-foreground active:bg-accent active:text-foreground flex h-[44px] w-[48px] touch-manipulation items-center justify-center border font-mono text-xs uppercase select-none"
             >
               123
             </FastKey>
             <FastKey
               dataKey="SPACE"
-              className="bg-secondary text-muted-foreground active:bg-primary active:text-primary-foreground flex h-[44px] flex-1 touch-manipulation items-center justify-center rounded-md text-sm select-none"
+              className="border-border bg-surface-raised text-muted-foreground active:bg-accent active:text-foreground flex h-[44px] flex-1 touch-manipulation items-center justify-center border font-mono text-xs select-none"
             >
               space
             </FastKey>
             <FastKey
               dataKey="ENTER"
-              className="bg-primary/30 text-primary active:bg-primary active:text-primary-foreground flex h-[44px] w-[68px] touch-manipulation items-center justify-center rounded-md text-sm font-medium select-none"
+              className="border-primary/40 bg-primary/10 text-primary active:bg-accent active:text-foreground flex h-[44px] w-[68px] touch-manipulation items-center justify-center border font-mono text-xs select-none"
             >
               ⏎
             </FastKey>
@@ -638,7 +638,10 @@ export function VirtualKeyboard({
 
   // Num mode - numbers and symbols
   return (
-    <div ref={keyboardRef} className="bg-background flex flex-col select-none">
+    <div
+      ref={keyboardRef}
+      className="bg-surface border-border flex flex-col select-none border-t"
+    >
       {/* Terminal shortcuts */}
       <TerminalShortcutsBar
         onKeyPress={onKeyPress}
@@ -671,19 +674,19 @@ export function VirtualKeyboard({
         <div className="flex gap-1">
           <FastKey
             dataKey="MODE_QUICK"
-            className="bg-muted text-muted-foreground active:bg-primary active:text-primary-foreground flex h-[44px] w-[56px] touch-manipulation items-center justify-center rounded-md text-xs font-medium select-none"
+            className="border-border bg-surface-raised text-destructive active:bg-accent flex h-[44px] w-[56px] touch-manipulation items-center justify-center border font-mono text-xs uppercase select-none"
           >
             ^C
           </FastKey>
           <FastKey
             dataKey="MODE_ABC"
-            className="bg-muted text-muted-foreground active:bg-primary active:text-primary-foreground flex h-[44px] w-[48px] touch-manipulation items-center justify-center rounded-md text-xs font-medium select-none"
+            className="border-border bg-surface-raised text-muted-foreground active:bg-accent active:text-foreground flex h-[44px] w-[48px] touch-manipulation items-center justify-center border font-mono text-xs uppercase select-none"
           >
             ABC
           </FastKey>
           <FastKey
             dataKey="SPACE"
-            className="bg-secondary text-muted-foreground active:bg-primary active:text-primary-foreground flex h-[44px] flex-1 touch-manipulation items-center justify-center rounded-md text-sm select-none"
+            className="border-border bg-surface-raised text-muted-foreground active:bg-accent active:text-foreground flex h-[44px] flex-1 touch-manipulation items-center justify-center border font-mono text-xs select-none"
           >
             space
           </FastKey>
@@ -694,13 +697,13 @@ export function VirtualKeyboard({
             onMouseDown={startBackspace}
             onMouseUp={stopBackspace}
             onMouseLeave={stopBackspace}
-            className="bg-muted text-muted-foreground active:bg-primary active:text-primary-foreground flex h-[44px] w-[48px] touch-manipulation items-center justify-center rounded-md text-sm font-medium select-none"
+            className="border-border bg-surface-raised text-muted-foreground active:bg-accent active:text-foreground flex h-[44px] w-[48px] touch-manipulation items-center justify-center border font-mono text-sm select-none"
           >
             ⌫
           </button>
           <FastKey
             dataKey="ENTER"
-            className="bg-primary/30 text-primary active:bg-primary active:text-primary-foreground flex h-[44px] w-[68px] touch-manipulation items-center justify-center rounded-md text-sm font-medium select-none"
+            className="border-primary/40 bg-primary/10 text-primary active:bg-accent active:text-foreground flex h-[44px] w-[68px] touch-manipulation items-center justify-center border font-mono text-xs select-none"
           >
             ⏎
           </FastKey>

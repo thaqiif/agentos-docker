@@ -155,48 +155,48 @@ function SnippetsModal({
       onClick={onClose}
     >
       <div
-        className="bg-background flex max-h-[70vh] w-full flex-col rounded-t-xl"
+        className="bg-popover border-border-strong flex max-h-[70vh] w-full flex-col border"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="border-border flex items-center justify-between border-b px-4 py-3">
-          <span className="text-sm font-medium">Snippets</span>
-          <div className="flex items-center gap-2">
+        <div className="border-border flex items-center justify-between border-b px-4 py-2.5">
+          <span className="tech-label">//snippets</span>
+          <div className="flex items-center">
             <button
               onClick={() => setIsAdding(!isAdding)}
-              className="hover:bg-muted rounded-md p-1.5"
+              className="text-muted-foreground hover:bg-accent/50 hover:text-foreground p-1.5 transition-colors"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-4 w-4" />
             </button>
             <button
               onClick={onClose}
-              className="hover:bg-muted rounded-md p-1.5"
+              className="text-muted-foreground hover:bg-accent/50 hover:text-foreground p-1.5 transition-colors"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>
 
         {/* Add new snippet form */}
         {isAdding && (
-          <div className="border-border bg-muted/50 border-b px-4 py-3">
+          <div className="border-border bg-surface border-b px-4 py-3">
             <input
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Snippet name..."
-              className="bg-background focus:ring-primary mb-2 w-full rounded-lg px-3 py-2 text-sm focus:ring-2 focus:outline-none"
+              className="border-border bg-background placeholder:text-foreground-subtle focus:border-primary focus:ring-primary mb-2 w-full border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
             />
             <textarea
               value={newContent}
               onChange={(e) => setNewContent(e.target.value)}
               placeholder="Command or text..."
-              className="bg-background focus:ring-primary h-20 w-full resize-none rounded-lg px-3 py-2 font-mono text-sm focus:ring-2 focus:outline-none"
+              className="border-border bg-background placeholder:text-foreground-subtle focus:border-primary focus:ring-primary h-20 w-full resize-none border px-3 py-2 font-mono text-xs focus:ring-1 focus:outline-none"
             />
             <button
               onClick={handleAdd}
               disabled={!newName.trim() || !newContent.trim()}
-              className="bg-primary text-primary-foreground mt-2 w-full rounded-lg py-2 font-medium disabled:opacity-50"
+              className="border-primary/60 bg-primary/10 text-primary hover:bg-primary/20 mt-2 w-full border py-2 font-mono text-[10px] tracking-[0.12em] uppercase transition-colors disabled:pointer-events-none disabled:opacity-40"
             >
               Save Snippet
             </button>
@@ -204,22 +204,22 @@ function SnippetsModal({
         )}
 
         {/* Snippets list */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="scrollbar-thin flex-1 overflow-y-auto">
           {snippets.length === 0 ? (
-            <div className="text-muted-foreground px-4 py-8 text-center text-sm">
+            <div className="text-muted-foreground px-4 py-8 text-center font-mono text-xs">
               No snippets yet. Tap + to add one.
             </div>
           ) : (
             snippets.map((snippet) => (
               <div
                 key={snippet.id}
-                className="border-border active:bg-muted flex items-center gap-2 border-b px-4 py-3"
+                className="border-border active:bg-accent/50 flex items-center gap-2 border-b px-4 py-3"
               >
                 <button
                   onClick={() => handleInsert(snippet.content)}
                   className="min-w-0 flex-1 text-left"
                 >
-                  <div className="truncate text-sm font-medium">
+                  <div className="text-foreground truncate text-xs font-medium">
                     {snippet.name}
                   </div>
                   <div className="text-muted-foreground truncate font-mono text-xs">
@@ -228,9 +228,9 @@ function SnippetsModal({
                 </button>
                 <button
                   onClick={() => handleDelete(snippet.id)}
-                  className="hover:bg-destructive/20 text-muted-foreground hover:text-destructive rounded-md p-2"
+                  className="text-muted-foreground hover:bg-destructive/20 hover:text-destructive p-2 transition-colors"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
             ))
@@ -269,13 +269,16 @@ function PasteModal({
       onClick={onClose}
     >
       <div
-        className="bg-background w-[90%] max-w-md rounded-xl p-4"
+        className="bg-popover border-border-strong w-[90%] max-w-md border p-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
-          <span className="text-sm font-medium">Paste text</span>
-          <button onClick={onClose} className="hover:bg-muted rounded-md p-1">
-            <X className="h-5 w-5" />
+          <span className="tech-label">//paste</span>
+          <button
+            onClick={onClose}
+            className="text-muted-foreground hover:bg-accent/50 hover:text-foreground p-1 transition-colors"
+          >
+            <X className="h-4 w-4" />
           </button>
         </div>
         <textarea
@@ -290,14 +293,14 @@ function PasteModal({
           }}
           placeholder="Tap here, then long-press to paste..."
           autoFocus
-          className="bg-muted focus:ring-primary h-24 w-full resize-none rounded-lg px-3 py-2 text-sm focus:ring-2 focus:outline-none"
+          className="border-border bg-background placeholder:text-foreground-subtle focus:border-primary focus:ring-primary h-24 w-full resize-none border px-3 py-2 font-mono text-xs focus:ring-1 focus:outline-none"
         />
         <button
           onClick={handleSend}
           disabled={!text}
-          className="bg-primary text-primary-foreground mt-3 flex w-full items-center justify-center gap-2 rounded-lg py-2.5 font-medium disabled:opacity-50"
+          className="border-primary/60 bg-primary/10 text-primary hover:bg-primary/20 mt-3 flex w-full items-center justify-center gap-2 border py-2.5 font-mono text-[10px] tracking-[0.12em] uppercase transition-colors disabled:pointer-events-none disabled:opacity-40"
         >
-          <Send className="h-4 w-4" />
+          <Send className="h-3.5 w-3.5" />
           Send to Terminal
         </button>
       </div>
@@ -512,7 +515,7 @@ export function TerminalToolbar({
         onInsert={sendText}
       />
       <div
-        className="bg-background/95 border-border scrollbar-none flex items-center gap-1 overflow-x-auto border-t px-2 py-1.5 backdrop-blur"
+        className="bg-surface border-border scrollbar-none flex items-stretch overflow-x-auto border-t"
         onTouchEnd={(e) => e.stopPropagation()}
       >
         {/* Mic button */}
@@ -526,16 +529,19 @@ export function TerminalToolbar({
               toggleMic();
             }}
             className={cn(
-              "inline-flex items-center justify-center min-w-[3.25rem] flex-shrink-0 rounded-md px-2 py-2.5 text-xs font-medium",
+              "relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 transition-colors",
               isListening
-                ? "animate-pulse bg-red-500 text-white"
-                : "bg-secondary text-secondary-foreground active:bg-primary active:text-primary-foreground"
+                ? "animate-pulse text-destructive"
+                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
             )}
           >
             {isListening ? (
               <MicOff className="h-4 w-4" />
             ) : (
               <Mic className="h-4 w-4" />
+            )}
+            {isListening && (
+              <span className="bg-destructive absolute inset-x-0 bottom-0 h-px" />
             )}
           </button>
         )}
@@ -548,7 +554,7 @@ export function TerminalToolbar({
             e.stopPropagation();
             handlePaste();
           }}
-          className="bg-secondary text-secondary-foreground active:bg-primary active:text-primary-foreground inline-flex items-center justify-center min-w-[3.25rem] flex-shrink-0 rounded-md px-2 py-2.5 text-xs font-medium"
+          className="text-muted-foreground hover:bg-accent/50 hover:text-foreground relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 transition-colors"
         >
           <Clipboard className="h-4 w-4" />
         </button>
@@ -563,13 +569,16 @@ export function TerminalToolbar({
               onSelectModeChange(!selectMode);
             }}
             className={cn(
-              "inline-flex items-center justify-center min-w-[3.25rem] flex-shrink-0 rounded-md px-2 py-2.5 text-xs font-medium",
+              "relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 transition-colors",
               selectMode
-                ? "bg-primary text-primary-foreground"
-                : "bg-secondary text-secondary-foreground active:bg-primary active:text-primary-foreground"
+                ? "text-primary"
+                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
             )}
           >
             <MousePointer2 className="h-4 w-4" />
+            {selectMode && (
+              <span className="bg-primary absolute inset-x-0 bottom-0 h-px" />
+            )}
           </button>
         )}
 
@@ -583,10 +592,10 @@ export function TerminalToolbar({
               handleCopy();
             }}
             className={cn(
-              "inline-flex items-center justify-center min-w-[3.25rem] flex-shrink-0 rounded-md px-2 py-2.5 text-xs font-medium",
+              "relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 transition-colors",
               copyFeedback
-                ? "bg-green-500 text-white"
-                : "bg-secondary text-secondary-foreground active:bg-primary active:text-primary-foreground"
+                ? "text-status-running"
+                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
             )}
           >
             <Copy className="h-4 w-4" />
@@ -602,7 +611,7 @@ export function TerminalToolbar({
               e.stopPropagation();
               onFilePicker();
             }}
-            className="bg-secondary text-secondary-foreground active:bg-primary active:text-primary-foreground inline-flex items-center justify-center min-w-[3.25rem] flex-shrink-0 rounded-md px-2 py-2.5 text-xs font-medium"
+            className="text-muted-foreground hover:bg-accent/50 hover:text-foreground relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 transition-colors"
           >
             <Paperclip className="h-4 w-4" />
           </button>
@@ -616,13 +625,10 @@ export function TerminalToolbar({
             e.stopPropagation();
             setShowSnippetsModal(true);
           }}
-          className="bg-secondary text-secondary-foreground active:bg-primary active:text-primary-foreground inline-flex items-center justify-center min-w-[3.25rem] flex-shrink-0 rounded-md px-2 py-2.5 text-xs font-medium"
+          className="text-muted-foreground hover:bg-accent/50 hover:text-foreground relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 transition-colors"
         >
           <FileText className="h-4 w-4" />
         </button>
-
-        {/* Divider */}
-        <div className="bg-border mx-1 h-6 w-px" />
 
         {/* Shift toggle */}
         <button
@@ -633,13 +639,16 @@ export function TerminalToolbar({
             setShiftActive(!shiftActive);
           }}
           className={cn(
-            "inline-flex items-center justify-center min-w-[3.25rem] flex-shrink-0 rounded-md px-2 py-2.5 text-xs font-medium",
+            "relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 font-mono text-sm transition-colors",
             shiftActive
-              ? "bg-primary text-primary-foreground"
-              : "bg-secondary text-secondary-foreground active:bg-primary active:text-primary-foreground"
+              ? "text-primary"
+              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
           )}
         >
           ⇧
+          {shiftActive && (
+            <span className="bg-primary absolute inset-x-0 bottom-0 h-px" />
+          )}
         </button>
 
         {/* Ctrl modifier toggle - next physical key becomes a control char */}
@@ -651,13 +660,16 @@ export function TerminalToolbar({
             setCtrlActive((v) => !v);
           }}
           className={cn(
-            "inline-flex items-center justify-center min-w-[3.25rem] flex-shrink-0 rounded-md px-2 py-2.5 text-xs font-medium",
+            "relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 font-mono text-sm transition-colors",
             ctrlActive
-              ? "bg-primary text-primary-foreground"
-              : "bg-secondary text-secondary-foreground active:bg-primary active:text-primary-foreground"
+              ? "text-primary"
+              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
           )}
         >
           ⌃
+          {ctrlActive && (
+            <span className="bg-primary absolute inset-x-0 bottom-0 h-px" />
+          )}
         </button>
 
         {/* Alt modifier toggle - next physical key is sent ESC-prefixed (Meta) */}
@@ -669,13 +681,16 @@ export function TerminalToolbar({
             setAltActive((v) => !v);
           }}
           className={cn(
-            "inline-flex items-center justify-center min-w-[3.25rem] flex-shrink-0 rounded-md px-2 py-2.5 text-xs font-medium",
+            "relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 font-mono text-sm transition-colors",
             altActive
-              ? "bg-primary text-primary-foreground"
-              : "bg-secondary text-secondary-foreground active:bg-primary active:text-primary-foreground"
+              ? "text-primary"
+              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
           )}
         >
           ⌥
+          {altActive && (
+            <span className="bg-primary absolute inset-x-0 bottom-0 h-px" />
+          )}
         </button>
 
         {/* Enter key - sends \n if shift active, \r otherwise */}
@@ -711,7 +726,7 @@ export function TerminalToolbar({
             onKeyPress(shiftActive ? "\n" : "\r");
             setShiftActive(false);
           }}
-          className="bg-secondary text-secondary-foreground active:bg-primary active:text-primary-foreground inline-flex items-center justify-center min-w-[3.25rem] flex-shrink-0 rounded-md px-2 py-2.5 text-xs font-medium"
+          className="text-muted-foreground hover:bg-accent/50 hover:text-foreground active:bg-accent active:text-foreground relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 font-mono text-sm transition-colors"
         >
           ↵
         </button>
@@ -744,11 +759,11 @@ export function TerminalToolbar({
               onKeyPress(btn.key);
             }}
             className={cn(
-              "inline-flex items-center justify-center min-w-[3.25rem] flex-shrink-0 rounded-md px-2 py-2.5 text-xs font-medium",
-              "active:bg-primary active:text-primary-foreground",
+              "relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 font-mono text-[10px] tracking-[0.12em] uppercase transition-colors",
+              "hover:bg-accent/50 active:bg-accent active:text-foreground",
               btn.highlight
-                ? "bg-red-500/20 text-red-500"
-                : "bg-secondary text-secondary-foreground"
+                ? "text-destructive"
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             {btn.label}

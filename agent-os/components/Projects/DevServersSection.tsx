@@ -95,7 +95,7 @@ export function DevServersSection({
                   variant="ghost"
                   size="icon-sm"
                   onClick={() => onRemove(ds.id)}
-                  className="text-red-500 hover:text-red-600"
+                  className="hover:bg-destructive/10 hover:text-status-error"
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>

@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { Terminal, GitBranch, Clock, Check } from "lucide-react";
+import { Terminal, GitBranch, Check } from "lucide-react";
 import type { Session } from "@/lib/db";
 import { CodeSearchResults } from "@/components/CodeSearch/CodeSearchResults";
 import { useRipgrepAvailable } from "@/data/code-search";
@@ -22,6 +22,31 @@ interface QuickSwitcherProps {
   onSelectFile?: (file: string, line: number) => void;
   currentSessionId?: string;
   activeSessionWorkingDir?: string;
+}
+
+function ModeCell({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "relative flex h-full items-center border-l border-border px-3 font-mono text-[10px] tracking-[0.14em] uppercase transition-colors",
+        active
+          ? "text-foreground"
+          : "text-muted-foreground hover:text-foreground"
+      )}
+    >
+      {label}
+      {active && <span className="bg-primary absolute inset-x-0 bottom-0 h-px" />}
+    </button>
+  );
 }
 
 /**
@@ -133,65 +158,63 @@ export function QuickSwitcher({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-md">
+      <DialogContent
+        showCloseButton={false}
+        className="gap-0 overflow-hidden border-border-strong bg-popover p-0 shadow-md sm:max-w-md"
+      >
         <DialogHeader className="sr-only">
           <DialogTitle>Switch Session / Search Code</DialogTitle>
         </DialogHeader>
 
-        {/* Mode Toggle - only show if ripgrep is available */}
-        {ripgrepAvailable === true && (
-          <div className="border-border flex gap-2 border-b p-2">
-            <button
-              onClick={() => setMode("sessions")}
-              className={cn(
-                "rounded-full px-3 py-1 text-sm transition-colors",
-                mode === "sessions"
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-accent"
-              )}
-            >
-              Sessions
-            </button>
-            <button
-              onClick={() => setMode("code")}
-              className={cn(
-                "rounded-full px-3 py-1 text-sm transition-colors",
-                mode === "code"
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-accent"
-              )}
-            >
-              Code Search
-            </button>
-          </div>
-        )}
+        {/* Header strip */}
+        <div className="border-border flex h-9 shrink-0 items-center justify-between border-b pl-4">
+          <span className="tech-label">//quick switch</span>
+          {ripgrepAvailable === true && (
+            <div className="flex h-full items-stretch">
+              <ModeCell
+                label="Sessions"
+                active={mode === "sessions"}
+                onClick={() => setMode("sessions")}
+              />
+              <ModeCell
+                label="Code"
+                active={mode === "code"}
+                onClick={() => setMode("code")}
+              />
+            </div>
+          )}
+        </div>
 
         {/* Search Input */}
-        <div className="border-border border-b p-3">
+        <div className="border-border flex items-center gap-2.5 border-b px-4">
+          <span className="text-primary font-mono text-sm select-none">❯</span>
           <Input
             ref={inputRef}
             placeholder={
               mode === "sessions" || !ripgrepAvailable
-                ? "Search sessions..."
-                : "Search code (min 3 chars)..."
+                ? "search sessions"
+                : "search code (min 3 chars)"
             }
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={mode === "sessions" ? handleKeyDown : undefined}
-            className="h-10"
+            className="h-11 border-0 bg-transparent px-0 font-mono text-sm shadow-none focus-visible:ring-0 md:text-sm"
           />
         </div>
 
         {/* Content */}
-        <div className="max-h-[300px] overflow-y-auto py-2">
+        <div className="scrollbar-thin max-h-[300px] overflow-y-auto">
           {mode === "sessions" ? (
             filteredSessions.length === 0 ? (
-              <div className="text-muted-foreground px-4 py-8 text-center text-sm">
-                No sessions found
+              <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
+                <span className="tech-label">//sessions 000</span>
+                <span className="tech-meta">No sessions found</span>
               </div>
             ) : (
               filteredSessions.map((session, index) => {
+                const isSelected = index === selectedIndex;
                 const isCurrent = session.id === currentSessionId;
+                const time = formatTime(session.updated_at);
                 return (
                   <button
                     key={session.id}
@@ -200,54 +223,46 @@ export function QuickSwitcher({
                       onOpenChange(false);
                     }}
                     className={cn(
-                      "flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors",
-                      index === selectedIndex
-                        ? "bg-accent"
-                        : "hover:bg-accent/50",
-                      isCurrent && "bg-primary/10"
+                      "relative flex w-full items-center gap-3 py-2 pr-4 pl-3 text-left transition-colors",
+                      isSelected ? "bg-accent" : "hover:bg-accent/50"
                     )}
                   >
-                    {/* Icon */}
-                    <div
-                      className={cn(
-                        "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md",
-                        session.worktree_path
-                          ? "bg-purple-500/20 text-purple-400"
-                          : "bg-emerald-500/20 text-emerald-400"
-                      )}
-                    >
-                      {session.worktree_path ? (
-                        <GitBranch className="h-4 w-4" />
-                      ) : (
-                        <Terminal className="h-4 w-4" />
-                      )}
-                    </div>
+                    {isSelected && (
+                      <span className="bg-primary absolute inset-y-0 left-0 w-0.5" />
+                    )}
 
-                    {/* Content */}
+                    <span className="w-5 shrink-0 font-mono text-[9px] text-foreground-subtle">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+
+                    {session.worktree_path ? (
+                      <GitBranch className="text-muted-foreground h-3 w-3 shrink-0" />
+                    ) : (
+                      <Terminal className="text-muted-foreground h-3 w-3 shrink-0" />
+                    )}
+
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="truncate font-medium">
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate text-sm leading-tight">
                           {session.name || "Unnamed Session"}
                         </span>
                         {isCurrent && (
-                          <Check className="text-primary h-3.5 w-3.5 flex-shrink-0" />
+                          <Check className="text-primary h-3 w-3 shrink-0" />
                         )}
                       </div>
-                      <div className="text-muted-foreground flex items-center gap-2 text-xs">
+                      <div className="tech-meta mt-1 flex items-center gap-1.5 truncate">
+                        <span>{session.agent_type || "claude"}</span>
+                        <span className="text-foreground-subtle">·</span>
                         <span className="truncate">
                           {session.working_directory?.split("/").pop() || "~"}
                         </span>
-                        <span>•</span>
-                        <span className="capitalize">
-                          {session.agent_type || "claude"}
-                        </span>
+                        {time && (
+                          <>
+                            <span className="text-foreground-subtle">·</span>
+                            <span className="shrink-0">{time}</span>
+                          </>
+                        )}
                       </div>
-                    </div>
-
-                    {/* Time */}
-                    <div className="text-muted-foreground flex flex-shrink-0 items-center gap-1 text-xs">
-                      <Clock className="h-3 w-3" />
-                      <span>{formatTime(session.updated_at)}</span>
                     </div>
                   </button>
                 );
@@ -263,16 +278,15 @@ export function QuickSwitcher({
         </div>
 
         {/* Footer Hint */}
-        <div className="border-border text-muted-foreground flex items-center gap-4 border-t px-4 py-2 text-xs">
-          <span>
-            <kbd className="bg-muted rounded px-1.5 py-0.5">↑↓</kbd> navigate
+        <div className="border-border flex items-center justify-between border-t px-4 py-2">
+          <span className="font-mono text-[10px] tracking-[0.12em] text-foreground-subtle uppercase">
+            ↑↓ navigate ↵ open esc close
           </span>
-          <span>
-            <kbd className="bg-muted rounded px-1.5 py-0.5">↵</kbd> select
-          </span>
-          <span>
-            <kbd className="bg-muted rounded px-1.5 py-0.5">esc</kbd> close
-          </span>
+          {mode === "sessions" && (
+            <span className="tech-label">
+              {String(filteredSessions.length).padStart(2, "0")} sessions
+            </span>
+          )}
         </div>
       </DialogContent>
     </Dialog>

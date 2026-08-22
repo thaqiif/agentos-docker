@@ -7,12 +7,12 @@ import {
 
 export function SidebarFooter() {
   return (
-    <div className="mt-auto px-3 pt-2 pb-3">
+    <div className="border-sidebar-border mt-auto border-t px-3 pt-2 pb-3">
       <div className="flex items-center justify-between">
-        <span className="text-muted-foreground text-xs">Theme</span>
+        <span className="tech-label">//theme</span>
         <ThemeToggle />
       </div>
-      <div className="text-muted-foreground/50 mt-2 text-center text-[10px]">
+      <div className="text-foreground-subtle mt-2 text-center font-mono text-[10px]">
         <Tooltip>
           <TooltipTrigger asChild>
             <a
@@ -43,7 +43,7 @@ export function SidebarFooter() {
           <TooltipContent side="top">
             <p className="flex items-center gap-1.5">
               Team collaboration with chat and documentation
-              <span className="bg-primary/15 text-primary rounded-full px-1.5 py-0.5 text-[10px] font-medium">
+              <span className="border-primary/50 bg-primary/10 text-primary border px-1 py-px font-mono text-[9px] tracking-[0.08em] uppercase">
                 Sponsor
               </span>
             </p>

@@ -1,15 +1,18 @@
 "use client";
 
 import { ShimmeringLoader } from "@/components/ui/skeleton";
-import { Terminal, FolderOpen, GitBranch } from "lucide-react";
+import { FolderOpen, GitBranch } from "lucide-react";
 
 export function TerminalSkeleton() {
   return (
-    <div className="bg-background flex h-full w-full flex-col items-center justify-center gap-3">
-      <Terminal className="text-muted-foreground/50 h-8 w-8 animate-pulse" />
+    <div className="bg-background workbench-grid flex h-full w-full flex-col items-center justify-center gap-3">
+      <span className="tech-label">//terminal</span>
       <div className="flex items-center gap-2">
-        <div className="bg-primary/50 h-2 w-2 animate-pulse rounded-full" />
-        <span className="text-muted-foreground text-sm">Connecting...</span>
+        <div className="bg-primary animate-status-pulse h-1.5 w-1.5" />
+        <span className="text-muted-foreground font-mono text-xs tracking-[0.08em]">
+          CONNECTING
+        </span>
+        <span className="bg-muted-foreground animate-caret-blink h-3 w-1.5" />
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Terminal as TerminalIcon, Clock, RefreshCw } from "lucide-react";
+import { Terminal as TerminalIcon, Clock, RefreshCw, Loader2, GitBranch } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Session } from "@/lib/db";
 
@@ -17,11 +17,11 @@ interface TerminalSnapshot {
 }
 
 const statusColors: Record<string, string> = {
-  running: "text-blue-400 bg-blue-500/20",
-  waiting: "text-yellow-400 bg-yellow-500/20",
-  idle: "text-gray-400 bg-gray-500/20",
-  dead: "text-red-400 bg-red-500/20",
-  error: "text-red-400 bg-red-500/20",
+  running: "text-status-running bg-status-running/10",
+  waiting: "text-status-waiting bg-status-waiting/10 animate-status-pulse",
+  idle: "text-muted-foreground bg-muted",
+  dead: "text-foreground-subtle bg-accent",
+  error: "text-status-error bg-status-error/10",
 };
 
 const statusLabels: Record<string, string> = {
@@ -162,28 +162,28 @@ export function SessionPreviewPopover({
     >
       <div
         className={cn(
-          "w-[720px] overflow-hidden rounded-xl",
-          "bg-zinc-900/95 backdrop-blur-xl",
-          "border border-zinc-700/50",
-          "shadow-2xl shadow-black/50"
+          "w-[720px] overflow-hidden rounded-lg",
+          "bg-popover",
+          "border border-border-strong",
+          "shadow-md"
         )}
       >
         {/* Header */}
-        <div className="border-b border-zinc-800 bg-zinc-800/50 px-4 py-3">
+        <div className="bg-surface border-b border-border px-4 py-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <TerminalIcon className="h-4 w-4 text-zinc-400" />
-              <span className="max-w-[280px] truncate text-sm font-medium text-zinc-100">
+              <TerminalIcon className="h-4 w-4 text-muted-foreground" />
+              <span className="max-w-[280px] truncate text-sm font-medium text-foreground">
                 {session.name}
               </span>
             </div>
             <div className="flex items-center gap-2">
               {isRefreshing && (
-                <RefreshCw className="h-3 w-3 animate-spin text-zinc-500" />
+                <RefreshCw className="text-muted-foreground h-3 w-3 animate-spin" />
               )}
               <span
                 className={cn(
-                  "rounded-full px-2 py-0.5 text-xs font-medium",
+                  "px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em]",
                   statusColors[status]
                 )}
               >
@@ -191,7 +191,13 @@ export function SessionPreviewPopover({
               </span>
             </div>
           </div>
-          <div className="mt-2 flex items-center gap-3 text-xs text-zinc-500">
+          <div className="tech-meta mt-2 flex items-center gap-3">
+            {session.branch_name && (
+              <span className="flex max-w-[220px] items-center gap-1 truncate">
+                <GitBranch className="h-3 w-3" />
+                {session.branch_name}
+              </span>
+            )}
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
               {formatRelativeTime(session.created_at)}
@@ -209,16 +215,16 @@ export function SessionPreviewPopover({
           <div
             ref={terminalRef}
             className={cn(
-              "h-[480px] rounded-lg",
-              "bg-zinc-950 font-mono text-[13px] leading-relaxed",
+              "scrollbar-thin h-[480px]",
+              "bg-background font-mono text-[13px] leading-relaxed",
               "overflow-auto p-3",
-              "border border-zinc-800"
+              "border border-border"
             )}
           >
             {loading ? (
               <div className="flex h-full items-center justify-center">
-                <div className="flex items-center gap-2 text-zinc-500">
-                  <div className="border-t-primary h-4 w-4 animate-spin rounded-full border-2 border-zinc-700" />
+                <div className="text-muted-foreground flex items-center gap-2">
+                  <Loader2 className="h-3 w-3 animate-spin" />
                   <span>Loading preview...</span>
                 </div>
               </div>
@@ -227,7 +233,7 @@ export function SessionPreviewPopover({
                 {snapshot.lines.map((line, i) => (
                   <div
                     key={i}
-                    className="whitespace-pre text-zinc-300"
+                    className="whitespace-pre text-foreground"
                     dangerouslySetInnerHTML={{
                       __html: parseAnsiToHtml(line),
                     }}
@@ -235,7 +241,7 @@ export function SessionPreviewPopover({
                 ))}
               </div>
             ) : (
-              <div className="flex h-full items-center justify-center text-zinc-500">
+              <div className="text-muted-foreground flex h-full items-center justify-center">
                 <span>No output yet</span>
               </div>
             )}
@@ -243,8 +249,10 @@ export function SessionPreviewPopover({
         </div>
 
         {/* Footer hint */}
-        <div className="border-t border-zinc-800 bg-zinc-800/30 px-4 py-2">
-          <div className="text-xs text-zinc-500">Click to connect</div>
+        <div className="bg-surface border-t border-border px-4 py-1.5">
+          <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+            ❯ click to connect
+          </div>
         </div>
       </div>
     </div>

@@ -47,15 +47,18 @@ function ViewModeButton({
         onClick(mode);
       }}
       className={cn(
-        "rounded p-1.5 transition-colors",
+        "relative border-l border-border p-1.5 transition-colors first:border-l-0",
         badge && "flex items-center gap-0.5",
         currentMode === mode
-          ? "bg-secondary text-foreground"
+          ? "bg-accent text-foreground"
           : "text-muted-foreground"
       )}
     >
       <Icon className="h-4 w-4" />
-      {badge}
+      {badge && <span className="font-mono text-[9px]">{badge}</span>}
+      {currentMode === mode && (
+        <span className="bg-primary absolute inset-x-0 bottom-0 h-px" />
+      )}
     </button>
   );
 }

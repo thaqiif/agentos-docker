@@ -7,9 +7,9 @@ import {
   FileIcon,
   FileImage,
   ChevronLeft,
+  ChevronRight,
   Loader2,
   Home,
-  ChevronRight,
   Upload,
   Clipboard,
   Search,
@@ -125,45 +125,38 @@ export function FilePicker({
   return (
     <div className="bg-background fixed inset-0 z-50 flex flex-col">
       {/* Header */}
-      <div className="border-border bg-background/95 flex items-center gap-2 border-b p-3 backdrop-blur-sm">
-        <Button
-          variant="ghost"
-          size="icon-sm"
+      <div className="border-border bg-surface flex h-10 shrink-0 items-center gap-2 border-b px-2">
+        <button
           onClick={onClose}
-          className="h-9 w-9"
+          aria-label="Close picker"
+          className="border-border text-muted-foreground hover:text-foreground hover:bg-accent/50 flex h-full w-8 shrink-0 items-center justify-center transition-colors"
         >
-          <X className="h-5 w-5" />
-        </Button>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-medium">Select File</h3>
-          <p className="text-muted-foreground truncate text-xs">
-            {currentPath}
-          </p>
-        </div>
+          <X className="h-3 w-3" />
+        </button>
+        <span className="tech-label">//file.select</span>
+        <span className="tech-meta ml-auto min-w-0 truncate">
+          {currentPath}
+        </span>
       </div>
 
       {/* Navigation bar */}
-      <div className="border-border flex items-center gap-1 overflow-x-auto border-b px-3 py-2">
-        <Button
-          variant="ghost"
-          size="icon-sm"
+      <div className="border-border scrollbar-none flex h-8 shrink-0 items-stretch overflow-x-auto border-b">
+        <button
           onClick={navigateHome}
-          className="h-8 w-8 shrink-0"
           title="Home"
+          className="border-border text-muted-foreground hover:text-foreground hover:bg-accent/50 flex w-8 shrink-0 items-center justify-center border-r transition-colors"
         >
-          <Home className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon-sm"
+          <Home className="h-3 w-3" />
+        </button>
+        <button
           onClick={navigateUp}
-          className="h-8 w-8 shrink-0"
           title="Go up"
+          className="border-border text-muted-foreground hover:text-foreground hover:bg-accent/50 flex w-8 shrink-0 items-center justify-center border-r transition-colors"
         >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <div className="text-muted-foreground flex items-center gap-0.5 overflow-x-auto text-xs">
-          <span>/</span>
+          <ChevronLeft className="h-3 w-3" />
+        </button>
+        <div className="tech-meta flex min-w-0 items-center gap-0.5 px-2">
+          <span className="text-foreground-subtle">/</span>
           {pathSegments.map((segment, i) => (
             <button
               key={i}
@@ -174,7 +167,7 @@ export function FilePicker({
             >
               <span className="max-w-[100px] truncate">{segment}</span>
               {i < pathSegments.length - 1 && (
-                <ChevronRight className="mx-0.5 h-3 w-3" />
+                <ChevronRight className="mx-0.5 h-3 w-3 opacity-50" />
               )}
             </button>
           ))}
@@ -183,7 +176,7 @@ export function FilePicker({
 
       {/* Upload zone */}
       {isMobile ? (
-        <div className="mx-3 mt-3 flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-2 px-3 py-2">
           <input
             ref={fileInputRef}
             type="file"
@@ -198,52 +191,47 @@ export function FilePicker({
             size="sm"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="gap-2"
+            className="gap-2 font-mono text-[10px] tracking-[0.12em] uppercase"
           >
             {uploading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-3 w-3 animate-spin" />
             ) : (
-              <Upload className="h-4 w-4" />
+              <Upload className="h-3 w-3" />
             )}
-            {uploading ? "Uploading..." : "Upload file"}
+            {uploading ? "uploading" : "upload ❯"}
           </Button>
-          <span className="text-muted-foreground text-xs">
-            or select a file below
-          </span>
+          <span className="tech-meta">or select a file below</span>
         </div>
       ) : (
         <div
           ref={dropZoneRef}
           {...dragHandlers}
           className={cn(
-            "border-border mx-3 mt-3 flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-4 transition-colors",
+            "border-border mx-3 mt-2 flex flex-col items-center justify-center gap-1 border border-dashed p-3 transition-colors",
             isDragging && "border-primary bg-primary/10",
             uploading && "opacity-50"
           )}
         >
           {uploading ? (
             <div className="flex items-center gap-2">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <span className="text-sm">Uploading...</span>
+              <Loader2 className="text-muted-foreground h-3.5 w-3.5 animate-spin" />
+              <span className="tech-label">uploading</span>
             </div>
           ) : isDragging ? (
-            <div className="flex items-center gap-2">
-              <Upload className="text-primary h-5 w-5" />
-              <span className="text-primary text-sm font-medium">
-                Drop file here
-              </span>
-            </div>
+            <span className="text-primary font-mono text-[10px] tracking-[0.12em] uppercase">
+              ❯ drop file here
+            </span>
           ) : (
-            <div className="flex flex-col items-center gap-1 text-center">
-              <div className="text-muted-foreground flex items-center gap-2">
-                <Upload className="h-4 w-4" />
-                <span className="text-sm">Drop file here</span>
+            <>
+              <div className="tech-meta flex items-center gap-2">
+                <Upload className="h-3 w-3" />
+                <span>drop file here</span>
               </div>
-              <div className="text-muted-foreground flex items-center gap-1 text-xs">
+              <div className="text-foreground-subtle flex items-center gap-1 font-mono text-[10px]">
                 <Clipboard className="h-3 w-3" />
                 <span>or paste from clipboard</span>
               </div>
-            </div>
+            </>
           )}
         </div>
       )}
@@ -251,76 +239,85 @@ export function FilePicker({
       {/* Search */}
       <div className="px-3 py-2">
         <div className="relative">
-          <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2" />
+          <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
           <Input
             type="text"
             placeholder="Search files..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-9 pl-9"
+            className="h-8 pl-8 font-mono text-xs"
           />
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="scrollbar-thin flex-1 overflow-y-auto">
         {loading ? (
-          <div className="flex h-32 items-center justify-center">
-            <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+          <div className="flex h-32 items-center justify-center gap-2">
+            <Loader2 className="text-muted-foreground h-3.5 w-3.5 animate-spin" />
+            <span className="tech-label">loading</span>
           </div>
         ) : error ? (
-          <div className="text-muted-foreground flex h-32 flex-col items-center justify-center p-4">
-            <p className="text-center text-sm">{error}</p>
+          <div className="flex h-32 flex-col items-center justify-center gap-2 p-4">
+            <span className="text-destructive tech-label">//error</span>
+            <p className="tech-meta text-center">{error}</p>
             <Button
               variant="outline"
               size="sm"
               onClick={navigateUp}
-              className="mt-2"
+              className="font-mono text-[10px] tracking-[0.12em] uppercase"
             >
-              Go back
+              ❯ go back
             </Button>
           </div>
         ) : filteredFiles.length === 0 ? (
-          <div className="text-muted-foreground flex h-32 items-center justify-center">
-            <p className="text-sm">
-              {search ? "No matching files" : "Empty directory"}
+          <div className="flex h-32 flex-col items-center justify-center gap-2">
+            <p className="tech-label">//empty</p>
+            <p className="tech-meta">
+              {search ? "no matching files" : "empty directory"}
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          <div className="divide-border flex flex-col divide-y">
             {filteredFiles.map((node) => {
               const isImg = isImageFile(node);
               const isDir = node.type === "directory";
-              const isFile = node.type === "file";
 
               return (
                 <button
                   key={node.path}
                   onClick={() => handleItemClick(node)}
                   className={cn(
-                    "flex flex-col items-center gap-2 rounded-lg border p-3 text-center transition-colors",
-                    "hover:bg-muted/50 hover:border-primary/50 cursor-pointer",
-                    isImg && "border-primary/30 bg-primary/5"
+                    "hover:bg-accent/50 flex h-8 w-full items-center gap-2 px-3 text-left transition-colors"
                   )}
                 >
                   {isDir ? (
-                    <Folder className="text-primary/70 h-10 w-10" />
+                    <Folder className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
                   ) : isImg ? (
-                    <div className="bg-muted flex h-10 w-10 items-center justify-center overflow-hidden rounded">
-                      <FileImage className="text-primary h-6 w-6" />
-                    </div>
-                  ) : isFile ? (
-                    <div className="bg-muted/50 flex h-10 w-10 items-center justify-center rounded">
-                      <FileIcon className="text-muted-foreground h-6 w-6" />
-                    </div>
+                    <FileImage className="text-muted-foreground h-3.5 w-3.5 shrink-0 opacity-70" />
+                  ) : node.extension ? (
+                    <FileIcon className="text-muted-foreground h-3.5 w-3.5 shrink-0 opacity-70" />
                   ) : (
-                    <div className="bg-muted/50 flex h-10 w-10 items-center justify-center rounded">
-                      <span className="text-muted-foreground text-xs">
-                        {node.extension?.toUpperCase() || "?"}
-                      </span>
-                    </div>
+                    <span className="text-muted-foreground w-3.5 shrink-0 text-center font-mono text-[9px]">
+                      ?
+                    </span>
                   )}
-                  <span className="w-full truncate text-xs">{node.name}</span>
+                  <span
+                    className={cn(
+                      "min-w-0 flex-1 truncate font-mono text-xs",
+                      isDir ? "text-foreground" : "text-muted-foreground"
+                    )}
+                  >
+                    {node.name}
+                  </span>
+                  {!isDir && node.extension && (
+                    <span className="shrink-0 font-mono text-[9px] tracking-wider text-foreground-subtle uppercase">
+                      {node.extension}
+                    </span>
+                  )}
+                  {isDir && (
+                    <ChevronRight className="text-muted-foreground h-3 w-3 shrink-0" />
+                  )}
                 </button>
               );
             })}
@@ -329,10 +326,8 @@ export function FilePicker({
       </div>
 
       {/* Footer hint */}
-      <div className="border-border border-t p-3 text-center">
-        <p className="text-muted-foreground text-xs">
-          Select any file or navigate into folders
-        </p>
+      <div className="border-border shrink-0 border-t px-3 py-2 text-center">
+        <p className="tech-meta">select any file or navigate into folders</p>
       </div>
     </div>
   );

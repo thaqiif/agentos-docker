@@ -170,27 +170,37 @@ export function DirectoryPicker({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="flex max-h-[80vh] max-w-md flex-col">
         <DialogHeader>
-          <DialogTitle>Select Directory</DialogTitle>
+          <span className="tech-label">//dir.select</span>
+          <DialogTitle className="font-mono text-sm font-medium tracking-[0.16em] uppercase">
+            Select Directory
+          </DialogTitle>
         </DialogHeader>
 
         {/* Navigation bar */}
-        <div className="flex items-center gap-2 border-b pb-2">
-          <Button variant="ghost" size="icon-sm" onClick={goRoot} title="Root">
-            <HardDrive className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon-sm" onClick={goHome} title="Home">
-            <Home className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
+        <div className="border-border scrollbar-none flex h-8 shrink-0 items-stretch overflow-x-auto border-y">
+          <button
+            onClick={goRoot}
+            title="Root"
+            className="border-border text-muted-foreground hover:text-foreground hover:bg-accent/50 flex w-8 shrink-0 items-center justify-center transition-colors"
+          >
+            <HardDrive className="h-3 w-3" />
+          </button>
+          <button
+            onClick={goHome}
+            title="Home"
+            className="border-border text-muted-foreground hover:text-foreground hover:bg-accent/50 flex w-8 shrink-0 items-center justify-center border-l transition-colors"
+          >
+            <Home className="h-3 w-3" />
+          </button>
+          <button
             onClick={goUp}
             disabled={currentPath === "/"}
             title="Go up"
+            className="border-border text-muted-foreground hover:text-foreground hover:bg-accent/50 flex w-8 shrink-0 items-center justify-center border-l transition-colors disabled:pointer-events-none disabled:opacity-30"
           >
-            <ChevronUp className="h-4 w-4" />
-          </Button>
-          <span className="text-muted-foreground flex-1 truncate font-mono text-sm">
+            <ChevronUp className="h-3 w-3" />
+          </button>
+          <span className="tech-meta flex min-w-0 items-center truncate px-2">
             {currentPath}
           </span>
           <Button
@@ -198,36 +208,44 @@ export function DirectoryPicker({
             size="sm"
             onClick={selectCurrentDirectory}
             title="Select this directory"
+            className="ml-auto shrink-0 gap-1 self-center font-mono text-[10px] tracking-[0.12em] uppercase"
           >
-            <FolderInput className="mr-1 h-4 w-4" />
-            Use This
+            <FolderInput className="h-3 w-3" />
+            use this ❯
           </Button>
         </div>
 
         {/* Directory listing */}
-        <div className="max-h-[400px] min-h-[200px] flex-1 overflow-y-auto">
+        <div className="scrollbar-thin max-h-[400px] min-h-[200px] flex-1 overflow-y-auto">
           {loading && directories.length === 0 ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+            <div className="flex items-center justify-center gap-2 py-8">
+              <Loader2 className="text-muted-foreground h-3.5 w-3.5 animate-spin" />
+              <span className="tech-label">loading</span>
             </div>
           ) : error ? (
-            <div className="py-8 text-center text-sm text-red-500">{error}</div>
+            <div className="flex flex-col items-center justify-center gap-2 py-8">
+              <span className="text-destructive tech-label">//error</span>
+              <p className="tech-meta text-center">{error}</p>
+            </div>
           ) : directories.length === 0 ? (
-            <div className="text-muted-foreground py-8 text-center text-sm">
-              No subdirectories
+            <div className="flex flex-col items-center justify-center gap-2 py-8">
+              <p className="tech-label">//empty</p>
+              <p className="tech-meta">no subdirectories</p>
             </div>
           ) : (
-            <DirectoryTree
-              nodes={directories}
-              expanded={expanded}
-              selectedPath={selectedPath}
-              onToggle={toggleExpand}
-              onSelect={handleSelect}
-              onDoubleClick={(path) => {
-                setCurrentPath(path);
-                setExpanded(new Set());
-              }}
-            />
+            <div className="py-1">
+              <DirectoryTree
+                nodes={directories}
+                expanded={expanded}
+                selectedPath={selectedPath}
+                onToggle={toggleExpand}
+                onSelect={handleSelect}
+                onDoubleClick={(path) => {
+                  setCurrentPath(path);
+                  setExpanded(new Set());
+                }}
+              />
+            </div>
           )}
         </div>
 
@@ -264,7 +282,7 @@ function DirectoryTree({
   depth = 0,
 }: DirectoryTreeProps) {
   return (
-    <div>
+    <div className={cn("w-full", depth > 0 && "border-border ml-3 border-l")}>
       {nodes.map((node) => {
         const isExpanded = expanded.has(node.path);
         const isSelected = selectedPath === node.path;
@@ -283,36 +301,40 @@ function DirectoryTree({
                 }
               }}
               className={cn(
-                "flex w-full cursor-pointer items-center gap-2 px-2 py-2 text-left transition-colors",
-                "min-h-[40px] text-sm md:min-h-[32px]",
-                isSelected ? "bg-primary/20 text-primary" : "hover:bg-accent"
+                "relative flex h-7 w-full cursor-pointer items-center gap-1.5 pr-2 pl-2 text-left transition-colors",
+                isSelected ? "bg-accent" : "hover:bg-accent/50"
               )}
-              style={{ paddingLeft: `${depth * 16 + 8}px` }}
             >
+              {isSelected && (
+                <span className="bg-primary absolute inset-y-0 left-0 w-0.5" />
+              )}
+
               {/* Expand/collapse */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggle(node);
                 }}
-                className="hover:bg-muted flex h-5 w-5 flex-shrink-0 items-center justify-center rounded"
+                className="text-muted-foreground hover:text-foreground flex h-4 w-4 flex-shrink-0 items-center justify-center"
               >
                 {isExpanded ? (
-                  <ChevronDown className="text-muted-foreground h-4 w-4" />
+                  <ChevronDown className="h-3 w-3" />
                 ) : (
-                  <ChevronRight className="text-muted-foreground h-4 w-4" />
+                  <ChevronRight className="h-3 w-3" />
                 )}
               </button>
 
               {/* Icon */}
               {isExpanded ? (
-                <FolderOpen className="h-4 w-4 flex-shrink-0 text-blue-400" />
+                <FolderOpen className="text-muted-foreground h-3.5 w-3.5 flex-shrink-0" />
               ) : (
-                <Folder className="h-4 w-4 flex-shrink-0 text-blue-400" />
+                <Folder className="text-muted-foreground h-3.5 w-3.5 flex-shrink-0" />
               )}
 
               {/* Name */}
-              <span className="flex-1 truncate font-medium">{node.name}</span>
+              <span className="flex-1 truncate font-mono text-xs text-foreground">
+                {node.name}
+              </span>
             </div>
 
             {/* Children */}

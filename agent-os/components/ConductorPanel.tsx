@@ -1,16 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { WorkerCard, type WorkerInfo, type WorkerStatus } from "./WorkerCard";
-import { Button } from "./ui/button";
-import {
-  RefreshCw,
-  Users,
-  CheckCircle,
-  Loader2,
-  AlertCircle,
-  XCircle,
-} from "lucide-react";
+import { WorkerCard, type WorkerInfo } from "./WorkerCard";
+import { RefreshCw, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface WorkersSummary {
@@ -156,100 +148,93 @@ export function ConductorPanel({
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+        <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
       </div>
     );
   }
 
   if (workers.length === 0) {
     return (
-      <div className="text-muted-foreground flex h-full flex-col items-center justify-center">
-        <Users className="mb-4 h-12 w-12 opacity-50" />
-        <p className="text-lg font-medium">No workers yet</p>
-        <p className="text-sm">This conductor hasn't spawned any workers.</p>
-        <p className="mt-4 max-w-md text-center text-xs">
-          Use the MCP tools or API to spawn workers. The conductor can delegate
-          tasks to parallel worker sessions.
+      <div className="flex h-full flex-col items-center justify-center gap-2">
+        <p className="tech-label">//workers 000</p>
+        <p className="text-sm text-muted-foreground">No workers spawned.</p>
+        <p className="tech-meta max-w-md text-center">
+          Use the MCP tools or API to spawn parallel worker sessions.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Header with summary */}
-      <div className="flex items-center justify-between border-b p-4">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Users className="text-primary h-5 w-5" />
-            <span className="font-semibold">Workers</span>
-            <span className="text-muted-foreground">
-              ({summary?.total || workers.length})
-            </span>
-          </div>
-
+    <div className="bg-background flex h-full flex-col">
+      {/* Command header */}
+      <div className="border-border flex h-10 shrink-0 items-center justify-between border-b pr-1 pl-3">
+        <div className="flex min-w-0 items-center gap-3 overflow-hidden">
+          <span className="tech-label">//workers</span>
+          <span className="font-mono text-xs text-foreground">
+            {String(summary?.total || workers.length).padStart(2, "0")}
+          </span>
           {summary && (
-            <div className="flex items-center gap-3 text-sm">
+            <div className="hidden items-center gap-3 md:flex">
               {summary.running > 0 && (
-                <div className="flex items-center gap-1 text-green-500">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  <span>{summary.running} running</span>
-                </div>
+                <span className="text-status-running flex items-center gap-1 font-mono text-[9px] tracking-[0.14em] uppercase">
+                  <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                  {summary.running} running
+                </span>
               )}
               {summary.waiting > 0 && (
-                <div className="flex items-center gap-1 text-yellow-500">
-                  <AlertCircle className="h-3 w-3" />
-                  <span>{summary.waiting} waiting</span>
-                </div>
+                <span className="text-status-waiting flex items-center gap-1 font-mono text-[9px] tracking-[0.14em] uppercase">
+                  <span className="h-1.5 w-1.5 animate-status-pulse rounded-full border border-current" />
+                  {summary.waiting} waiting
+                </span>
               )}
               {summary.completed > 0 && (
-                <div className="flex items-center gap-1 text-green-500">
-                  <CheckCircle className="h-3 w-3" />
-                  <span>{summary.completed} done</span>
-                </div>
+                <span className="text-status-running flex items-center gap-1 font-mono text-[9px] tracking-[0.14em] uppercase">
+                  <span className="h-1.5 w-1.5 rounded-full border border-current" />
+                  {summary.completed} done
+                </span>
               )}
               {summary.failed > 0 && (
-                <div className="flex items-center gap-1 text-red-500">
-                  <XCircle className="h-3 w-3" />
-                  <span>{summary.failed} failed</span>
-                </div>
+                <span className="text-status-error flex items-center gap-1 font-mono text-[9px] tracking-[0.14em] uppercase">
+                  <span aria-hidden="true">×</span>
+                  {summary.failed} failed
+                </span>
               )}
             </div>
           )}
         </div>
 
-        <Button
-          variant="ghost"
-          size="icon-sm"
+        <button
           onClick={refresh}
           disabled={refreshing}
+          title="Refresh"
+          className="text-muted-foreground hover:bg-accent hover:text-foreground flex h-7 w-7 shrink-0 items-center justify-center transition-colors disabled:pointer-events-none disabled:opacity-30"
         >
-          <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
-        </Button>
+          <RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} />
+        </button>
       </div>
 
-      {/* Workers grid */}
-      <div className="flex-1 overflow-auto p-4">
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          {workers.map((worker) => (
-            <WorkerCard
-              key={worker.id}
-              worker={worker}
-              isExpanded={expandedWorkers.has(worker.id)}
-              output={workerOutputs[worker.id]}
-              onToggleExpand={() => toggleExpand(worker.id)}
-              onViewOutput={() => {
-                toggleExpand(worker.id);
-                fetchWorkerOutput(worker.id);
-              }}
-              onSendMessage={(msg) => handleSendMessage(worker.id, msg)}
-              onKill={() => handleKillWorker(worker.id)}
-              onAttach={
-                onAttachToWorker ? () => onAttachToWorker(worker.id) : undefined
-              }
-            />
-          ))}
-        </div>
+      {/* Workers ledger */}
+      <div className="scrollbar-thin divide-border flex-1 divide-y overflow-auto">
+        {workers.map((worker, i) => (
+          <WorkerCard
+            key={worker.id}
+            worker={worker}
+            index={i}
+            isExpanded={expandedWorkers.has(worker.id)}
+            output={workerOutputs[worker.id]}
+            onToggleExpand={() => toggleExpand(worker.id)}
+            onViewOutput={() => {
+              toggleExpand(worker.id);
+              fetchWorkerOutput(worker.id);
+            }}
+            onSendMessage={(msg) => handleSendMessage(worker.id, msg)}
+            onKill={() => handleKillWorker(worker.id)}
+            onAttach={
+              onAttachToWorker ? () => onAttachToWorker(worker.id) : undefined
+            }
+          />
+        ))}
       </div>
     </div>
   );

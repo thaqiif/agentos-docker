@@ -212,7 +212,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
               <span>Select text below, then tap Copy</span>
               <button
                 onClick={() => setSelectMode(false)}
-                className="bg-primary-foreground/20 rounded px-2 py-0.5 text-xs"
+                className="bg-primary-foreground/20 rounded px-2 py-0.5 font-mono text-xs"
               >
                 Done
               </button>
@@ -232,7 +232,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
         {/* Drag and drop overlay */}
         {isDragging && (
           <div className="bg-primary/10 pointer-events-none absolute inset-0 z-30 flex items-center justify-center">
-            <div className="border-primary bg-background/90 rounded-lg border px-6 py-4 text-center shadow-lg">
+            <div className="border-primary bg-background/90 rounded-lg border px-6 py-4 text-center">
               <Upload className="text-primary mx-auto mb-2 h-8 w-8" />
               <p className="text-sm font-medium">Drop file to upload</p>
             </div>
@@ -242,7 +242,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
         {/* Upload in progress overlay */}
         {isUploading && (
           <div className="bg-background/50 pointer-events-none absolute inset-0 z-30 flex items-center justify-center">
-            <div className="bg-background rounded-lg border px-6 py-4 text-center shadow-lg">
+            <div className="bg-background rounded-lg border px-6 py-4 text-center">
               <Loader2 className="text-primary mx-auto mb-2 h-6 w-6 animate-spin" />
               <p className="text-sm">Uploading file...</p>
             </div>
@@ -253,7 +253,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
         {!isMobile && showImageButton && (
           <button
             onClick={() => setShowFilePicker(true)}
-            className="bg-secondary hover:bg-accent absolute top-3 right-3 z-40 flex h-9 w-9 items-center justify-center rounded-full shadow-lg transition-all"
+            className="bg-secondary hover:bg-accent border-border-strong absolute top-3 right-3 z-40 flex h-9 w-9 items-center justify-center rounded-lg border transition-colors"
             title="Attach file"
           >
             <Paperclip className="h-4 w-4" />
@@ -287,15 +287,18 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
         {/* Connection status overlays */}
         {connectionState === "connecting" && (
           <div className="bg-background absolute inset-0 z-20 flex flex-col items-center justify-center gap-3">
-            <div className="bg-primary h-2 w-2 animate-pulse rounded-full" />
-            <span className="text-muted-foreground text-sm">Connecting...</span>
+            <div className="bg-primary h-1.5 w-1.5 animate-status-pulse rounded-full" />
+            <span className="text-muted-foreground font-mono text-xs tracking-[0.14em] uppercase">
+              Connecting
+              <span className="animate-caret-blink">_</span>
+            </span>
           </div>
         )}
 
         {connectionState === "reconnecting" && (
-          <div className="absolute top-4 left-4 flex items-center gap-2 rounded bg-amber-500/20 px-2 py-1 text-xs text-amber-400">
-            <div className="h-2 w-2 animate-pulse rounded-full bg-amber-500" />
-            Reconnecting...
+          <div className="bg-background/80 absolute top-4 left-4 flex items-center gap-2 border px-2 py-1 font-mono text-[10px] tracking-[0.14em] uppercase text-status-waiting">
+            <div className="bg-status-waiting h-1.5 w-1.5 animate-pulse" />
+            Reconnecting
           </div>
         )}
 
@@ -309,7 +312,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
             <span className="text-foreground text-sm font-medium">
               Connection lost
             </span>
-            <span className="bg-primary text-primary-foreground rounded-full px-4 py-2 text-sm font-medium">
+            <span className="bg-primary text-primary-foreground rounded-lg px-4 py-2 font-mono text-[10px] tracking-[0.14em] uppercase">
               Tap to reconnect
             </span>
           </button>

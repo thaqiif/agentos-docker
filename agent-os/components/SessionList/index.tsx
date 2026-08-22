@@ -15,9 +15,8 @@ import { GroupSection } from "./GroupSection";
 import { KillAllConfirm } from "./KillAllConfirm";
 import { useSessionListMutations } from "./hooks/useSessionListMutations";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
 import { ProjectSectionSkeleton } from "@/components/ui/skeleton";
-import { Plus, FolderPlus, Loader2, AlertCircle } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import type { Session } from "@/lib/db";
 import type { ProjectWithRepositories } from "@/lib/projects";
 import { useViewport } from "@/hooks/useViewport";
@@ -181,35 +180,36 @@ export function SessionList({
 
       {/* Summarizing indicator */}
       {mutations.summarizingSessionId && (
-        <div className="bg-primary/10 mx-4 mb-2 flex items-center gap-2 rounded-lg p-2 text-sm">
-          <Loader2 className="text-primary h-4 w-4 animate-spin" />
-          <span className="text-primary">Generating summary...</span>
+        <div className="border-primary/20 bg-primary/10 mx-4 mb-2 flex items-center gap-2 border-l-2 px-2 py-1.5">
+          <Loader2 className="text-primary h-3 w-3 animate-spin" />
+          <span className="text-primary font-mono text-[10px] uppercase tracking-[0.12em]">
+            Generating summary...
+          </span>
         </div>
       )}
 
       {/* Session list */}
       <ScrollArea className="w-full flex-1">
-        <div className="max-w-full space-y-0.5 px-1.5 py-1">
+        <div className="scrollbar-thin max-w-full px-1.5 py-1">
           {/* Loading state */}
           {isInitialLoading && <ProjectSectionSkeleton count={2} />}
 
           {/* Error state */}
           {hasError && !isInitialLoading && (
-            <div className="flex flex-col items-center justify-center px-4 py-12">
-              <AlertCircle className="text-destructive/50 mb-3 h-10 w-10" />
-              <p className="text-destructive mb-2 text-sm">
-                Failed to load sessions
+            <div className="flex flex-col items-start justify-center px-4 py-12">
+              <span className="tech-label">//error</span>
+              <p className="mt-2 font-mono text-xs text-status-error">
+                failed to load sessions
               </p>
-              <p className="text-muted-foreground mb-4 text-xs">
+              <p className="mb-3 font-mono text-[11px] text-muted-foreground">
                 {sessionsError?.message || "Unknown error"}
               </p>
-              <Button
-                variant="outline"
+              <button
                 onClick={mutations.handleRefresh}
-                className="gap-2"
+                className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:text-foreground"
               >
-                Retry
-              </Button>
+                ❯ retry
+              </button>
             </div>
           )}
 
@@ -218,18 +218,17 @@ export function SessionList({
             !hasError &&
             sessions.length === 0 &&
             projects.length <= 1 && (
-              <div className="flex flex-col items-center justify-center px-4 py-12">
-                <FolderPlus className="text-muted-foreground/50 mb-3 h-10 w-10" />
-                <p className="text-muted-foreground mb-4 text-center text-sm">
+              <div className="flex flex-col items-start justify-center px-4 py-12">
+                <span className="tech-label">//sessions 000</span>
+                <p className="mt-2 mb-3 text-xs text-muted-foreground">
                   Create a project to organize your sessions
                 </p>
-                <Button
+                <button
                   onClick={() => setShowNewProjectDialog(true)}
-                  className="gap-2"
+                  className="font-mono text-[10px] uppercase tracking-[0.12em] text-primary transition-colors hover:text-primary/80"
                 >
-                  <Plus className="h-4 w-4" />
-                  New Project
-                </Button>
+                  ❯ new project
+                </button>
               </div>
             )}
 

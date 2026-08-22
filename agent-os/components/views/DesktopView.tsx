@@ -80,12 +80,17 @@ export function DesktopView({
 
       {/* Main content */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Header */}
-        <header className="flex items-center justify-between px-4 py-2">
-          <div className="flex items-center gap-2">
+        {/* Command strip */}
+        <header className="border-border flex h-11 items-center justify-between gap-3 border-b pr-2 pl-1">
+          <div className="flex min-w-0 items-center gap-1">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon-sm" onClick={togglePin}>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="h-8 w-8"
+                  onClick={togglePin}
+                >
                   {isPinned ? (
                     <PanelLeftClose className="h-4 w-4" />
                   ) : (
@@ -99,19 +104,22 @@ export function DesktopView({
             </Tooltip>
 
             {activeSession && (
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{activeSession.name}</span>
+              <div className="flex min-w-0 items-center gap-2.5 border-l border-border pl-3">
+                <span className="tech-label hidden shrink-0 md:inline">
+                  //session
+                </span>
+                <span className="truncate text-sm font-medium">
+                  {activeSession.name}
+                </span>
                 {activeSession.tmux_name && (
-                  <span className="text-muted-foreground text-xs">
-                    {activeSession.tmux_name}
+                  <span className="tech-meta hidden shrink-0 lg:inline">
+                    tmux {activeSession.tmux_name}
                   </span>
                 )}
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      className="h-6 w-6"
+                    <button
+                      className="tech-meta border-border hover:border-border-strong hover:text-foreground flex shrink-0 items-center gap-1 border px-1.5 py-0.5 transition-colors"
                       onClick={async () => {
                         try {
                           if (navigator.clipboard) {
@@ -137,11 +145,14 @@ export function DesktopView({
                       }}
                     >
                       {copiedSessionId ? (
-                        <Check className="h-3 w-3 text-green-500" />
+                        <Check className="text-status-running h-3 w-3" />
                       ) : (
                         <Copy className="h-3 w-3" />
                       )}
-                    </Button>
+                      <span className="hidden xl:inline">
+                        id {activeSession.id.slice(0, 8)}
+                      </span>
+                    </button>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Copy session ID for orchestration</p>
@@ -154,16 +165,16 @@ export function DesktopView({
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
+                <button
                   onClick={() => setShowQuickSwitcher(true)}
+                  className="border-border text-muted-foreground hover:border-border-strong hover:text-foreground flex h-7 items-center gap-1.5 border px-2 font-mono text-[10px] tracking-[0.1em] transition-colors"
                 >
-                  <Command className="h-4 w-4" />
-                </Button>
+                  <Command className="h-3 w-3" />
+                  <span className="hidden sm:inline">⌘K</span>
+                </button>
               </TooltipTrigger>
               <TooltipContent>
                 <p>Quick switch</p>
@@ -185,8 +196,12 @@ export function DesktopView({
                 if (session) attachToSession(session);
               }}
             />
-            <Button size="sm" onClick={() => setShowNewSessionDialog(true)}>
-              <Plus className="mr-1 h-4 w-4" />
+            <Button
+              size="sm"
+              className="h-7 font-mono text-[10px] tracking-[0.12em] uppercase"
+              onClick={() => setShowNewSessionDialog(true)}
+            >
+              <Plus className="mr-1 h-3.5 w-3.5" />
               New Session
             </Button>
           </div>

@@ -80,14 +80,59 @@
   --color-card-foreground: hsl(var(--card-foreground));
   --color-card: hsl(var(--card));
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  /* ── Workbench surfaces ────────────────────────────────────────────── */
+  --color-surface: hsl(var(--surface));
+  --color-surface-raised: hsl(var(--surface-raised));
+  --color-border-strong: hsl(var(--border-strong));
+  --color-foreground-subtle: hsl(var(--foreground-subtle));
+
+  /* ── Status semantics ──────────────────────────────────────────────── */
+  --color-status-running: hsl(var(--status-running));
+  --color-status-waiting: hsl(var(--status-waiting));
+  --color-status-info: hsl(var(--status-info));
+  --color-status-error: hsl(var(--status-error));
+
+  /* ── Command accent palette (constant across themes) ───────────────── */
+  --color-command-burple: #8c4edd;
+  --color-command-purple: #c7b8f5;
+  --color-command-peach: #f6d1ac;
+  --color-command-teal: #a7eadc;
+  --color-command-blue: #afcdf6;
+  --color-command-coral: #f5b6a6;
+  --color-command-pink: #f3b5d2;
+
+  /* Geometric edge language: 0 / 1 / 2 / 4px only */
+  --radius-sm: 0px;
+  --radius-md: 1px;
+  --radius-lg: 2px;
+  --radius-xl: 4px;
+
+  /* Motion temperament: quick, precise, no bounce */
+  --animate-status-pulse: status-pulse 1.6s ease-in-out infinite;
+  --animate-caret-blink: caret-blink 1.1s step-end infinite;
+
+  @keyframes status-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.35;
+    }
+  }
+  @keyframes caret-blink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
+  }
 }
 
 :root {
-  --radius: 0.625rem;
+  --radius: 2px;
   /* Mobile viewport height - JS hook sets this dynamically for keyboard */
   --app-height: 100vh;
   --app-height: 100dvh;
@@ -100,6 +145,80 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.32);
+    color: hsl(var(--foreground));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   WORKBENCH UTILITIES — Command Code × AgentOS technical language
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Architectural background grid for shell/empty surfaces only.
+   Never place behind terminal or editor canvases. */
+@utility workbench-grid {
+  background-image: linear-gradient(
+      to right,
+      var(--grid-line) 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* Technical micro-label: //sections, indexes, metadata headers */
+@utility tech-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: hsl(var(--foreground-subtle));
+}
+
+/* Mono metadata text: paths, branches, ports, ids, timestamps */
+@utility tech-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Thin workbench scrollbars — square thumbs, no pills */
+.scrollbar-thin,
+.workbench-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border-strong)) transparent;
+}
+.scrollbar-thin::-webkit-scrollbar,
+.workbench-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scrollbar-thin::-webkit-scrollbar-track,
+.workbench-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb,
+.workbench-scroll::-webkit-scrollbar-thumb {
+  background: hsl(var(--border-strong));
+  border-radius: 0;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover,
+.workbench-scroll::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--foreground-subtle));
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -176,7 +295,7 @@ body {
   }
   .xterm-viewport::-webkit-scrollbar-thumb {
     background: hsl(var(--muted-foreground) / 0.3);
-    border-radius: 2px;
+    border-radius: 0;
   }
 }
 

@@ -58,14 +58,12 @@ const VARIANT_CLASSES: Record<ABadgeVariant, string> = {
   secondary: "",
   destructive: "",
   outline: "",
-  new: "border-transparent bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400",
-  beta: "border-transparent bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400",
-  pro: "border-transparent bg-violet-500/15 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400",
-  waiting:
-    "border-transparent bg-yellow-500/15 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400",
-  running:
-    "border-transparent bg-green-500/15 text-green-600 dark:bg-green-500/20 dark:text-green-400",
-  idle: "border-transparent bg-gray-500/15 text-gray-600 dark:bg-gray-500/20 dark:text-gray-400",
+  new: "border-status-running/40 bg-status-running/10 text-status-running",
+  beta: "border-status-waiting/40 bg-status-waiting/10 text-status-waiting",
+  pro: "border-primary/50 bg-primary/10 text-primary",
+  waiting: "border-status-waiting/40 bg-status-waiting/10 text-status-waiting",
+  running: "border-status-running/40 bg-status-running/10 text-status-running",
+  idle: "border-border bg-secondary text-muted-foreground",
 };
 
 const BASE_VARIANT_MAP: Record<

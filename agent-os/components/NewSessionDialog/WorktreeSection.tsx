@@ -1,4 +1,5 @@
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -30,38 +31,43 @@ export function WorktreeSection({
   if (!gitInfo.isGitRepo) return null;
 
   return (
-    <div className="bg-accent/40 space-y-3 rounded-lg p-3">
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
+    <div className="border-t border-border pt-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="tech-label">//worktree</span>
+          <label
+            htmlFor="useWorktree"
+            className="cursor-pointer text-sm text-foreground"
+          >
+            Create isolated worktree
+          </label>
+        </div>
+        <Switch
           id="useWorktree"
           checked={useWorktree}
-          onChange={(e) => onUseWorktreeChange(e.target.checked)}
-          className="border-border bg-background accent-primary h-4 w-4 rounded"
+          onCheckedChange={onUseWorktreeChange}
         />
-        <label
-          htmlFor="useWorktree"
-          className="cursor-pointer text-sm font-medium"
-        >
-          Create isolated worktree
-        </label>
       </div>
 
       {useWorktree && (
-        <div className="space-y-3 pl-6">
-          <div className="space-y-1">
-            <label className="text-muted-foreground text-xs">
+        <div className="mt-3 space-y-3 border-l border-border pl-4">
+          <div className="space-y-1.5">
+            <label
+              htmlFor="worktree-feature-name"
+              className="tech-label block"
+            >
               Feature Name
             </label>
             <Input
+              id="worktree-feature-name"
               value={featureName}
               onChange={(e) => onFeatureNameChange(e.target.value)}
               placeholder="add-dark-mode"
-              className="h-8 text-sm"
+              className="h-8 font-mono text-sm"
             />
             {featureName && (
-              <p className="text-muted-foreground text-xs">
-                Branch: feature/
+              <p className="tech-meta">
+                branch: feature/
                 {featureName
                   .toLowerCase()
                   .replace(/[^a-z0-9]+/g, "-")
@@ -70,16 +76,16 @@ export function WorktreeSection({
               </p>
             )}
           </div>
-          <div className="space-y-1">
-            <label className="text-muted-foreground text-xs">Base Branch</label>
+          <div className="space-y-1.5">
+            <label className="tech-label block">Base Branch</label>
             <Select value={baseBranch} onValueChange={onBaseBranchChange}>
-              <SelectTrigger className="h-8 text-sm">
+              <SelectTrigger className="h-8 font-mono text-sm">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="scrollbar-thin">
                 {gitInfo.branches.map((branch) => (
                   <SelectItem key={branch} value={branch}>
-                    {branch}
+                    <span className="font-mono text-xs">{branch}</span>
                   </SelectItem>
                 ))}
               </SelectContent>

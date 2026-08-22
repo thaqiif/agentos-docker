@@ -70,7 +70,7 @@ export function DirectoryField({
                 key={dir}
                 type="button"
                 onClick={() => onChange(dir)}
-                className="bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground max-w-[200px] truncate rounded-full px-2 py-0.5 text-xs transition-colors"
+                className="bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground max-w-[200px] truncate rounded px-2 py-0.5 font-mono text-[11px] transition-colors"
                 title={dir}
               >
                 {dir.replace(/^~\//, "").split("/").pop() || dir}

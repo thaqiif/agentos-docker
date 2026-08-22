@@ -149,14 +149,14 @@ export function ProjectsSection({
   };
 
   return (
-    <div className="space-y-1">
+    <div className="divide-border divide-y">
       {projects.map((project) => {
         const projectSessions = sessionsByProject[project.id] || [];
         const runningServers = getProjectRunningServers(project.id);
         const projectDevServers = getProjectDevServers(project.id);
 
         return (
-          <div key={project.id} className="space-y-0.5">
+          <div key={project.id} className="space-y-0.5 py-0.5 first:pt-0">
             {/* Project header */}
             <ProjectCard
               project={project}
@@ -195,7 +195,7 @@ export function ProjectsSection({
 
             {/* Project contents when expanded */}
             {project.expanded && (
-              <div className="border-border/30 ml-3 space-y-px border-l pl-1.5">
+              <div className="border-border ml-3 space-y-px border-l pl-1.5">
                 {/* Dev servers for this project */}
                 {projectDevServers.length > 0 && (
                   <div className="space-y-px pb-0.5">
@@ -224,9 +224,7 @@ export function ProjectsSection({
                 {/* Project sessions */}
                 {projectSessions.length === 0 &&
                 projectDevServers.length === 0 ? (
-                  <p className="text-muted-foreground px-2 py-2 text-xs">
-                    No sessions yet
-                  </p>
+                  <p className="tech-label px-2 py-2">//sessions 000</p>
                 ) : projectSessions.length === 0 ? null : (
                   projectSessions.map((session) => {
                     const workers = workersByConduct[session.id] || [];
@@ -298,7 +296,7 @@ export function ProjectsSection({
                           </div>
                           {/* Workers badge */}
                           {hasWorkers && (
-                            <span className="bg-primary/20 text-primary flex-shrink-0 rounded-full px-1.5 py-0.5 text-xs">
+                            <span className="flex-shrink-0 border border-primary/40 px-1 font-mono text-[9px] leading-4 text-primary">
                               {workers.length}
                             </span>
                           )}
@@ -306,7 +304,7 @@ export function ProjectsSection({
 
                         {/* Nested workers */}
                         {hasWorkers && (
-                          <div className="border-border/30 ml-3 space-y-px border-l pl-1.5">
+                          <div className="border-border ml-3 space-y-px border-l pl-1.5">
                             {workers.map((worker) => (
                               <SessionCard
                                 key={worker.id}

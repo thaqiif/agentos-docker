@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import { Plus, ArrowRight } from "lucide-react";
 import type { ProjectWithDevServers } from "@/lib/projects";
 import type { AgentType } from "@/lib/providers";
 
@@ -44,13 +44,20 @@ export function ProjectSelector({
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium">Project</label>
+      <div className="flex items-center gap-2">
+        <span className="tech-label">04</span>
+        <label className="tech-label" htmlFor="new-session-project">
+          Project
+        </label>
+      </div>
       {showNewProject ? (
         <div className="flex gap-2">
           <Input
+            id="new-session-project"
             value={newProjectName}
             onChange={(e) => onNewProjectNameChange(e.target.value)}
             placeholder="Project name"
+            className="font-mono text-sm"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -73,6 +80,7 @@ export function ProjectSelector({
               !workingDirectory ||
               workingDirectory === "~"
             }
+            className="font-mono text-[10px] tracking-[0.12em] uppercase"
           >
             {creatingProject ? "Creating..." : "Create"}
           </Button>
@@ -85,6 +93,7 @@ export function ProjectSelector({
               onNewProjectNameChange("");
             }}
             disabled={creatingProject}
+            className="font-mono text-[10px] tracking-[0.12em] uppercase"
           >
             Cancel
           </Button>
@@ -95,10 +104,10 @@ export function ProjectSelector({
             value={projectId || "none"}
             onValueChange={(v) => onProjectChange(v === "none" ? null : v)}
           >
-            <SelectTrigger className="flex-1">
+            <SelectTrigger className="flex-1 font-mono text-sm">
               <SelectValue placeholder="Select a project" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="scrollbar-thin">
               <SelectItem value="none">
                 <span className="text-muted-foreground">
                   No project (uncategorized)
@@ -108,7 +117,7 @@ export function ProjectSelector({
                 .filter((p) => !p.is_uncategorized)
                 .map((project) => (
                   <SelectItem key={project.id} value={project.id}>
-                    {project.name}
+                    <span className="font-mono text-xs">{project.name}</span>
                   </SelectItem>
                 ))}
             </SelectContent>
@@ -120,6 +129,7 @@ export function ProjectSelector({
               size="icon"
               onClick={() => onShowNewProjectChange(true)}
               title="Create new project"
+              aria-label="Create new project"
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -127,7 +137,8 @@ export function ProjectSelector({
         </div>
       )}
       {showNewProject && (
-        <p className="text-muted-foreground text-xs">
+        <p className="tech-meta flex items-center gap-1.5">
+          <ArrowRight className="h-3 w-3 shrink-0 text-primary" />
           {workingDirectory && workingDirectory !== "~"
             ? `New project will use: ${workingDirectory}, ${agentType}`
             : "Enter a working directory above to create a project"}
@@ -136,7 +147,7 @@ export function ProjectSelector({
       {!showNewProject &&
         selectedProject &&
         !selectedProject.is_uncategorized && (
-          <p className="text-muted-foreground text-xs">
+          <p className="tech-meta">
             Settings inherited: {selectedProject.working_directory},{" "}
             {selectedProject.agent_type}
           </p>

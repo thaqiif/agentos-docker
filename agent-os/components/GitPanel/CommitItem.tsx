@@ -3,8 +3,6 @@
 import { useState } from "react";
 import {
   ChevronRight,
-  Plus,
-  Minus,
   FileText,
   FilePlus,
   FileX,
@@ -39,70 +37,64 @@ export function CommitItem({
   const authorInitial = commit.author.charAt(0).toUpperCase();
 
   return (
-    <div className="border-border/30 border-b last:border-b-0">
+    <div className="border-border border-b last:border-b-0">
       {/* Commit summary row */}
       <button
         onClick={() => setExpanded(!expanded)}
         className={cn(
-          "hover:bg-muted/50 flex w-full items-center gap-3 p-3 text-left transition-colors",
-          expanded && "bg-muted/30"
+          "hover:bg-accent/50 flex w-full items-start gap-2.5 px-3 py-2 text-left transition-colors",
+          expanded && "bg-surface"
         )}
       >
         <ChevronRight
           className={cn(
-            "text-muted-foreground h-4 w-4 flex-shrink-0 transition-transform",
+            "text-muted-foreground mt-0.5 h-3.5 w-3.5 flex-shrink-0 transition-transform",
             expanded && "rotate-90"
           )}
         />
 
-        {/* Author avatar */}
-        <div className="bg-primary/20 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full">
-          <span className="text-primary text-xs font-medium">
-            {authorInitial}
-          </span>
+        {/* Author cell */}
+        <div className="bg-surface-raised text-muted-foreground mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center border border-border font-mono text-[10px]">
+          {authorInitial}
         </div>
 
         {/* Commit info */}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground font-mono text-xs">
+          <div className="flex items-baseline gap-2">
+            <span className="text-muted-foreground shrink-0 font-mono text-[11px]">
               {commit.shortHash}
             </span>
-            <span className="truncate text-sm">{commit.subject}</span>
+            <span className="truncate text-sm font-medium text-foreground">
+              {commit.subject}
+            </span>
           </div>
-          <div className="text-muted-foreground mt-0.5 flex items-center gap-2 text-xs">
+          <div className="tech-meta mt-0.5 flex items-center gap-1.5">
             <span>{commit.author}</span>
             <span>·</span>
             <span>{commit.relativeTime}</span>
           </div>
         </div>
 
-        {/* Stats badge */}
-        <div className="flex flex-shrink-0 items-center gap-1 text-xs">
+        {/* Stats */}
+        <div className="mt-0.5 flex flex-shrink-0 items-center gap-1.5 font-mono text-[11px] tabular-nums">
           {commit.additions > 0 && (
-            <span className="flex items-center text-green-500">
-              <Plus className="h-3 w-3" />
-              {commit.additions}
-            </span>
+            <span className="text-status-running">+{commit.additions}</span>
           )}
           {commit.deletions > 0 && (
-            <span className="flex items-center text-red-500">
-              <Minus className="h-3 w-3" />
-              {commit.deletions}
-            </span>
+            <span className="text-status-error">-{commit.deletions}</span>
           )}
         </div>
       </button>
 
       {/* Expanded file list */}
       {expanded && (
-        <div className="pr-3 pb-3 pl-14">
+        <div className="border-border mb-2 ml-6 border-l pl-2 pr-2">
           {isLoading ? (
-            <div className="flex items-center justify-center py-4">
+            <div className="flex items-center justify-center py-3">
               <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
             </div>
           ) : detail?.files?.length ? (
-            <div className="space-y-1">
+            <div className="divide-border divide-y">
               {detail.files.map((file) => (
                 <FileRow
                   key={file.path}
@@ -116,9 +108,7 @@ export function CommitItem({
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground py-2 text-sm">
-              No files changed
-            </p>
+            <p className="tech-meta py-2">no files changed</p>
           )}
         </div>
       )}
@@ -134,35 +124,39 @@ interface FileRowProps {
 
 function FileRow({ file, isSelected, onClick }: FileRowProps) {
   const StatusIcon = getStatusIcon(file.status);
+  const statusColor = getStatusColor(file.status);
 
   return (
     <button
       onClick={onClick}
       className={cn(
-        "hover:bg-muted/70 flex w-full items-center gap-2 rounded px-2 py-1.5 text-left transition-colors",
-        isSelected && "bg-primary/10 hover:bg-primary/20"
+        "hover:bg-accent/50 relative flex w-full items-center gap-2 px-2 py-1.5 text-left transition-colors",
+        isSelected && "bg-accent"
       )}
     >
+      {isSelected && (
+        <span className="bg-primary absolute inset-y-0 left-0 w-0.5" />
+      )}
       <StatusIcon
-        className={cn("h-4 w-4 flex-shrink-0", getStatusColor(file.status))}
+        className={cn("h-3.5 w-3.5 flex-shrink-0", statusColor)}
       />
-      <span className="flex-1 truncate text-sm">
+      <span className="min-w-0 flex-1 truncate font-mono text-[11px]">
         {file.oldPath ? (
           <span className="flex items-center gap-1">
             <span className="text-muted-foreground">{file.oldPath}</span>
-            <ArrowRight className="h-3 w-3" />
-            <span>{file.path}</span>
+            <ArrowRight className="h-3 w-3 shrink-0" />
+            <span className="text-foreground">{file.path}</span>
           </span>
         ) : (
-          file.path
+          <span className="text-foreground">{file.path}</span>
         )}
       </span>
-      <div className="flex flex-shrink-0 items-center gap-1 text-xs">
+      <div className="flex flex-shrink-0 items-center gap-1.5 font-mono text-[10px] tabular-nums">
         {file.additions > 0 && (
-          <span className="text-green-500">+{file.additions}</span>
+          <span className="text-status-running">+{file.additions}</span>
         )}
         {file.deletions > 0 && (
-          <span className="text-red-500">-{file.deletions}</span>
+          <span className="text-status-error">-{file.deletions}</span>
         )}
       </div>
     </button>
@@ -185,12 +179,12 @@ function getStatusIcon(status: CommitFile["status"]) {
 function getStatusColor(status: CommitFile["status"]) {
   switch (status) {
     case "added":
-      return "text-green-500";
+      return "text-status-running";
     case "deleted":
-      return "text-red-500";
+      return "text-status-error";
     case "renamed":
-      return "text-yellow-500";
+      return "text-status-info";
     default:
-      return "text-muted-foreground";
+      return "text-status-waiting";
   }
 }

@@ -107,7 +107,7 @@ export function SwipeSidebar({ isOpen, onClose, children }: SwipeSidebarProps) {
       <aside
         ref={sidebarRef}
         className={cn(
-          "bg-background fixed top-0 bottom-0 left-0 z-50 w-[280px] transition-transform duration-300 md:hidden",
+          "bg-surface border-border fixed top-0 bottom-0 left-0 z-50 w-[280px] border-r transition-transform duration-300 md:hidden",
           "flex flex-col",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
@@ -116,7 +116,7 @@ export function SwipeSidebar({ isOpen, onClose, children }: SwipeSidebarProps) {
         <div className="h-[env(safe-area-inset-top)]" />
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto">{children}</div>
+        <div className="scrollbar-thin flex-1 overflow-y-auto">{children}</div>
 
         {/* Safe area spacer */}
         <div className="h-[env(safe-area-inset-bottom)]" />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Server, Container, Loader2, Play, FolderOpen } from "lucide-react";
+import { X, Server, Container, Loader2, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Project, ProjectDevServer } from "@/lib/db";
 
@@ -131,227 +131,285 @@ export function StartServerDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <div
         className={cn(
-          "w-full max-w-md rounded-xl",
-          "bg-background border-border border",
-          "shadow-2xl"
+          "flex max-h-[90vh] w-full max-w-md flex-col",
+          "bg-background border-border border"
         )}
       >
         {/* Header */}
-        <div className="border-border flex items-center justify-between border-b px-4 py-3">
-          <h2 className="text-lg font-semibold">Start Dev Server</h2>
+        <div className="border-border flex h-11 shrink-0 items-stretch justify-between border-b">
+          <div className="flex min-w-0 items-center gap-2.5 px-4">
+            <span className="tech-label">//dev servers.start</span>
+            <h2 className="truncate font-mono text-sm font-medium tracking-[0.08em] uppercase">
+              Start Dev Server
+            </h2>
+          </div>
           <button
             onClick={onClose}
-            className="hover:bg-muted rounded-md p-1 transition-colors"
+            title="Close"
+            className="text-muted-foreground hover:bg-accent hover:text-foreground flex w-8 shrink-0 items-center justify-center border-l border-border transition-colors"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="space-y-4 p-4">
-          {/* Project info */}
-          <div className="text-muted-foreground text-sm">
-            Project:{" "}
-            <span className="text-foreground font-medium">{project.name}</span>
+        <div className="divide-border scrollbar-thin min-h-0 flex-1 divide-y overflow-y-auto">
+          {/* Target */}
+          <div className="flex items-baseline gap-2 px-4 py-3">
+            <span className="tech-label">target</span>
+            <span className="truncate text-sm font-medium">
+              {project.name}
+            </span>
+            <span className="tech-meta ml-auto hidden truncate sm:block">
+              {project.working_directory}
+            </span>
           </div>
 
-          {/* Project dev servers */}
+          {/* Registered servers */}
           {projectDevServers.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <FolderOpen className="h-4 w-4" />
-                Project servers
+            <div>
+              <p className="tech-label px-4 pt-3">//registered</p>
+              <div className="mt-1 pb-2">
+                {projectDevServers.map((server, i) => (
+                  <button
+                    key={server.id}
+                    onClick={() => handleStartProjectServer(server)}
+                    disabled={starting}
+                    className={cn(
+                      "hover:bg-accent/30 group flex w-full items-center gap-2.5 px-4 py-2 text-left transition-colors",
+                      "disabled:pointer-events-none disabled:opacity-50"
+                    )}
+                  >
+                    <span className="w-5 shrink-0 font-mono text-[9px] text-foreground-subtle">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    {server.type === "docker" ? (
+                      <Container className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+                    ) : (
+                      <Server className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+                    )}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium">
+                        {server.name}
+                      </span>
+                      <span className="tech-meta block truncate">
+                        $ {server.command}
+                        {server.port && ` · ${server.port}`}
+                      </span>
+                    </span>
+                    <Play className="text-primary h-3.5 w-3.5 shrink-0" />
+                  </button>
+                ))}
               </div>
-              {projectDevServers.map((server) => (
-                <button
-                  key={server.id}
-                  onClick={() => handleStartProjectServer(server)}
-                  disabled={starting}
-                  className={cn(
-                    "border-primary/30 bg-primary/5 flex w-full items-center gap-3 rounded-lg border p-3",
-                    "hover:bg-primary/10 text-left transition-colors",
-                    "disabled:cursor-not-allowed disabled:opacity-50"
-                  )}
-                >
-                  {server.type === "docker" ? (
-                    <Container className="h-5 w-5 text-blue-500" />
-                  ) : (
-                    <Server className="h-5 w-5 text-green-500" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium">{server.name}</div>
-                    <div className="text-muted-foreground truncate text-xs">
-                      {server.command}
-                      {server.port && ` (port ${server.port})`}
-                    </div>
-                  </div>
-                  <Play className="text-primary h-4 w-4" />
-                </button>
-              ))}
             </div>
           )}
 
           {/* Detected servers */}
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
-              <span className="text-muted-foreground ml-2 text-sm">
-                Detecting dev servers...
-              </span>
+          <div>
+            <p className="tech-label px-4 pt-3">//detected</p>
+            <div className="mt-1 pb-2">
+              {loading ? (
+                <div className="flex items-center gap-2 px-4 py-4">
+                  <Loader2 className="text-muted-foreground h-3.5 w-3.5 animate-spin" />
+                  <span className="tech-meta">scanning for dev servers</span>
+                </div>
+              ) : detected.length > 0 ? (
+                detected.map((server, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleStartDetected(server)}
+                    disabled={starting}
+                    className={cn(
+                      "hover:bg-accent/30 flex w-full items-center gap-2.5 px-4 py-2 text-left transition-colors",
+                      "disabled:pointer-events-none disabled:opacity-50"
+                    )}
+                  >
+                    <span className="w-5 shrink-0 font-mono text-[9px] text-foreground-subtle">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    {server.type === "docker" ? (
+                      <Container className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+                    ) : (
+                      <Server className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+                    )}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium">
+                        {server.name}
+                      </span>
+                      <span className="tech-meta block truncate">
+                        $ {server.command}
+                        {server.ports.length > 0 && ` · ${server.ports[0]}`}
+                      </span>
+                    </span>
+                    <Play className="text-primary h-3.5 w-3.5 shrink-0" />
+                  </button>
+                ))
+              ) : (
+                <p className="tech-meta px-4 py-3">
+                  No dev servers detected automatically
+                </p>
+              )}
             </div>
-          ) : detected.length > 0 ? (
-            <div className="space-y-2">
-              <div className="text-sm font-medium">Detected servers</div>
-              {detected.map((server, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleStartDetected(server)}
-                  disabled={starting}
-                  className={cn(
-                    "border-border flex w-full items-center gap-3 rounded-lg border p-3",
-                    "hover:bg-muted/50 text-left transition-colors",
-                    "disabled:cursor-not-allowed disabled:opacity-50"
-                  )}
-                >
-                  {server.type === "docker" ? (
-                    <Container className="h-5 w-5 text-blue-500" />
-                  ) : (
-                    <Server className="h-5 w-5 text-green-500" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium">{server.name}</div>
-                    <div className="text-muted-foreground truncate text-xs">
-                      {server.command}
-                      {server.ports.length > 0 && ` (port ${server.ports[0]})`}
-                    </div>
-                  </div>
-                  <Play className="text-primary h-4 w-4" />
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="text-muted-foreground py-4 text-center text-sm">
-              No dev servers detected automatically
-            </div>
-          )}
+          </div>
 
-          {/* Custom server form toggle */}
+          {/* Custom form */}
           {!showCustom ? (
-            <button
-              onClick={() => setShowCustom(true)}
-              className="text-primary w-full text-sm hover:underline"
-            >
-              + Add custom server
-            </button>
+            <div className="px-4 py-3">
+              <button
+                onClick={() => setShowCustom(true)}
+                disabled={starting}
+                className="text-primary hover:text-primary/80 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] transition-colors"
+              >
+                <Play className="h-3 w-3" />
+                Add custom server
+              </button>
+            </div>
           ) : (
-            <div className="border-border space-y-3 border-t pt-4">
-              <div className="text-sm font-medium">Custom server</div>
-
-              {/* Type selector */}
-              <div className="flex gap-2">
+            <div className="space-y-4 px-4 py-4">
+              <div className="flex items-stretch">
                 <button
                   onClick={() => setCustomType("node")}
                   className={cn(
-                    "flex flex-1 items-center justify-center gap-2 rounded-md py-2",
-                    "border transition-colors",
+                    "flex flex-1 items-center justify-center gap-2 border py-2 font-mono text-[10px] uppercase tracking-[0.12em] transition-colors",
                     customType === "node"
                       ? "border-primary bg-primary/10 text-primary"
-                      : "border-border hover:bg-muted"
+                      : "border-border text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <Server className="h-4 w-4" />
+                  <Server className="h-3 w-3" />
                   Node.js
                 </button>
                 <button
                   onClick={() => setCustomType("docker")}
                   className={cn(
-                    "flex flex-1 items-center justify-center gap-2 rounded-md py-2",
-                    "border transition-colors",
+                    "-ml-px flex flex-1 items-center justify-center gap-2 border py-2 font-mono text-[10px] uppercase tracking-[0.12em] transition-colors",
                     customType === "docker"
                       ? "border-primary bg-primary/10 text-primary"
-                      : "border-border hover:bg-muted"
+                      : "border-border text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <Container className="h-4 w-4" />
+                  <Container className="h-3 w-3" />
                   Docker
                 </button>
               </div>
 
-              {/* Name input */}
-              <input
-                type="text"
-                placeholder="Server name"
-                value={customName}
-                onChange={(e) => setCustomName(e.target.value)}
-                className={cn(
-                  "border-border bg-background w-full rounded-md border px-3 py-2",
-                  "placeholder:text-muted-foreground text-sm",
-                  "focus:ring-primary/50 focus:ring-2 focus:outline-none"
-                )}
-              />
-
-              {/* Command input */}
-              <input
-                type="text"
-                placeholder={
-                  customType === "docker"
-                    ? "Service name (e.g., web)"
-                    : "Command (e.g., npm run dev)"
-                }
-                value={customCommand}
-                onChange={(e) => setCustomCommand(e.target.value)}
-                className={cn(
-                  "border-border bg-background w-full rounded-md border px-3 py-2",
-                  "placeholder:text-muted-foreground font-mono text-sm",
-                  "focus:ring-primary/50 focus:ring-2 focus:outline-none"
-                )}
-              />
-
-              {/* Port input (for Node.js only) */}
-              {customType === "node" && (
+              <div className="space-y-2">
+                <div className="flex items-baseline gap-2">
+                  <span className="tech-label">01</span>
+                  <label htmlFor="custom-server-name" className="tech-label">
+                    Name
+                  </label>
+                </div>
                 <input
+                  id="custom-server-name"
                   type="text"
-                  placeholder="Port (optional)"
-                  value={customPort}
-                  onChange={(e) => setCustomPort(e.target.value)}
+                  placeholder="Server name"
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
                   className={cn(
-                    "border-border bg-background w-full rounded-md border px-3 py-2",
-                    "placeholder:text-muted-foreground text-sm",
-                    "focus:ring-primary/50 focus:ring-2 focus:outline-none"
+                    "border-border placeholder:text-muted-foreground/60 focus:border-primary w-full border bg-transparent px-2.5 py-2 text-sm outline-none transition-colors"
                   )}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-baseline gap-2">
+                  <span className="tech-label">02</span>
+                  <label htmlFor="custom-server-command" className="tech-label">
+                    Command
+                  </label>
+                </div>
+                <input
+                  id="custom-server-command"
+                  type="text"
+                  placeholder={
+                    customType === "docker"
+                      ? "Service name (e.g., web)"
+                      : "Command (e.g., npm run dev)"
+                  }
+                  value={customCommand}
+                  onChange={(e) => setCustomCommand(e.target.value)}
+                  className={cn(
+                    "border-border placeholder:text-muted-foreground/60 focus:border-primary w-full border bg-transparent px-2.5 py-2 font-mono text-xs outline-none transition-colors"
+                  )}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-baseline gap-2">
+                  <span className="tech-label">03</span>
+                  <label className="tech-label">Directory</label>
+                  <span className="tech-label">(fixed)</span>
+                </div>
+                <p className="tech-meta truncate border-border border bg-transparent px-2.5 py-2">
+                  {project.working_directory}
+                </p>
+              </div>
+
+              {customType === "node" && (
+                <div className="space-y-2">
+                  <div className="flex items-baseline gap-2">
+                    <span className="tech-label">04</span>
+                    <label htmlFor="custom-server-port" className="tech-label">
+                      Port
+                    </label>
+                    <span className="tech-label">(optional)</span>
+                  </div>
+                  <input
+                    id="custom-server-port"
+                    type="text"
+                    placeholder="Port (optional)"
+                    value={customPort}
+                    onChange={(e) => setCustomPort(e.target.value)}
+                    className={cn(
+                      "border-border placeholder:text-muted-foreground/60 focus:border-primary w-full border bg-transparent px-2.5 py-2 font-mono text-xs outline-none transition-colors"
+                    )}
+                  />
+                </div>
               )}
-
-              {/* Start custom button */}
-              <button
-                onClick={handleStartCustom}
-                disabled={starting || !customName || !customCommand}
-                className={cn(
-                  "flex w-full items-center justify-center gap-2 rounded-md py-2",
-                  "bg-primary text-primary-foreground font-medium",
-                  "hover:bg-primary/90 transition-colors",
-                  "disabled:cursor-not-allowed disabled:opacity-50"
-                )}
-              >
-                {starting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Play className="h-4 w-4" />
-                )}
-                Start Server
-              </button>
             </div>
           )}
 
-          {/* Error message */}
+          {/* Error */}
           {error && (
-            <div className="rounded-md bg-red-500/10 p-2 text-sm text-red-500">
+            <p className="flex items-center gap-2 px-4 py-3 font-mono text-xs text-status-error">
+              <span className="bg-status-error animate-status-pulse h-1.5 w-1.5 shrink-0 rounded-full" />
               {error}
-            </div>
+            </p>
           )}
+        </div>
+
+        {/* Footer */}
+        <div className="border-border flex shrink-0 items-center justify-end gap-2 border-t px-4 py-3">
+          <button
+            onClick={onClose}
+            disabled={starting}
+            className="border-border text-muted-foreground hover:border-border-strong hover:text-foreground flex h-7 items-center gap-1.5 border px-2.5 font-mono text-[10px] uppercase tracking-[0.12em] transition-colors disabled:pointer-events-none disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          {showCustom ? (
+            <button
+              onClick={handleStartCustom}
+              disabled={starting || !customName || !customCommand}
+              className="bg-primary text-primary-foreground hover:bg-primary/85 flex h-7 items-center gap-1.5 px-2.5 font-mono text-[10px] uppercase tracking-[0.12em] transition-colors disabled:pointer-events-none disabled:opacity-50"
+            >
+              {starting ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Starting
+                </>
+              ) : (
+                <>
+                  <Play className="h-3.5 w-3.5" />
+                  Start
+                </>
+              )}
+            </button>
+          ) : null}
         </div>
       </div>
     </div>

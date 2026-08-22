@@ -86,16 +86,20 @@ export function SelectionToolbar({
 
   return (
     <>
-      <div className="bg-primary/10 border-primary/20 flex items-center gap-2 border-b px-3 py-2">
-        <span className="text-sm font-medium whitespace-nowrap">
-          {selectedCount} selected
+      <div className="border-border bg-surface-raised flex items-center gap-2 border-b px-3 py-1.5">
+        <span className="bg-primary h-4 w-0.5" />
+        <span className="font-mono text-[10px] uppercase tracking-[0.12em] whitespace-nowrap">
+          <span className="text-primary">
+            {String(selectedCount).padStart(2, "0")}
+          </span>{" "}
+          <span className="text-muted-foreground">selected</span>
         </span>
         <div className="ml-auto flex items-center gap-1">
           {!allSelected && (
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 text-xs"
+              className="h-6 font-mono text-[10px] tracking-[0.12em] uppercase"
               onClick={handleSelectAll}
             >
               Select all

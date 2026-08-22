@@ -98,7 +98,7 @@ export function GroupSection({
 
     const groupHeader = (
       <div
-        className="hover:bg-accent/50 group flex cursor-pointer items-center gap-1 rounded px-2 py-1"
+        className="hover:bg-accent/50 group flex cursor-pointer items-center gap-1 rounded-none px-2 py-1"
         style={{ marginLeft: indent }}
         onClick={() => onToggleGroup(group.path, !group.expanded)}
       >
@@ -112,8 +112,8 @@ export function GroupSection({
         <span className="flex-1 truncate text-sm font-medium">
           {group.name}
         </span>
-        <span className="text-muted-foreground text-xs">
-          {groupSessions.length}
+        <span className="font-mono text-[9px] text-foreground-subtle">
+          {String(groupSessions.length).padStart(2, "0")}
         </span>
 
         <DropdownMenu>
@@ -142,7 +142,7 @@ export function GroupSection({
                   e.stopPropagation();
                   onDeleteGroup(group.path);
                 }}
-                className="text-red-500"
+                className="text-destructive focus:text-destructive"
               >
                 Delete group
               </DropdownMenuItem>
@@ -164,7 +164,7 @@ export function GroupSection({
             {group.path !== "sessions" && (
               <ContextMenuItem
                 onClick={() => onDeleteGroup(group.path)}
-                className="text-red-500 focus:text-red-500"
+                className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="mr-2 h-3 w-3" />
                 Delete group
@@ -190,7 +190,7 @@ export function GroupSection({
                   setShowNewGroupInput(null);
                 }
               }}
-              className="bg-muted/50 focus:bg-muted focus:ring-primary/50 flex-1 rounded px-2 py-1 text-sm focus:ring-1 focus:outline-none"
+              className="min-w-0 flex-1 border-b border-primary bg-transparent px-2 py-1 font-mono text-xs outline-none placeholder:text-foreground-subtle"
               autoFocus
             />
           </div>
@@ -198,7 +198,7 @@ export function GroupSection({
 
         {group.expanded && (
           <div
-            className="border-border/50 ml-2 border-l"
+            className="border-border ml-2 border-l"
             style={{ marginLeft: indent + 10, paddingLeft: 6 }}
           >
             {childGroups.map((child) => renderGroup(child, level + 1))}
@@ -231,14 +231,14 @@ export function GroupSection({
                       />
                     </div>
                     {hasWorkers && (
-                      <span className="bg-primary/20 text-primary flex-shrink-0 rounded-full px-1.5 py-0.5 text-xs">
+                      <span className="flex-shrink-0 border border-primary/40 px-1 font-mono text-[9px] leading-4 text-primary">
                         {workers.length}
                       </span>
                     )}
                   </div>
 
                   {hasWorkers && (
-                    <div className="border-border/30 ml-3 space-y-px border-l pl-1.5">
+                    <div className="border-border ml-3 space-y-px border-l pl-1.5">
                       {workers.map((worker) => (
                         <SessionCard
                           key={worker.id}

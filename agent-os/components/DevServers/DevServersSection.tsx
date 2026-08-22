@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Server } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DevServerCard } from "./DevServerCard";
 import type { DevServer, Project } from "@/lib/db";
@@ -36,46 +36,42 @@ export function DevServersSection({
   const projectMap = new Map(projects.map((p) => [p.id, p]));
 
   return (
-    <div className="border-border/50 border-b">
+    <div className="border-border border-b">
       {/* Header */}
       <button
         onClick={() => setExpanded(!expanded)}
         className={cn(
-          "flex w-full items-center gap-2 px-3 py-2",
-          "hover:bg-muted/50 transition-colors"
+          "hover:bg-accent/30 flex h-9 w-full items-center gap-2.5 px-3 text-left transition-colors"
         )}
       >
         <ChevronDown
           className={cn(
-            "text-muted-foreground h-4 w-4 transition-transform",
+            "text-foreground-subtle h-3 w-3 shrink-0 transition-transform",
             !expanded && "-rotate-90"
           )}
         />
-        <Server className="text-muted-foreground h-4 w-4" />
-        <span className="flex-1 text-left text-sm font-medium">
-          Dev Servers
-        </span>
-        {runningCount > 0 && (
-          <span
-            className={cn(
-              "rounded-full px-1.5 py-0.5",
-              "text-[10px] font-medium",
-              "bg-green-500/20 text-green-500"
-            )}
-          >
-            {runningCount} running
+        <span className="tech-label">//dev servers</span>
+        <span className="ml-auto flex items-center gap-2.5">
+          {runningCount > 0 && (
+            <span className="text-status-running flex items-center gap-1 font-mono text-[9px] tracking-[0.14em] uppercase">
+              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+              {runningCount} up
+            </span>
+          )}
+          <span className="font-mono text-xs text-muted-foreground">
+            {String(servers.length).padStart(2, "0")}
           </span>
-        )}
-        <span className="text-muted-foreground text-xs">{servers.length}</span>
+        </span>
       </button>
 
-      {/* Server list */}
+      {/* Service ledger */}
       {expanded && (
-        <div className="space-y-2 px-3 pb-3">
-          {servers.map((server) => (
+        <div className="divide-border border-border divide-y border-t">
+          {servers.map((server, i) => (
             <DevServerCard
               key={server.id}
               server={server}
+              index={i}
               projectName={projectMap.get(server.project_id)?.name}
               onStart={onStart}
               onStop={onStop}

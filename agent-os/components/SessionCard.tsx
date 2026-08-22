@@ -78,27 +78,27 @@ const statusConfig: Record<
   idle: {
     color: "text-muted-foreground",
     label: "idle",
-    icon: <Circle className="h-2 w-2 fill-current" />,
+    icon: <Circle className="h-1.5 w-1.5 rounded-full bg-current" />,
   },
   running: {
-    color: "text-blue-500",
+    color: "text-status-running",
     label: "running",
-    icon: <Loader2 className="h-3 w-3 animate-spin" />,
+    icon: <Circle className="h-2 w-2 rounded-full bg-current" />,
   },
   waiting: {
-    color: "text-yellow-500 animate-pulse",
+    color: "text-status-waiting animate-status-pulse",
     label: "waiting",
     icon: <AlertCircle className="h-3 w-3" />,
   },
   error: {
-    color: "text-red-500",
+    color: "text-status-error",
     label: "error",
-    icon: <Circle className="h-2 w-2 fill-current" />,
+    icon: <AlertCircle className="h-3 w-3" />,
   },
   dead: {
-    color: "text-muted-foreground/50",
+    color: "text-foreground-subtle",
     label: "stopped",
-    icon: <Circle className="h-2 w-2" />,
+    icon: <Circle className="h-1.5 w-1.5 rounded-full border border-current" />,
   },
 };
 
@@ -341,7 +341,7 @@ export function SessionCard({
             <MenuSeparator />
             <MenuItem
               onClick={() => onDelete()}
-              className="text-red-500 focus:text-red-500"
+              className="text-destructive focus:text-destructive"
             >
               <Trash2 className="mr-2 h-3 w-3" />
               Delete session
@@ -359,16 +359,22 @@ export function SessionCard({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className={cn(
-        "group flex w-full cursor-pointer items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 text-left transition-colors",
-        "min-h-[36px] md:min-h-0", // Compact touch target
+        "group relative flex w-full cursor-pointer items-center gap-2 overflow-hidden rounded-none px-2 py-1.5 text-left transition-colors",
+        "min-h-[36px] md:min-h-0",
         isSelected
-          ? "bg-primary/20"
+          ? "bg-primary/15"
           : isActive
-            ? "bg-primary/10"
+            ? "bg-accent"
             : "hover:bg-accent/50",
-        status === "waiting" && !isActive && !isSelected && "bg-yellow-500/5"
+        status === "waiting" &&
+          !isActive &&
+          !isSelected &&
+          "bg-status-waiting/5"
       )}
     >
+      {isActive && (
+        <span className="absolute left-0 top-0 h-full w-0.5 bg-primary" />
+      )}
       {/* Selection checkbox - visible when in select mode */}
       {isInSelectMode && onToggleSelect && (
         <button
@@ -413,7 +419,7 @@ export function SessionCard({
             }
           }}
           onClick={(e) => e.stopPropagation()}
-          className="border-primary min-w-0 flex-1 border-b bg-transparent text-sm outline-none"
+          className="min-w-0 flex-1 border-b border-primary bg-transparent font-mono text-xs outline-none"
         />
       ) : (
         <span className="min-w-0 flex-1 truncate text-sm">{session.name}</span>
@@ -424,10 +430,6 @@ export function SessionCard({
         <GitFork className="text-muted-foreground h-3 w-3 flex-shrink-0" />
       )}
 
-      {/* TODO: Show port indicator once auto dev server management is implemented.
-          Each worktree gets a unique port (3100, 3110, etc.) for running dev servers.
-          See lib/ports.ts and ideas.md for the planned feature. */}
-
       {/* PR status badge */}
       {session.pr_status && (
         <a
@@ -436,11 +438,10 @@ export function SessionCard({
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
           className={cn(
-            "flex flex-shrink-0 items-center gap-0.5 rounded px-1 text-[10px]",
-            session.pr_status === "open" && "bg-green-500/20 text-green-400",
-            session.pr_status === "merged" &&
-              "bg-purple-500/20 text-purple-400",
-            session.pr_status === "closed" && "bg-red-500/20 text-red-400"
+            "flex flex-shrink-0 items-center gap-0.5 border border-border px-1 font-mono text-[9px] uppercase",
+            session.pr_status === "open" && "text-status-running",
+            session.pr_status === "merged" && "text-primary",
+            session.pr_status === "closed" && "text-status-error"
           )}
           title={`PR #${session.pr_number}: ${session.pr_status}`}
         >
@@ -456,7 +457,7 @@ export function SessionCard({
       )}
 
       {/* Time ago */}
-      <span className="text-muted-foreground hidden flex-shrink-0 text-[10px] group-hover:hidden sm:block">
+      <span className="hidden flex-shrink-0 font-mono text-[10px] text-muted-foreground group-hover:hidden sm:block">
         {timeAgo}
       </span>
 

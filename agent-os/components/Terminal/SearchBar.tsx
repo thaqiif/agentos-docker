@@ -11,11 +11,22 @@ interface SearchBarProps {
   onFindNext: () => void;
   onFindPrevious: () => void;
   onClose: () => void;
+  matchCount?: number;
+  matchTotal?: number;
 }
 
 export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
   (
-    { visible, query, onQueryChange, onFindNext, onFindPrevious, onClose },
+    {
+      visible,
+      query,
+      onQueryChange,
+      onFindNext,
+      onFindPrevious,
+      onClose,
+      matchCount,
+      matchTotal,
+    },
     ref
   ) => {
     if (!visible) return null;
@@ -23,12 +34,11 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
     return (
       <div
         className={cn(
-          "flex items-center gap-2 px-4 py-2",
-          "bg-zinc-900/90 backdrop-blur-sm",
-          "border-b border-zinc-800"
+          "border-border bg-popover flex items-center gap-1 border-b px-3",
+          "focus-within:ring-primary focus-within:ring-1 focus-within:ring-inset"
         )}
       >
-        <Search className="h-4 w-4 text-zinc-500" />
+        <Search className="h-3.5 w-3.5 shrink-0 text-foreground-subtle" />
         <input
           ref={ref}
           type="text"
@@ -36,31 +46,36 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder="Search in terminal..."
           className={cn(
-            "flex-1 bg-transparent text-sm text-zinc-100 placeholder:text-zinc-500",
+            "placeholder:text-foreground-subtle min-w-0 flex-1 bg-transparent py-2 font-mono text-xs text-foreground",
             "focus:outline-none"
           )}
         />
-        <div className="flex items-center gap-1">
+        {matchTotal !== undefined && (
+          <span className="shrink-0 font-mono text-[10px] tracking-[0.08em] text-muted-foreground">
+            {matchCount ?? 0}/{matchTotal}
+          </span>
+        )}
+        <div className="flex items-stretch">
           <button
             onClick={onFindPrevious}
-            className="rounded p-1.5 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+            className="text-muted-foreground hover:bg-accent/50 hover:text-foreground p-2 transition-colors"
             title="Previous (Shift+Enter)"
           >
-            <ChevronUp className="h-4 w-4" />
+            <ChevronUp className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={onFindNext}
-            className="rounded p-1.5 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+            className="text-muted-foreground hover:bg-accent/50 hover:text-foreground p-2 transition-colors"
             title="Next (Enter)"
           >
-            <ChevronDown className="h-4 w-4" />
+            <ChevronDown className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={onClose}
-            className="rounded p-1.5 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+            className="text-muted-foreground hover:bg-accent/50 hover:text-foreground p-2 transition-colors"
             title="Close (Esc)"
           >
-            <X className="h-4 w-4" />
+            <X className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>

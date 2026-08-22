@@ -37,7 +37,7 @@ export function ToolCallDisplay({
         <StatusIcon
           className={cn(
             "ml-auto h-4 w-4",
-            status === "running" && "animate-spin text-yellow-400",
+            status === "running" && "animate-spin text-status-running",
             status === "pending" && "text-muted-foreground animate-spin",
             status === "completed" && "text-primary",
             status === "error" && "text-destructive"

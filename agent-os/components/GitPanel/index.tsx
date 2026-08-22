@@ -13,10 +13,12 @@ import {
   Plus,
   Minus,
   ArrowLeft,
+  ArrowRight,
   FileCode,
   ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { FileChanges } from "./FileChanges";
 import { CommitForm } from "./CommitForm";
 import { PRCreationModal } from "@/components/PRCreationModal";
@@ -257,7 +259,7 @@ export function GitPanel({
           refreshing={false}
         />
         <div className="flex flex-1 items-center justify-center">
-          <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+          <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
         </div>
       </div>
     );
@@ -274,10 +276,10 @@ export function GitPanel({
           refreshing={isRefetching}
           existingPR={existingPR}
         />
-        <div className="flex flex-1 flex-col items-center justify-center p-4">
-          <AlertCircle className="text-muted-foreground mb-2 h-8 w-8" />
-          <p className="text-muted-foreground text-center text-sm">
-            {error?.message ?? "Failed to load git status"}
+        <div className="flex flex-1 flex-col items-center justify-center gap-2 p-4">
+          <AlertCircle className="text-status-error h-5 w-5" />
+          <p className="tech-meta text-center">
+            {error?.message ?? "failed to load git status"}
           </p>
         </div>
       </div>
@@ -366,10 +368,11 @@ export function GitPanel({
           />
           <GitPanelTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="scrollbar-thin flex-1 overflow-y-auto">
             {!hasChanges ? (
-              <div className="flex h-32 flex-col items-center justify-center gap-3">
-                <p className="text-muted-foreground text-sm">No changes</p>
+              <div className="flex h-32 flex-col items-center justify-center gap-2">
+                <p className="tech-label">//GIT CLEAN_</p>
+                <p className="tech-meta">working tree has no changes</p>
                 {status.branch !== "main" &&
                   status.branch !== "master" &&
                   !existingPR && (
@@ -378,19 +381,19 @@ export function GitPanel({
                       size="sm"
                       onClick={() => createPRMutation.mutate()}
                       disabled={createPRMutation.isPending}
-                      className="gap-1.5"
+                      className="mt-2 gap-1.5 font-mono text-[10px] tracking-[0.12em] uppercase"
                     >
                       {createPRMutation.isPending ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <Loader2 className="h-3 w-3 animate-spin" />
                       ) : (
-                        <GitPullRequest className="h-3.5 w-3.5" />
+                        <GitPullRequest className="h-3 w-3" />
                       )}
                       Create PR
                     </Button>
                   )}
               </div>
             ) : (
-              <div className="py-2">
+              <div className="pb-2">
                 {/* Staged section */}
                 {status.staged.length > 0 && (
                   <FileChanges
@@ -453,22 +456,22 @@ export function GitPanel({
 
         {/* Resize handle */}
         <div
-          className="bg-muted/50 hover:bg-primary/50 active:bg-primary w-1 flex-shrink-0 cursor-col-resize transition-colors"
+          className="bg-border hover:bg-primary/50 active:bg-primary w-1 flex-shrink-0 cursor-col-resize transition-colors"
           onMouseDown={handleMouseDown}
         />
 
         {/* Right panel - diff viewer */}
-        <div className="bg-muted/20 flex h-full min-w-0 flex-1 flex-col">
+        <div className="flex h-full min-w-0 flex-1 flex-col bg-background">
           {loadingDiff ? (
             <div className="flex flex-1 items-center justify-center">
-              <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+              <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
             </div>
           ) : selectedFile ? (
             <>
               {/* Diff header with stage/unstage */}
-              <div className="bg-background/50 flex items-center gap-2 p-3">
-                <FileCode className="text-muted-foreground h-4 w-4" />
-                <span className="flex-1 truncate text-sm font-medium">
+              <div className="bg-surface border-border flex items-center gap-2 border-b px-3 py-2">
+                <FileCode className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+                <span className="tech-meta min-w-0 flex-1 truncate">
                   {selectedFile.file.path}
                 </span>
                 <Button
@@ -479,22 +482,24 @@ export function GitPanel({
                       ? handleUnstage(selectedFile.file)
                       : handleStage(selectedFile.file)
                   }
+                  className="font-mono text-[10px] tracking-[0.12em] uppercase"
                 >
                   {selectedFile.file.staged ? (
                     <>
-                      <Minus className="mr-1 h-4 w-4" />
+                      <Minus className="mr-1 h-3 w-3" />
                       Unstage
                     </>
                   ) : (
                     <>
-                      <Plus className="mr-1 h-4 w-4" />
+                      <Plus className="mr-1 h-3 w-3" />
                       Stage
+                      <ArrowRight className="ml-1 h-3 w-3" />
                     </>
                   )}
                 </Button>
               </div>
               {/* Diff content */}
-              <div className="flex-1 overflow-auto p-3">
+              <div className="scrollbar-thin flex-1 overflow-auto p-3">
                 <DiffView
                   diff={selectedFile.diff}
                   fileName={selectedFile.file.path}
@@ -502,9 +507,9 @@ export function GitPanel({
               </div>
             </>
           ) : (
-            <div className="text-muted-foreground flex flex-1 flex-col items-center justify-center">
-              <FileCode className="mb-4 h-12 w-12 opacity-50" />
-              <p className="text-sm">Select a file to view diff</p>
+            <div className="flex flex-1 flex-col items-center justify-center gap-2">
+              <p className="tech-label">//diff.idle_</p>
+              <p className="tech-meta">select a file to view diff</p>
             </div>
           )}
         </div>
@@ -599,14 +604,12 @@ function MobileGitPanel({
     return (
       <div className="bg-background flex h-full w-full flex-col">
         {/* Header */}
-        <div className="bg-muted/30 flex items-center gap-2 p-2">
+        <div className="bg-surface border-border flex items-center gap-2 border-b px-2 py-2">
           <Button variant="ghost" size="icon-sm" onClick={onBack}>
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">
-              {selectedFile.file.path}
-            </p>
+            <p className="tech-meta truncate">{selectedFile.file.path}</p>
           </div>
           <Button
             variant={selectedFile.file.staged ? "outline" : "default"}
@@ -616,16 +619,17 @@ function MobileGitPanel({
                 ? onUnstage(selectedFile.file)
                 : onStage(selectedFile.file)
             }
+            className="font-mono text-[10px] tracking-[0.12em] uppercase"
           >
             {selectedFile.file.staged ? "Unstage" : "Stage"}
           </Button>
         </div>
 
         {/* Diff content */}
-        <div className="flex-1 overflow-auto p-3">
+        <div className="scrollbar-thin flex-1 overflow-auto p-3">
           {loadingDiff ? (
             <div className="flex h-32 items-center justify-center">
-              <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+              <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
             </div>
           ) : (
             <DiffView
@@ -651,10 +655,11 @@ function MobileGitPanel({
       />
       <GitPanelTabs activeTab={activeTab} onTabChange={onTabChange} />
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="scrollbar-thin flex-1 overflow-y-auto">
         {!hasChanges ? (
-          <div className="flex h-32 flex-col items-center justify-center gap-3">
-            <p className="text-muted-foreground text-sm">No changes</p>
+          <div className="flex h-32 flex-col items-center justify-center gap-2">
+            <p className="tech-label">//GIT CLEAN_</p>
+            <p className="tech-meta">working tree has no changes</p>
             {status.branch !== "main" &&
               status.branch !== "master" &&
               !existingPR && (
@@ -663,19 +668,19 @@ function MobileGitPanel({
                   size="sm"
                   onClick={onCreatePR}
                   disabled={creatingPR}
-                  className="gap-1.5"
+                  className="mt-2 gap-1.5 font-mono text-[10px] tracking-[0.12em] uppercase"
                 >
                   {creatingPR ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <Loader2 className="h-3 w-3 animate-spin" />
                   ) : (
-                    <GitPullRequest className="h-3.5 w-3.5" />
+                    <GitPullRequest className="h-3 w-3" />
                   )}
                   Create PR
                 </Button>
               )}
           </div>
         ) : (
-          <div className="py-2">
+          <div className="pb-2">
             {/* Staged section */}
             {status.staged.length > 0 && (
               <FileChanges
@@ -727,9 +732,9 @@ function MobileGitPanel({
 
       {/* Mobile hint */}
       {hasChanges && status.staged.length === 0 && (
-        <div className="px-3 py-2">
-          <p className="text-muted-foreground text-center text-xs">
-            Swipe right to stage, left to unstage
+        <div className="border-border border-t px-3 py-2">
+          <p className="tech-meta text-center">
+            swipe right to stage · left to unstage
           </p>
         </div>
       )}
@@ -767,29 +772,17 @@ function Header({
   existingPR,
 }: HeaderProps) {
   return (
-    <div className="flex items-center gap-2 p-3">
-      <GitBranch className="text-muted-foreground h-4 w-4 flex-shrink-0" />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <p className="truncate text-sm font-medium">
-            {branch || "Git Status"}
-          </p>
-          {existingPR && (
-            <button
-              onClick={() => window.open(existingPR.url, "_blank")}
-              className="bg-muted hover:bg-accent inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs transition-colors"
-              title={`${existingPR.title} (#${existingPR.number})`}
-            >
-              <GitPullRequest className="h-3 w-3" />
-              PR
-              <ExternalLink className="h-2.5 w-2.5" />
-            </button>
-          )}
-        </div>
+    <div className="bg-surface border-border flex h-8 shrink-0 items-stretch justify-between border-b">
+      <div className="flex min-w-0 flex-1 items-center gap-2.5 px-3">
+        <GitBranch className="text-primary h-3 w-3 shrink-0" />
+        <span className="tech-label">//git</span>
+        <span className="tech-meta min-w-0 truncate">
+          {branch || "no branch"}
+        </span>
         {(ahead > 0 || behind > 0) && (
-          <div className="text-muted-foreground flex items-center gap-2 text-xs">
+          <span className="tech-meta hidden items-center gap-2 sm:flex">
             {ahead > 0 && (
-              <span className="flex items-center gap-0.5">
+              <span className="text-status-running flex items-center gap-0.5">
                 <ArrowUp className="h-3 w-3" />
                 {ahead}
               </span>
@@ -800,18 +793,28 @@ function Header({
                 {behind}
               </span>
             )}
-          </div>
+          </span>
+        )}
+        {existingPR && (
+          <button
+            onClick={() => window.open(existingPR.url, "_blank")}
+            className="hover:bg-accent text-muted-foreground hover:text-foreground inline-flex shrink-0 items-center gap-1 border border-border px-1.5 py-0.5 font-mono text-[9px] tracking-[0.12em] uppercase transition-colors"
+            title={`${existingPR.title} (#${existingPR.number})`}
+          >
+            <GitPullRequest className="h-3 w-3" />
+            PR
+            <ExternalLink className="h-2.5 w-2.5" />
+          </button>
         )}
       </div>
-      <Button
-        variant="ghost"
-        size="icon-sm"
+      <button
         onClick={onRefresh}
         disabled={refreshing}
-        className="h-8 w-8"
+        className="text-muted-foreground hover:bg-accent hover:text-foreground flex w-7 shrink-0 items-center justify-center border-l border-border transition-colors disabled:pointer-events-none disabled:opacity-30"
+        title="Refresh"
       >
-        <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-      </Button>
+        <RefreshCw className={cn("h-3 w-3", refreshing && "animate-spin")} />
+      </button>
     </div>
   );
 }

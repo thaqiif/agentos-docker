@@ -4,7 +4,6 @@ import { X, Plus, Minus, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UnifiedDiff } from "./UnifiedDiff";
 import { parseDiff, getDiffFileName, getDiffSummary } from "@/lib/diff-parser";
-import { cn } from "@/lib/utils";
 
 interface DiffModalProps {
   diff: string;
@@ -30,55 +29,55 @@ export function DiffModal({
   return (
     <div className="bg-background fixed inset-0 z-50 flex flex-col">
       {/* Header */}
-      <div className="border-border bg-background/95 flex items-center gap-2 border-b p-3 backdrop-blur-sm">
-        <Button
-          variant="ghost"
-          size="icon-sm"
+      <div className="bg-surface border-border flex h-10 shrink-0 items-stretch justify-between border-b">
+        <button
           onClick={onClose}
-          className="h-9 w-9"
+          className="text-muted-foreground hover:bg-accent hover:text-foreground flex w-8 shrink-0 items-center justify-center border-r border-border transition-colors"
+          title="Back"
         >
-          <ChevronLeft className="h-5 w-5" />
-        </Button>
+          <ChevronLeft className="h-4 w-4" />
+        </button>
 
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm font-medium">{displayName}</h3>
-          <p className="text-muted-foreground text-xs">{summary}</p>
+        <div className="flex min-w-0 flex-1 flex-col justify-center px-3">
+          <p className="tech-meta truncate text-foreground">{displayName}</p>
+          <span className="tech-label">{summary}</span>
         </div>
 
         {/* Stage/Unstage button */}
         {(onStage || onUnstage) && (
-          <Button
-            variant={isStaged ? "outline" : "default"}
-            size="sm"
-            onClick={isStaged ? onUnstage : onStage}
-            className="h-9"
-          >
-            {isStaged ? (
-              <>
-                <Minus className="mr-1 h-4 w-4" />
-                Unstage
-              </>
-            ) : (
-              <>
-                <Plus className="mr-1 h-4 w-4" />
-                Stage
-              </>
-            )}
-          </Button>
+          <div className="flex shrink-0 items-center gap-2 px-2">
+            <Button
+              variant={isStaged ? "outline" : "default"}
+              size="sm"
+              onClick={isStaged ? onUnstage : onStage}
+              className="font-mono text-[10px] tracking-[0.12em] uppercase"
+            >
+              {isStaged ? (
+                <>
+                  <Minus className="mr-1 h-3 w-3" />
+                  Unstage
+                </>
+              ) : (
+                <>
+                  <Plus className="mr-1 h-3 w-3" />
+                  Stage
+                </>
+              )}
+            </Button>
+          </div>
         )}
 
-        <Button
-          variant="ghost"
-          size="icon-sm"
+        <button
           onClick={onClose}
-          className="h-9 w-9 md:hidden"
+          className="text-muted-foreground hover:bg-accent hover:text-foreground flex w-8 shrink-0 items-center justify-center border-l border-border transition-colors md:hidden"
+          title="Close"
         >
           <X className="h-4 w-4" />
-        </Button>
+        </button>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto p-3">
+      <div className="scrollbar-thin flex-1 overflow-auto p-3">
         {diff ? (
           <UnifiedDiff
             diff={parsedDiff}
@@ -86,24 +85,25 @@ export function DiffModal({
             expanded={true}
           />
         ) : (
-          <div className="text-muted-foreground flex h-full items-center justify-center">
-            <p className="text-sm">No changes to display</p>
+          <div className="flex h-full flex-col items-center justify-center gap-2">
+            <p className="tech-label">//diff.empty_</p>
+            <p className="tech-meta">no changes to display</p>
           </div>
         )}
       </div>
 
       {/* Mobile action bar */}
-      <div className="border-border bg-background/95 safe-area-bottom flex items-center justify-between border-t p-3 backdrop-blur-sm md:hidden">
-        <div className="flex items-center gap-4">
+      <div className="bg-surface border-border safe-area-bottom flex items-center justify-between border-t p-3 md:hidden">
+        <div className="flex items-center gap-4 font-mono text-xs tabular-nums">
           {parsedDiff.additions > 0 && (
-            <span className="flex items-center gap-1 text-sm text-green-500">
-              <Plus className="h-4 w-4" />
+            <span className="text-status-running flex items-center gap-1">
+              <Plus className="h-3.5 w-3.5" />
               {parsedDiff.additions}
             </span>
           )}
           {parsedDiff.deletions > 0 && (
-            <span className="flex items-center gap-1 text-sm text-red-500">
-              <Minus className="h-4 w-4" />
+            <span className="text-status-error flex items-center gap-1">
+              <Minus className="h-3.5 w-3.5" />
               {parsedDiff.deletions}
             </span>
           )}
@@ -114,7 +114,7 @@ export function DiffModal({
             variant={isStaged ? "outline" : "default"}
             size="default"
             onClick={isStaged ? onUnstage : onStage}
-            className="min-h-[44px]"
+            className="min-h-[44px] font-mono text-[10px] tracking-[0.12em] uppercase"
           >
             {isStaged ? "Unstage" : "Stage"}
           </Button>
@@ -139,8 +139,9 @@ export function DiffView({ diff, fileName }: DiffViewProps) {
 
   if (!diff) {
     return (
-      <div className="text-muted-foreground p-4 text-center">
-        <p className="text-sm">No changes to display</p>
+      <div className="flex flex-col items-center justify-center gap-2 p-4">
+        <p className="tech-label">//diff.empty_</p>
+        <p className="tech-meta">no changes to display</p>
       </div>
     );
   }

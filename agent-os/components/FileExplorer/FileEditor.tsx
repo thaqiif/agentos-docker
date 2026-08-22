@@ -13,7 +13,7 @@ import { html } from "@codemirror/lang-html";
 import { markdown } from "@codemirror/lang-markdown";
 import type { Extension } from "@codemirror/state";
 import { FileCode, Eye, Code2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { HtmlRenderer } from "./HtmlRenderer";
 
@@ -22,6 +22,8 @@ interface FileEditorProps {
   language: string;
   isBinary: boolean;
   readOnly?: boolean;
+  dirty?: boolean;
+  saving?: boolean;
   onChange: (content: string) => void;
   onSave?: () => void;
 }
@@ -168,6 +170,8 @@ export function FileEditor({
   language,
   isBinary,
   readOnly = false,
+  dirty = false,
+  saving = false,
   onChange,
   onSave,
 }: FileEditorProps) {
@@ -212,31 +216,86 @@ export function FileEditor({
 
   if (isBinary) {
     return (
-      <div className="text-muted-foreground flex h-full flex-col items-center justify-center p-8">
-        <FileCode className="mb-4 h-12 w-12 opacity-50" />
-        <p className="text-center text-sm">Binary file cannot be displayed</p>
+      <div className="flex h-full flex-col items-center justify-center gap-2 p-8">
+        <FileCode className="text-foreground-subtle h-4 w-4" />
+        <p className="tech-label">//binary</p>
+        <p className="tech-meta">no preview available</p>
       </div>
     );
   }
 
   return (
     <div className="bg-background flex h-full w-full flex-col overflow-hidden">
-      {hasPreview && (
-        <div className="bg-muted/30 flex items-center justify-end px-2 py-1 shadow-sm">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => setPreviewMode(!previewMode)}
-            title={previewMode ? "Show source" : "Preview"}
-          >
-            {previewMode ? (
-              <Code2 className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
-          </Button>
+      <div className="border-border bg-surface flex h-8 shrink-0 items-stretch justify-between border-b">
+        <div className="flex items-center px-2.5">
+          <span className="tech-label">//{language || "plaintext"}</span>
         </div>
-      )}
+        <div className="flex items-stretch">
+          {hasPreview && (
+            <>
+              <button
+                onClick={() => setPreviewMode(false)}
+                title={previewMode ? "Show source" : "Source"}
+                className={cn(
+                  "relative flex items-center gap-1 px-2.5 font-mono text-[10px] tracking-[0.12em] uppercase transition-colors",
+                  previewMode
+                    ? "text-muted-foreground hover:text-foreground"
+                    : "bg-background text-foreground"
+                )}
+              >
+                <Code2 className="h-3 w-3" />
+                source
+                {!previewMode && (
+                  <span className="bg-primary absolute inset-x-0 bottom-0 h-px" />
+                )}
+              </button>
+              <button
+                onClick={() => setPreviewMode(true)}
+                title={previewMode ? "Preview" : "Show preview"}
+                className={cn(
+                  "relative flex items-center gap-1 px-2.5 font-mono text-[10px] tracking-[0.12em] uppercase transition-colors",
+                  previewMode
+                    ? "bg-background text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Eye className="h-3 w-3" />
+                preview
+                {previewMode && (
+                  <span className="bg-primary absolute inset-x-0 bottom-0 h-px" />
+                )}
+              </button>
+            </>
+          )}
+          {onSave && (
+            <>
+              <div className="border-border flex items-center gap-1.5 border-l px-2.5">
+                <span
+                  className={cn(
+                    "font-mono text-[10px] tracking-[0.12em] uppercase",
+                    dirty ? "text-status-waiting" : "text-status-running"
+                  )}
+                >
+                  {dirty ? "modified ●" : "saved ●"}
+                </span>
+              </div>
+              <button
+                onClick={onSave}
+                disabled={saving}
+                title="Save (Mod-s)"
+                className={cn(
+                  "border-border flex items-center gap-1 border-l px-2.5 font-mono text-[10px] tracking-[0.12em] uppercase transition-colors",
+                  saving
+                    ? "text-muted-foreground opacity-50"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+                )}
+              >
+                save ❯
+              </button>
+            </>
+          )}
+        </div>
+      </div>
 
       <div className="min-h-0 flex-1 overflow-hidden">
         {previewMode && isMarkdown ? (

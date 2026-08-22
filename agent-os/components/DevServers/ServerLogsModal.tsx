@@ -62,58 +62,61 @@ export function ServerLogsModal({
   }, [serverId]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <div
         className={cn(
-          "flex h-[80vh] w-full max-w-3xl flex-col rounded-xl",
-          "bg-background border-border border",
-          "shadow-2xl"
+          "flex h-[80vh] w-full max-w-3xl flex-col",
+          "bg-background border-border border"
         )}
       >
         {/* Header */}
-        <div className="border-border flex items-center justify-between border-b px-4 py-3">
-          <h2 className="truncate text-lg font-semibold">Logs: {serverName}</h2>
-          <div className="flex items-center gap-2">
+        <div className="border-border flex h-11 shrink-0 items-stretch justify-between border-b">
+          <div className="flex min-w-0 items-center gap-2.5 px-4">
+            <span className="tech-label">//logs</span>
+            <h2 className="truncate font-mono text-sm font-medium tracking-[0.08em] uppercase">
+              {serverName}
+            </h2>
+          </div>
+          <div className="flex items-stretch">
             <button
               onClick={() => fetchLogs(true)}
               disabled={refreshing}
-              className={cn(
-                "hover:bg-muted rounded-md p-1.5 transition-colors",
-                "disabled:opacity-50"
-              )}
               title="Refresh"
+              className={cn(
+                "text-muted-foreground hover:bg-accent hover:text-foreground flex w-8 items-center justify-center border-l border-border transition-colors",
+                "disabled:pointer-events-none disabled:opacity-30"
+              )}
             >
               <RefreshCw
-                className={cn("h-4 w-4", refreshing && "animate-spin")}
+                className={cn("h-3.5 w-3.5", refreshing && "animate-spin")}
               />
             </button>
             <button
               onClick={onClose}
-              className="hover:bg-muted rounded-md p-1.5 transition-colors"
+              title="Close"
+              className="text-muted-foreground hover:bg-accent hover:text-foreground flex w-8 items-center justify-center border-l border-border transition-colors"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        {/* Logs content */}
+        {/* Log terminal */}
         <div
           ref={logsRef}
           className={cn(
-            "flex-1 overflow-auto p-4",
-            "bg-zinc-950 font-mono text-sm leading-relaxed"
+            "scrollbar-thin flex-1 overflow-auto p-3",
+            "bg-background font-mono text-xs leading-relaxed"
           )}
         >
           {loading ? (
             <div className="flex h-full items-center justify-center">
-              <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
-              <span className="text-muted-foreground ml-2">
-                Loading logs...
-              </span>
+              <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
+              <span className="tech-meta ml-2">Loading logs...</span>
             </div>
           ) : logs.length === 0 ? (
-            <div className="text-muted-foreground flex h-full items-center justify-center">
-              No logs available
+            <div className="tech-label flex h-full items-center justify-center">
+              //no output
             </div>
           ) : (
             <div className="space-y-0.5">
@@ -123,10 +126,10 @@ export function ServerLogsModal({
                   className={cn(
                     "break-all whitespace-pre-wrap",
                     line.includes("error") || line.includes("Error")
-                      ? "text-red-400"
+                      ? "text-status-error"
                       : line.includes("warn") || line.includes("Warning")
-                        ? "text-yellow-400"
-                        : "text-zinc-300"
+                        ? "text-status-waiting"
+                        : "text-muted-foreground"
                   )}
                 >
                   {line || " "}
@@ -137,12 +140,10 @@ export function ServerLogsModal({
         </div>
 
         {/* Footer */}
-        <div className="border-border text-muted-foreground border-t px-4 py-2 text-xs">
-          Auto-refreshing every 3 seconds
+        <div className="border-border text-muted-foreground flex shrink-0 items-center justify-between border-t px-4 py-1.5">
+          <span className="tech-meta">//auto-refresh 3s</span>
           {refreshing && (
-            <span className="ml-2">
-              <RefreshCw className="inline h-3 w-3 animate-spin" />
-            </span>
+            <RefreshCw className="text-muted-foreground inline h-3 w-3 animate-spin" />
           )}
         </div>
       </div>

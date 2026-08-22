@@ -1,16 +1,11 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import {
   SplitSquareHorizontal,
   SplitSquareVertical,
   X,
   Unplug,
   Plus,
-  FolderOpen,
-  GitBranch,
-  Users,
-  Home,
 } from "lucide-react";
 import {
   Tooltip,
@@ -54,6 +49,78 @@ interface DesktopTabBarProps {
   onDetach: () => void;
 }
 
+function ModeCell({
+  label,
+  active,
+  tooltip,
+  badge,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  tooltip: string;
+  badge?: number;
+  onClick: () => void;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onClick();
+          }}
+          className={cn(
+            "relative flex h-full items-center gap-1 border-l border-border px-2.5 font-mono text-[10px] tracking-[0.14em] uppercase transition-colors",
+            active
+              ? "bg-background text-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          {label}
+          {badge !== undefined && badge > 0 && (
+            <span className="text-primary font-mono text-[9px]">{badge}</span>
+          )}
+          {active && (
+            <span className="bg-primary absolute inset-x-0 bottom-0 h-px" />
+          )}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>{tooltip}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function PaneControl({
+  icon: Icon,
+  tooltip,
+  disabled,
+  onClick,
+}: {
+  icon: typeof X;
+  tooltip: string;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onClick();
+          }}
+          disabled={disabled}
+          className="text-muted-foreground hover:text-foreground hover:bg-accent flex h-full w-7 items-center justify-center border-l border-border transition-colors disabled:pointer-events-none disabled:opacity-30"
+        >
+          <Icon className="h-3 w-3" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>{tooltip}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function DesktopTabBar({
   tabs,
   activeTabId,
@@ -91,235 +158,132 @@ export function DesktopTabBar({
   return (
     <div
       className={cn(
-        "flex items-center gap-1 overflow-x-auto px-1 pt-1 transition-colors",
-        isFocused ? "bg-muted" : "bg-muted/50"
+        "scrollbar-none border-border flex h-9 items-stretch overflow-x-auto border-b transition-colors",
+        isFocused ? "bg-surface" : "bg-background"
       )}
     >
       {/* Tabs */}
-      <div className="flex min-w-0 flex-1 items-center gap-0.5">
-        {tabs.map((tab) => (
-          <div
-            key={tab.id}
-            onClick={(e) => {
-              e.stopPropagation();
-              onTabSwitch(tab.id);
-            }}
-            className={cn(
-              "group flex cursor-pointer items-center gap-1.5 rounded-t-md px-3 py-1.5 text-xs transition-colors",
-              tab.id === activeTabId
-                ? "bg-background text-foreground"
-                : "text-muted-foreground hover:text-foreground/80 hover:bg-accent/50"
-            )}
-          >
-            <span className="max-w-[120px] truncate">{getTabName(tab)}</span>
-            {tabs.length > 1 && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onTabClose(tab.id);
-                }}
-                className="hover:text-foreground ml-1 opacity-0 group-hover:opacity-100"
+      <div className="flex min-w-0 flex-1 items-stretch">
+        {tabs.map((tab, index) => {
+          const isActive = tab.id === activeTabId;
+          return (
+            <div
+              key={tab.id}
+              onClick={(e) => {
+                e.stopPropagation();
+                onTabSwitch(tab.id);
+              }}
+              className={cn(
+                "group relative flex cursor-pointer items-center gap-2 border-r border-border px-2.5 text-xs transition-colors",
+                isActive
+                  ? "bg-background text-foreground"
+                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+              )}
+            >
+              <span
+                className={cn(
+                  "font-mono text-[9px] tracking-wider",
+                  isActive ? "text-primary" : "text-foreground-subtle"
+                )}
               >
-                <X className="h-3 w-3" />
-              </button>
-            )}
-          </div>
-        ))}
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <span className="max-w-[140px] truncate">{getTabName(tab)}</span>
+              {tabs.length > 1 && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onTabClose(tab.id);
+                  }}
+                  className="hover:text-foreground text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+              {isActive && (
+                <span className="bg-primary absolute inset-x-0 bottom-0 h-px" />
+              )}
+            </div>
+          );
+        })}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon-sm"
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 onTabAdd();
               }}
-              className="mx-1 h-6 w-6"
+              className="text-muted-foreground hover:text-foreground hover:bg-accent/50 flex items-center border-r border-border px-2 transition-colors"
             >
               <Plus className="h-3 w-3" />
-            </Button>
+            </button>
           </TooltipTrigger>
           <TooltipContent>New tab</TooltipContent>
         </Tooltip>
       </div>
 
-      {/* View Toggle */}
+      {/* Mode strip */}
       {session?.working_directory && (
-        <div className="bg-accent/50 mx-2 flex items-center rounded-md p-0.5">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onViewModeChange("terminal");
-                }}
-                className={cn(
-                  "rounded px-2 py-1 transition-colors",
-                  viewMode === "terminal"
-                    ? "bg-secondary text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Home className="h-3.5 w-3.5" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Terminal</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onViewModeChange("files");
-                }}
-                className={cn(
-                  "rounded px-2 py-1 transition-colors",
-                  viewMode === "files"
-                    ? "bg-secondary text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <FolderOpen className="h-3.5 w-3.5" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Files</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onGitDrawerToggle();
-                }}
-                className={cn(
-                  "rounded px-2 py-1 transition-colors",
-                  gitDrawerOpen
-                    ? "bg-secondary text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <GitBranch className="h-3.5 w-3.5" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Git</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onShellDrawerToggle();
-                }}
-                className={cn(
-                  "rounded px-2 py-1 font-mono text-xs transition-colors",
-                  shellDrawerOpen
-                    ? "bg-secondary text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {">_"}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Shell</TooltipContent>
-          </Tooltip>
+        <div className="flex items-stretch">
+          <ModeCell
+            label="Term"
+            active={viewMode === "terminal"}
+            tooltip="Terminal"
+            onClick={() => onViewModeChange("terminal")}
+          />
+          <ModeCell
+            label="Files"
+            active={viewMode === "files"}
+            tooltip="Files"
+            onClick={() => onViewModeChange("files")}
+          />
+          <ModeCell
+            label="Git"
+            active={gitDrawerOpen}
+            tooltip="Git"
+            onClick={onGitDrawerToggle}
+          />
+          <ModeCell
+            label=">_"
+            active={shellDrawerOpen}
+            tooltip="Shell"
+            onClick={onShellDrawerToggle}
+          />
           {isConductor && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onViewModeChange("workers");
-                  }}
-                  className={cn(
-                    "relative rounded px-2 py-1 transition-colors",
-                    viewMode === "workers"
-                      ? "bg-secondary text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <Users className="h-3.5 w-3.5" />
-                  <span className="bg-primary text-primary-foreground absolute -top-1 -right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full text-[9px] font-medium">
-                    {workerCount}
-                  </span>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>Workers</TooltipContent>
-            </Tooltip>
+            <ModeCell
+              label="Workers"
+              active={viewMode === "workers"}
+              tooltip="Workers"
+              badge={workerCount}
+              onClick={() => onViewModeChange("workers")}
+            />
           )}
         </div>
       )}
 
-      {/* Pane Controls */}
-      <div className="ml-auto flex items-center gap-0.5 px-2">
+      {/* Pane controls */}
+      <div className="flex items-stretch">
         {hasAttachedTmux && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDetach();
-                }}
-                className="h-6 w-6"
-              >
-                <Unplug className="h-3 w-3" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Detach from tmux</TooltipContent>
-          </Tooltip>
+          <PaneControl icon={Unplug} tooltip="Detach from tmux" onClick={onDetach} />
         )}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onSplitHorizontal();
-              }}
-              disabled={!canSplit}
-              className="h-6 w-6"
-            >
-              <SplitSquareHorizontal className="h-3 w-3" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Split horizontal</TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onSplitVertical();
-              }}
-              disabled={!canSplit}
-              className="h-6 w-6"
-            >
-              <SplitSquareVertical className="h-3 w-3" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Split vertical</TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onClose();
-              }}
-              disabled={!canClose}
-              className="h-6 w-6"
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Close pane</TooltipContent>
-        </Tooltip>
+        <PaneControl
+          icon={SplitSquareHorizontal}
+          tooltip="Split horizontal"
+          disabled={!canSplit}
+          onClick={onSplitHorizontal}
+        />
+        <PaneControl
+          icon={SplitSquareVertical}
+          tooltip="Split vertical"
+          disabled={!canSplit}
+          onClick={onSplitVertical}
+        />
+        <PaneControl
+          icon={X}
+          tooltip="Close pane"
+          disabled={!canClose}
+          onClick={onClose}
+        />
       </div>
     </div>
   );

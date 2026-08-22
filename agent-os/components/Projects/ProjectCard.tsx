@@ -166,7 +166,7 @@ export function ProjectCard({
             <MenuSeparator />
             <MenuItem
               onClick={() => onDelete()}
-              className="text-red-500 focus:text-red-500"
+              className="text-destructive focus:text-destructive"
             >
               <Trash2 className="mr-2 h-3 w-3" />
               Delete project
@@ -181,7 +181,7 @@ export function ProjectCard({
     <div
       onClick={handleClick}
       className={cn(
-        "group flex cursor-pointer items-center gap-1 rounded-md px-2 py-1.5",
+        "group relative flex cursor-pointer items-center gap-1 overflow-hidden rounded-none px-2 py-1.5",
         "min-h-[36px] md:min-h-[28px]",
         "hover:bg-accent/50"
       )}
@@ -189,13 +189,13 @@ export function ProjectCard({
       {/* Expand/collapse toggle */}
       <button className="flex-shrink-0 p-0.5">
         {project.expanded ? (
-          <ChevronDown className="text-muted-foreground h-4 w-4" />
+          <ChevronDown className="text-muted-foreground h-3.5 w-3.5" />
         ) : (
-          <ChevronRight className="text-muted-foreground h-4 w-4" />
+          <ChevronRight className="text-muted-foreground h-3.5 w-3.5" />
         )}
       </button>
 
-      {/* Project name */}
+      {/* Project name + path */}
       {isEditing ? (
         <input
           ref={inputRef}
@@ -211,21 +211,26 @@ export function ProjectCard({
             }
           }}
           onClick={(e) => e.stopPropagation()}
-          className="border-primary min-w-0 flex-1 border-b bg-transparent text-sm font-medium outline-none"
+          className="min-w-0 flex-1 border-b border-primary bg-transparent font-mono text-xs outline-none"
         />
       ) : (
-        <span className="min-w-0 flex-1 truncate text-sm font-medium">
-          {project.name}
-        </span>
+        <div className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-medium">
+            {project.name}
+          </span>
+          <span className="tech-meta block truncate">
+            {project.working_directory}
+          </span>
+        </div>
       )}
 
       {/* Running servers indicator */}
       {hasRunningServers && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex flex-shrink-0 items-center gap-1 text-green-500">
-              <Server className="h-3 w-3" />
-              <span className="text-xs">{runningDevServers.length}</span>
+            <div className="flex flex-shrink-0 items-center gap-1 font-mono text-[9px] uppercase tracking-[0.12em] text-status-running">
+              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+              server
             </div>
           </TooltipTrigger>
           <TooltipContent>
@@ -238,8 +243,8 @@ export function ProjectCard({
       )}
 
       {/* Session count */}
-      <span className="text-muted-foreground flex-shrink-0 text-xs">
-        {sessionCount}
+      <span className="flex-shrink-0 font-mono text-[10px] text-muted-foreground">
+        {String(sessionCount).padStart(2, "0")}
       </span>
 
       {/* Actions menu */}
