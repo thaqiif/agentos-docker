@@ -25,6 +25,8 @@ import { GitDrawer } from "@/components/GitDrawer";
 import { ShellDrawer } from "@/components/ShellDrawer";
 import { useSnapshot } from "valtio";
 import { fileOpenStore, fileOpenActions } from "@/stores/fileOpen";
+import { Welcome } from "@/components/Welcome";
+import { tmuxAttachCommand } from "@/lib/tmux-attach";
 
 // Dynamic imports for client-only components with loading states
 const Terminal = dynamic(
@@ -48,6 +50,9 @@ interface PaneProps {
   onRegisterTerminal: (ref: TerminalHandle | null) => void;
   onMenuClick?: () => void;
   onSelectTerminal?: (name: string) => void;
+  /** Welcome-screen actions, used only while nothing is attached. */
+  onNewTerminal?: () => void;
+  onQuickSwitch?: () => void;
 }
 
 /**
@@ -64,6 +69,8 @@ export const Pane = memo(function Pane({
   onRegisterTerminal,
   onMenuClick,
   onSelectTerminal,
+  onNewTerminal,
+  onQuickSwitch,
 }: PaneProps) {
   const { isMobile } = useViewport();
   const {
@@ -129,13 +136,25 @@ export const Pane = memo(function Pane({
     onRegisterTerminal(handle);
 
     if (attachedTmux) {
-      setTimeout(() => handle.sendCommand(`tmux attach -t ${attachedTmux}`), 100);
+      const cwd = terminals.find(
+        (t) => t.tmux_name === attachedTmux
+      )?.working_directory;
+      setTimeout(() => {
+        handle.sendCommand(tmuxAttachCommand(attachedTmux, cwd));
+        handle.focus();
+      }, 100);
     }
-  }, [attachedTmux, onRegisterTerminal]);
+  }, [attachedTmux, terminals, onRegisterTerminal]);
 
   useEffect(() => {
     return () => onRegisterTerminal(null);
   }, [onRegisterTerminal]);
+
+  // Detaching unmounts the terminal, so the handle the rest of the app is
+  // holding is stale. Drop it, or the next attach would type into nothing.
+  useEffect(() => {
+    if (!attachedTmux) onRegisterTerminal(null);
+  }, [attachedTmux, onRegisterTerminal]);
 
   // Swipe between terminals on mobile.
   const touchStartX = useRef<number | null>(null);
@@ -195,6 +214,20 @@ export const Pane = memo(function Pane({
     />
   );
 
+  // Nothing attached means nothing to show: the terminal only exists as a
+  // window onto a tmux session, so without one it would be a throwaway
+  // shell pretending to be persistent.
+  const surface = attachedTmux ? (
+    terminal
+  ) : (
+    <Welcome
+      terminals={terminals}
+      onNewTerminal={() => onNewTerminal?.()}
+      onSelectTerminal={(name) => onSelectTerminal?.(name)}
+      onQuickSwitch={onQuickSwitch}
+    />
+  );
+
   return (
     <div
       className={cn(
@@ -223,7 +256,7 @@ export const Pane = memo(function Pane({
           onTouchEnd={handleTouchEnd}
         >
           <div className={viewMode === "terminal" ? "h-full w-full" : "hidden"}>
-            {terminal}
+            {surface}
           </div>
 
           {session?.working_directory && (
@@ -259,7 +292,7 @@ export const Pane = memo(function Pane({
               >
                 <div className="relative h-full">
                   <div className={viewMode === "terminal" ? "h-full" : "hidden"}>
-                    {terminal}
+                    {surface}
                   </div>
 
                   {session?.working_directory && (

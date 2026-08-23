@@ -28,6 +28,8 @@ interface PaneContextValue {
   /** True once localStorage has been read, so we do not flash the default. */
   hydrated: boolean;
   attach: (tmuxName: string) => void;
+  /** Stop pointing at a session. The session itself keeps running. */
+  detach: () => void;
   setViewMode: (mode: ViewMode) => void;
   toggleGitDrawer: () => void;
   toggleShellDrawer: () => void;
@@ -56,6 +58,12 @@ export function PaneProvider({ children }: { children: ReactNode }) {
 
   const attach = useCallback((tmuxName: string) => {
     setState((prev) => ({ ...prev, attachedTmux: tmuxName }));
+  }, []);
+
+  const detach = useCallback(() => {
+    // Back to the terminal view as well: files and git have no working
+    // directory to point at once nothing is attached.
+    setState((prev) => ({ ...prev, attachedTmux: null, viewMode: "terminal" }));
   }, []);
 
   const setViewMode = useCallback((viewMode: ViewMode) => {
@@ -96,6 +104,7 @@ export function PaneProvider({ children }: { children: ReactNode }) {
         isMobile,
         hydrated,
         attach,
+        detach,
         setViewMode,
         toggleGitDrawer,
         toggleShellDrawer,

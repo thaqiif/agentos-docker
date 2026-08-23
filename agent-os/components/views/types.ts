@@ -36,6 +36,8 @@ export interface ViewProps {
   /** Open a new terminal, optionally in a project's working directory. */
   handleNewTerminal: (projectId?: string) => Promise<void>;
   handleCloseTerminal: (name: string) => Promise<void>;
+  /** Detach the workbench from the attached session, leaving it running. */
+  handleDetachTerminal: () => void;
   handleCreateProject: (
     name: string,
     workingDirectory: string,

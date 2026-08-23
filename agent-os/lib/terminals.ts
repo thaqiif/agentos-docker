@@ -177,6 +177,10 @@ export async function createTerminal(cwd: string): Promise<Terminal> {
   // pane focus and divider dragging all work without a prefix key.
   await tmux(["set-option", "-t", name, "mouse", "on"]);
 
+  // The status bar duplicates what the workbench already shows, and eats a
+  // row of the harness's TUI. Global, so hand-started sessions lose it too.
+  await tmux(["set-option", "-g", "status", "off"]);
+
   return {
     name,
     path: cwd,

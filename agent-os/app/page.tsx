@@ -32,6 +32,7 @@ import { useProjects } from "@/hooks/useProjects";
 import { useDevServersManager } from "@/hooks/useDevServersManager";
 import { useTerminalStatuses } from "@/hooks/useTerminalStatuses";
 import type { TerminalRecord } from "@/lib/terminals";
+import { tmuxAttachCommand } from "@/lib/tmux-attach";
 import type { TerminalHandle } from "@/components/Terminal";
 import { DesktopView } from "@/components/views/DesktopView";
 import { MobileView } from "@/components/views/MobileView";
@@ -46,7 +47,7 @@ function HomeContent() {
   const terminalRef = useRef<TerminalHandle | null>(null);
 
   // Pane context
-  const { attachedTmux, attach } = usePanes();
+  const { attachedTmux, attach, detach } = usePanes();
   const { isMobile, isHydrated } = useViewport();
 
   // Data hooks
@@ -89,19 +90,20 @@ function HomeContent() {
    */
   const attachToTerminal = useCallback(
     (name: string) => {
+      const record = terminals.find((t) => t.tmux_name === name);
+      const command = tmuxAttachCommand(name, record?.working_directory);
+
       const terminal = getTerminal();
+
+      // Nothing is mounted while the welcome screen is up. Recording the
+      // attachment is enough: that mounts the terminal, and its connect
+      // handler runs the same command once the pty is ready.
       if (!terminal) {
-        debugLog(`ERROR: No terminal available to attach: ${name}`);
+        debugLog(`Attaching on mount: ${name}`);
+        attach(name);
+        void fetchTerminals();
         return;
       }
-
-      // A terminal whose tmux session has been killed is still listed, so
-      // attaching has to be able to start it again. The fallback runs in
-      // the shell, which also closes the race where the session dies
-      // between the listing and the click.
-      const record = terminals.find((t) => t.tmux_name === name);
-      const cwd = record?.working_directory || "$HOME";
-      const start = `tmux new -s ${name} -c "${cwd}"`;
 
       const isInTmux = !!attachedTmux;
       if (isInTmux) terminal.sendInput("\x02d");
@@ -110,10 +112,7 @@ function HomeContent() {
         () => {
           terminal.sendInput("\x03");
           setTimeout(() => {
-            // Mouse mode makes tmux's own splits usable in the browser.
-            terminal.sendCommand(
-              `tmux set -g mouse on 2>/dev/null; tmux attach -t ${name} 2>/dev/null || ${start}`
-            );
+            terminal.sendCommand(command);
             attach(name);
             terminal.focus();
             // The restart changes what the listing should say.
@@ -125,6 +124,19 @@ function HomeContent() {
     },
     [getTerminal, attachedTmux, attach, terminals, fetchTerminals]
   );
+
+  /**
+   * Stop looking at a terminal without killing it.
+   *
+   * Detaching leaves the tmux session and everything running in it exactly
+   * where it was; the workbench just stops pointing at it and falls back to
+   * the welcome screen. Unmounting the terminal drops the pty, which tmux
+   * sees as a detached client, so the Ctrl-B d is belt and braces.
+   */
+  const handleDetachTerminal = useCallback(() => {
+    getTerminal()?.sendInput("\x02d");
+    detach();
+  }, [getTerminal, detach]);
 
   // The attached tmux session is what the workbench is looking at.
   const activeSession = terminals.find((t) => t.tmux_name === attachedTmux);
@@ -176,20 +188,6 @@ function HomeContent() {
     [attachToTerminal]
   );
 
-  // Pane renderer
-  const renderPane = useCallback(
-    () => (
-      <Pane
-        terminals={terminals}
-        projects={projects}
-        onRegisterTerminal={registerTerminalRef}
-        onMenuClick={isMobile ? () => setSidebarOpen(true) : undefined}
-        onSelectTerminal={handleSelectTerminal}
-      />
-    ),
-    [terminals, projects, registerTerminalRef, isMobile, handleSelectTerminal]
-  );
-
   /**
    * Open a new terminal.
    *
@@ -220,6 +218,30 @@ function HomeContent() {
       await fetchTerminals();
     },
     [killTerminal, fetchTerminals]
+  );
+
+  // Pane renderer. Declared after the handlers it hands to the welcome
+  // screen, since the dependency array reads them at render time.
+  const renderPane = useCallback(
+    () => (
+      <Pane
+        terminals={terminals}
+        projects={projects}
+        onRegisterTerminal={registerTerminalRef}
+        onMenuClick={isMobile ? () => setSidebarOpen(true) : undefined}
+        onSelectTerminal={handleSelectTerminal}
+        onNewTerminal={() => void handleNewTerminal()}
+        onQuickSwitch={() => setShowQuickSwitcher(true)}
+      />
+    ),
+    [
+      terminals,
+      projects,
+      registerTerminalRef,
+      isMobile,
+      handleSelectTerminal,
+      handleNewTerminal,
+    ]
   );
 
   // Project created handler (shared between desktop/mobile)
@@ -269,6 +291,7 @@ function HomeContent() {
     attachToTerminal,
     handleNewTerminal,
     handleCloseTerminal,
+    handleDetachTerminal,
     handleCreateProject,
     handleStartDevServer: startDevServer,
     handleCreateDevServer: createDevServer,

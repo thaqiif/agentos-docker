@@ -24,10 +24,9 @@ export interface TerminalListProps {
     workingDirectory: string;
     ports?: number[];
   }) => Promise<void>;
-  pinControls?: {
-    isPinned: boolean;
-    onTogglePin: () => void;
-  };
+  /** Notification bell element, rendered into the sidebar header. */
+  notifications?: React.ReactNode;
+  onQuickSwitch?: () => void;
 }
 
 export interface SessionHoverHandlers {

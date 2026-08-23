@@ -240,51 +240,54 @@ export function ProjectCard({
         </Tooltip>
       )}
 
-      {/* New terminal, left of the actions menu */}
-      {onNewTerminal && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="h-7 w-7 flex-shrink-0 md:h-6 md:w-6"
-              onClick={(e) => {
-                e.stopPropagation();
-                onNewTerminal();
-              }}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>New terminal</p>
-          </TooltipContent>
-        </Tooltip>
-      )}
+      {/* Row actions. Both buttons sit in the flow, side by side: the menu
+          used to be absolutely positioned against the row's right edge,
+          which parked it on top of the new-terminal button. */}
+      <div className="flex flex-shrink-0 items-center gap-0.5 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100">
+        {onNewTerminal && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="h-7 w-7 md:h-6 md:w-6"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onNewTerminal();
+                }}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>New terminal</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
 
-      {/* Actions menu */}
-      {hasActions && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="inline-flex h-7 w-7 flex-shrink-0 transition-opacity md:absolute md:top-1/2 md:right-1 md:h-6 md:w-6 md:-translate-y-1/2 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
+        {hasActions && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="h-7 w-7 md:h-6 md:w-6"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              // Without this Radix returns focus to the trigger on close, which
+              // instantly blurs the rename input and cancelled every rename.
+              onCloseAutoFocus={(e) => e.preventDefault()}
+              onClick={(e) => e.stopPropagation()}
             >
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            // Without this Radix returns focus to the trigger on close, which
-            // instantly blurs the rename input and cancelled every rename.
-            onCloseAutoFocus={(e) => e.preventDefault()}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {renderMenuItems(false)}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
+              {renderMenuItems(false)}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
     </div>
   );
 

@@ -35,7 +35,8 @@ export function TerminalList({
   onCloseTerminal,
   onStartDevServer,
   onCreateDevServer,
-  pinControls,
+  notifications,
+  onQuickSwitch,
 }: TerminalListProps) {
   const { isMobile } = useViewport();
 
@@ -141,7 +142,8 @@ export function TerminalList({
           setShowNewProjectDialog(true);
         }}
         onKillAll={() => setShowKillAllConfirm(true)}
-        pinControls={pinControls}
+        notifications={notifications}
+        onQuickSwitch={onQuickSwitch}
       />
 
       {/* Kill All Confirmation */}

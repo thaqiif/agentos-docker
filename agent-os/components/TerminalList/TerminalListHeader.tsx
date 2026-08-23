@@ -1,25 +1,12 @@
+"use client";
+
+import { useState, type ReactNode } from "react";
 import {
   ADropdownMenu,
   menuItem,
-  toggleItem,
-  submenuItem,
   separator,
 } from "@/components/a/ADropdownMenu";
-import { useTheme } from "next-themes";
-import {
-  DARK_THEMES,
-  LIGHT_THEMES,
-  parseTheme,
-  buildTheme,
-  type DarkThemeVariant,
-  type LightThemeVariant,
-} from "@/lib/theme-config";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { ThemeDialog } from "@/components/ThemeDialog";
 import {
   Plus,
   FolderPlus,
@@ -27,9 +14,8 @@ import {
   GitBranch,
   MoreHorizontal,
   Trash2,
-  PanelLeft,
   Palette,
-  Info,
+  Command,
 } from "lucide-react";
 
 interface TerminalListHeaderProps {
@@ -37,10 +23,13 @@ interface TerminalListHeaderProps {
   onOpenProject: () => void;
   onCloneFromGithub: () => void;
   onKillAll: () => void;
-  pinControls?: {
-    isPinned: boolean;
-    onTogglePin: () => void;
-  };
+  onQuickSwitch?: () => void;
+  /**
+   * The notification bell, rendered by whoever owns its state. It sits
+   * between the new-project and the overflow menus, so it is next to the
+   * terminals it is telling you about.
+   */
+  notifications?: ReactNode;
 }
 
 export function TerminalListHeader({
@@ -48,33 +37,10 @@ export function TerminalListHeader({
   onOpenProject,
   onCloneFromGithub,
   onKillAll,
-  pinControls,
+  onQuickSwitch,
+  notifications,
 }: TerminalListHeaderProps) {
-  const { theme, setTheme } = useTheme();
-  const { mode, variant } = parseTheme(theme || "system");
-
-  // Theme and the project credit used to sit in a footer pinned to the
-  // bottom of the sidebar, taking vertical space from the terminal list for
-  // two things nobody clicks often. They live in this menu now.
-  const themeItems = [
-    toggleItem("System", mode === "system", () => setTheme("system")),
-    separator(),
-    ...DARK_THEMES.map((t) =>
-      toggleItem(
-        t.label,
-        mode === "dark" && (variant ?? "deep") === t.id,
-        () => setTheme(buildTheme("dark", t.id as DarkThemeVariant))
-      )
-    ),
-    separator(),
-    ...LIGHT_THEMES.map((t) =>
-      toggleItem(
-        t.label,
-        mode === "light" && (variant ?? "default") === t.id,
-        () => setTheme(buildTheme("light", t.id as LightThemeVariant))
-      )
-    ),
-  ];
+  const [showThemeDialog, setShowThemeDialog] = useState(false);
 
   return (
     <div className="border-sidebar-border border-b px-3 pt-2.5 pb-2">
@@ -99,24 +65,7 @@ export function TerminalListHeader({
           </svg>
           <h2 className="text-sm font-semibold tracking-tight">AgentOS</h2>
         </div>
-        <div className="flex gap-0.5">
-          {pinControls && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="h-7 w-7"
-                  onClick={pinControls.onTogglePin}
-                >
-                  <PanelLeft className="h-3.5 w-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Toggle sidebar</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
+        <div className="flex items-center gap-0.5">
           <ADropdownMenu
             icon={Plus}
             tooltip="New project"
@@ -128,16 +77,21 @@ export function TerminalListHeader({
               }),
             ]}
           />
+          {notifications}
           <ADropdownMenu
             icon={MoreHorizontal}
             tooltip="More options"
             items={[
-              submenuItem("Theme", themeItems, { icon: Palette }),
-              menuItem(
-                "About aTerm",
-                () => window.open("https://aterm.app", "_blank", "noopener"),
-                { icon: Info }
-              ),
+              ...(onQuickSwitch
+                ? [
+                    menuItem("Quick Switch  ⌘K", onQuickSwitch, {
+                      icon: Command,
+                    }),
+                  ]
+                : []),
+              menuItem("Theme…", () => setShowThemeDialog(true), {
+                icon: Palette,
+              }),
               separator(),
               menuItem("Close all terminals", onKillAll, {
                 icon: Trash2,
@@ -147,6 +101,8 @@ export function TerminalListHeader({
           />
         </div>
       </div>
+
+      <ThemeDialog open={showThemeDialog} onOpenChange={setShowThemeDialog} />
     </div>
   );
 }
