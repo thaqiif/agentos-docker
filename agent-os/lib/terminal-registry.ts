@@ -35,6 +35,12 @@ export function renameTerminalRow(name: string, newName: string): void {
   queries.renameTerminalRow(getDb()).run(newName, name);
 }
 
+/** Whether the registry already has an entry under this name. */
+export function terminalRowExists(name: string): boolean {
+  const rows = queries.getAllTerminals(getDb()).all() as TerminalRow[];
+  return rows.some((r) => r.name === name);
+}
+
 /** Working directory last recorded for a terminal, if we know it. */
 export function terminalWorkingDirectory(name: string): string | null {
   const rows = queries.getAllTerminals(getDb()).all() as TerminalRow[];

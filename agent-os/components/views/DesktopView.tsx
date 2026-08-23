@@ -15,6 +15,8 @@ import { QuickSwitcher } from "@/components/QuickSwitcher";
 import type { ViewProps } from "./types";
 import { fileOpenActions } from "@/stores/fileOpen";
 import { useSidebarPinned } from "@/hooks/useSidebarPinned";
+import { useTerminalRename } from "@/hooks/useTerminalRename";
+import { WorkbenchTitle } from "./WorkbenchTitle";
 
 export function DesktopView({
   terminals,
@@ -41,6 +43,7 @@ export function DesktopView({
   renderPane,
 }: ViewProps) {
   const { isPinned, togglePin } = useSidebarPinned();
+  const renameTerminal = useTerminalRename();
 
   return (
     <div className="bg-background flex h-screen overflow-hidden">
@@ -105,9 +108,10 @@ export function DesktopView({
 
             {activeSession && (
               <div className="flex min-w-0 items-center gap-1 border-l border-border pl-3">
-                <span className="truncate text-sm font-medium">
-                  {activeSession.name}
-                </span>
+                <WorkbenchTitle
+                  name={activeSession.name}
+                  onRename={renameTerminal}
+                />
                 {/* Detach, not kill: the session and everything in it keep
                     running, the workbench just stops looking at it. */}
                 <Tooltip>

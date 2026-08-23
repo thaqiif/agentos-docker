@@ -153,13 +153,16 @@ export async function listTerminals(): Promise<Terminal[]> {
   return terminals;
 }
 
+/**
+ * Whether a session by exactly this name exists.
+ *
+ * Deliberately not `has-session`: tmux target names are prefix- and
+ * pattern-matched, so `has-session -t v1` answers yes for a session called
+ * `v1_2_0`. A rename collision check that loose would refuse valid names
+ * and, worse, `sessionId` would hand back the wrong session to rename.
+ */
 export async function terminalExists(name: string): Promise<boolean> {
-  const out = await tmux(["has-session", "-t", name]);
-  // has-session prints nothing and exits non-zero when absent, which tmux()
-  // turns into "". Re-check against the listing to stay unambiguous.
-  if (out !== "") return true;
-  const all = await listTerminals();
-  return all.some((t) => t.name === name);
+  return (await sessionId(name)) !== null;
 }
 
 /**
@@ -235,9 +238,67 @@ export async function killTerminal(name: string): Promise<void> {
   await execFileAsync("tmux", ["kill-session", "-t", name]);
 }
 
+/**
+ * A session name tmux will accept unchanged.
+ *
+ * tmux uses "." and ":" to address windows and panes, so it rewrites both
+ * to "_" in a session name — silently, with a zero exit code. Renaming a
+ * terminal to "v1.2.0" therefore left tmux holding "v1_2_0" while we
+ * recorded "v1.2.0": the entry went stale, and the real session came back
+ * on the next listing as a second, unexplained terminal.
+ *
+ * Applying the same rule up front means the name we show is the name that
+ * exists. `renameTerminal` still reads the result back from tmux, so we
+ * stay correct even if this rule and tmux's ever diverge.
+ */
+export function sanitizeSessionName(name: string): string {
+  return name.trim().replace(/[.:]/g, "_");
+}
+
+/**
+ * tmux's own id for a session (`$3`), which survives a rename.
+ *
+ * Renaming by name is a race with itself: once tmux has rewritten the name,
+ * neither the old nor the requested name addresses the session any more.
+ * Resolved from the listing rather than a target, so the match is exact.
+ */
+async function sessionId(name: string): Promise<string | null> {
+  const out = await tmux([
+    "list-sessions",
+    "-F",
+    `#{session_name}${SEP}#{session_id}`,
+  ]);
+
+  for (const line of out.split("\n")) {
+    const idx = line.lastIndexOf(SEP);
+    if (idx === -1) continue;
+    if (line.slice(0, idx) === name) return line.slice(idx + SEP.length).trim();
+  }
+
+  return null;
+}
+
+/**
+ * Rename a live session, returning the name tmux actually gave it.
+ *
+ * Throws if the session is gone or tmux refuses the name — the caller must
+ * not update its own records unless this succeeds.
+ */
 export async function renameTerminal(
   name: string,
   newName: string
-): Promise<void> {
-  await execFileAsync("tmux", ["rename-session", "-t", name, newName]);
+): Promise<string> {
+  const id = await sessionId(name);
+  if (!id) throw new Error(`No tmux session named "${name}"`);
+
+  await execFileAsync("tmux", ["rename-session", "-t", id, newName]);
+
+  const actual = await tmux([
+    "display-message",
+    "-p",
+    "-t",
+    id,
+    "#{session_name}",
+  ]);
+  return actual.trim() || newName;
 }

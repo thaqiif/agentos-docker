@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { killTerminal, renameTerminal } from "@/lib/terminals";
+import {
+  killTerminal,
+  renameTerminal,
+  sanitizeSessionName,
+  terminalExists,
+} from "@/lib/terminals";
 import {
   forgetTerminal,
   renameTerminalRow,
+  terminalRowExists,
 } from "@/lib/terminal-registry";
 
 /**
@@ -35,7 +41,15 @@ export async function DELETE(
   }
 }
 
-/** PATCH /api/terminals/:name - rename the tmux session. */
+/**
+ * PATCH /api/terminals/:name - rename a terminal.
+ *
+ * A terminal's name *is* its tmux session name, so this has to keep tmux
+ * and the registry saying the same thing. Every failure here used to be
+ * swallowed and the registry renamed regardless, which is how a rename
+ * tmux had rejected or rewritten produced one dead entry under the name
+ * the user typed and a second, live one under the name tmux chose.
+ */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ name: string }> }
@@ -52,13 +66,46 @@ export async function PATCH(
     }
 
     const decoded = decodeURIComponent(name);
-    await renameTerminal(decoded, newName).catch(() => {});
-    renameTerminalRow(decoded, newName);
-    return NextResponse.json({ success: true, name: newName });
+    const requested = newName.trim();
+    const target = sanitizeSessionName(requested);
+
+    if (!target) {
+      return NextResponse.json(
+        { error: "Name cannot be empty" },
+        { status: 400 }
+      );
+    }
+
+    if (target === decoded) {
+      // Nothing to do, but report the sanitized name so a rename of
+      // "v1.2.0" to itself does not look like it failed.
+      return NextResponse.json({ success: true, name: target, requested });
+    }
+
+    // Renaming onto a name already in use would collide in tmux and again
+    // on the registry's unique index. Say so instead of half-applying it.
+    if ((await terminalExists(target)) || terminalRowExists(target)) {
+      return NextResponse.json(
+        { error: `A terminal named "${target}" already exists` },
+        { status: 409 }
+      );
+    }
+
+    // A stopped terminal has no session to rename — only a registry entry.
+    const actual = (await terminalExists(decoded))
+      ? await renameTerminal(decoded, target)
+      : target;
+
+    renameTerminalRow(decoded, actual);
+
+    return NextResponse.json({ success: true, name: actual, requested });
   } catch (error) {
     console.error("Error renaming terminal:", error);
     return NextResponse.json(
-      { error: "Failed to rename terminal" },
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to rename terminal",
+      },
       { status: 500 }
     );
   }

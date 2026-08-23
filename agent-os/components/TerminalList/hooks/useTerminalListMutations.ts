@@ -1,7 +1,8 @@
 import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useKillTerminal, useRenameTerminal } from "@/data/terminals";
+import { useKillTerminal } from "@/data/terminals";
+import { useTerminalRename } from "@/hooks/useTerminalRename";
 import {
   useToggleProject,
   useDeleteProject,
@@ -13,7 +14,6 @@ import {
   useRemoveDevServer,
 } from "@/data/dev-servers";
 import { terminalKeys } from "@/data/terminals/keys";
-import { usePanes } from "@/contexts/PaneContext";
 
 /**
  * Sidebar mutations.
@@ -25,10 +25,9 @@ import { usePanes } from "@/contexts/PaneContext";
  */
 export function useTerminalListMutations() {
   const queryClient = useQueryClient();
-  const { attachedTmux, attach } = usePanes();
 
   const killTerminalMutation = useKillTerminal();
-  const renameTerminalMutation = useRenameTerminal();
+  const renameTerminal = useTerminalRename();
 
   const toggleProjectMutation = useToggleProject();
   const deleteProjectMutation = useDeleteProject();
@@ -47,18 +46,7 @@ export function useTerminalListMutations() {
     [killTerminalMutation]
   );
 
-  const handleRenameTerminal = useCallback(
-    async (name: string, newName: string) => {
-      await renameTerminalMutation.mutateAsync({ name, newName });
-
-      // A terminal is identified by its tmux session name, so renaming the
-      // attached one leaves the workbench pointing at a name that no longer
-      // exists. The client is still attached to the same session — only the
-      // pointer needs moving, not the tmux client.
-      if (attachedTmux === name) attach(newName);
-    },
-    [renameTerminalMutation, attachedTmux, attach]
-  );
+  const handleRenameTerminal = renameTerminal;
 
   const handleToggleProject = useCallback(
     async (projectId: string, expanded: boolean) => {

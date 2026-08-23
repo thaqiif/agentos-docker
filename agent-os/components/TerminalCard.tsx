@@ -326,7 +326,16 @@ export function TerminalCard({
               className="min-w-0 flex-1 border-b border-primary bg-transparent font-mono text-xs outline-none"
             />
           ) : (
-            <span className="min-w-0 flex-1 truncate text-sm leading-4">
+            <span
+              // Double-click to rename, rather than hunting for the menu.
+              onDoubleClick={(e) => {
+                if (!onRename) return;
+                e.stopPropagation();
+                setEditName(session.name);
+                setIsEditing(true);
+              }}
+              className="min-w-0 flex-1 truncate text-sm leading-4"
+            >
               {session.name}
             </span>
           )}

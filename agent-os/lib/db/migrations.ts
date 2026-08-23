@@ -178,6 +178,38 @@ const migrations: Migration[] = [
       `);
     },
   },
+  {
+    id: 16,
+    name: "repair_mangled_terminal_names",
+    up: (db) => {
+      // tmux rewrites "." and ":" in session names, but renames used to be
+      // recorded as typed. Any such row can never match a live session: it
+      // shows as a permanently stopped terminal, and the real session turns
+      // up alongside it as a second entry. Point them at the name tmux
+      // would have chosen, dropping the row if that name is already taken —
+      // that is the live entry, and it is the one worth keeping.
+      const rows = db
+        .prepare(`SELECT name FROM terminals`)
+        .all() as { name: string }[];
+
+      const taken = new Set(rows.map((r) => r.name));
+      const rename = db.prepare(`UPDATE terminals SET name = ? WHERE name = ?`);
+      const drop = db.prepare(`DELETE FROM terminals WHERE name = ?`);
+
+      for (const { name } of rows) {
+        const fixed = name.replace(/[.:]/g, "_");
+        if (fixed === name) continue;
+
+        if (taken.has(fixed)) {
+          drop.run(name);
+        } else {
+          rename.run(fixed, name);
+          taken.add(fixed);
+        }
+        taken.delete(name);
+      }
+    },
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

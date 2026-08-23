@@ -78,7 +78,14 @@ export function useRenameTerminal() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ newName }),
       });
-      if (!res.ok) throw new Error("Failed to rename terminal");
+
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(body.error || "Failed to rename terminal");
+      }
+
+      // The name tmux settled on, which is not always the one asked for.
+      return body as { name: string; requested: string };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: terminalKeys.all });

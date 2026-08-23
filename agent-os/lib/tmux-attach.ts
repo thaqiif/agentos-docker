@@ -24,8 +24,6 @@ function quote(value: string): string {
  */
 export function tmuxAttachCommand(name: string, cwd?: string | null): string {
   const target = quote(name);
-  // `$HOME` has to stay unquoted for the shell to expand it.
-  const dir = cwd ? quote(cwd) : "$HOME";
 
   // `-g` writes the server's global options, so this covers whatever the
   // attach lands on, including a server these commands just started. Mouse
@@ -35,10 +33,15 @@ export function tmuxAttachCommand(name: string, cwd?: string | null): string {
   const options =
     "tmux set -g mouse on 2>/dev/null; tmux set -g status off 2>/dev/null";
 
-  const create = `tmux new-session -d -s ${target} -c ${dir} 2>/dev/null`;
+  const attach = `${options}; tmux attach -t ${target}`;
 
-  return (
-    `${options}; tmux attach -t ${target} 2>/dev/null || ` +
-    `{ ${create}; ${options}; tmux attach -t ${target}; }`
-  );
+  // No working directory means we do not know where this terminal lives —
+  // the listing has not loaded, or the name does not match anything. Attach
+  // and let it fail loudly. Guessing `$HOME` used to invent a session in
+  // the wrong directory, which then showed up under Uncategorized.
+  if (!cwd) return attach;
+
+  const create = `tmux new-session -d -s ${target} -c ${quote(cwd)} 2>/dev/null`;
+
+  return `${attach} 2>/dev/null || { ${create}; ${attach}; }`;
 }

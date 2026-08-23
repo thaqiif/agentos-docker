@@ -35,5 +35,35 @@ export function useSidebarPinned() {
     });
   }, []);
 
+  /**
+   * Cmd/Ctrl+B, as in VS Code.
+   *
+   * Ctrl+B is also tmux's prefix key, and this whole app is a window onto
+   * tmux. So Ctrl+B is only claimed when focus is outside the terminal —
+   * inside it, the keystroke belongs to tmux and is left alone. Cmd+B has
+   * no such conflict and always toggles.
+   */
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "b" && event.key !== "B") return;
+      if (event.altKey) return;
+
+      const isCmd = event.metaKey && !event.ctrlKey;
+      const isCtrl = event.ctrlKey && !event.metaKey;
+      if (!isCmd && !isCtrl) return;
+
+      if (isCtrl) {
+        const target = event.target as Element | null;
+        if (target?.closest?.(".xterm")) return;
+      }
+
+      event.preventDefault();
+      togglePin();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [togglePin]);
+
   return { isPinned, togglePin, setPinned };
 }
