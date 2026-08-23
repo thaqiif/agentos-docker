@@ -91,6 +91,10 @@ export function WorkbenchBar() {
     splitPane,
   } = usePanes();
 
+  // Nothing attached means the welcome screen is up: there is no terminal
+  // to split and no working directory for files or git to point at.
+  if (!attachedTmux) return null;
+
   return (
     <div className="flex items-center gap-1">
       <div className="border-border flex items-stretch border">

@@ -13,6 +13,7 @@ import {
   useRemoveDevServer,
 } from "@/data/dev-servers";
 import { terminalKeys } from "@/data/terminals/keys";
+import { usePanes } from "@/contexts/PaneContext";
 
 /**
  * Sidebar mutations.
@@ -24,6 +25,7 @@ import { terminalKeys } from "@/data/terminals/keys";
  */
 export function useTerminalListMutations() {
   const queryClient = useQueryClient();
+  const { attachedTmux, attach } = usePanes();
 
   const killTerminalMutation = useKillTerminal();
   const renameTerminalMutation = useRenameTerminal();
@@ -48,8 +50,14 @@ export function useTerminalListMutations() {
   const handleRenameTerminal = useCallback(
     async (name: string, newName: string) => {
       await renameTerminalMutation.mutateAsync({ name, newName });
+
+      // A terminal is identified by its tmux session name, so renaming the
+      // attached one leaves the workbench pointing at a name that no longer
+      // exists. The client is still attached to the same session — only the
+      // pointer needs moving, not the tmux client.
+      if (attachedTmux === name) attach(newName);
     },
-    [renameTerminalMutation]
+    [renameTerminalMutation, attachedTmux, attach]
   );
 
   const handleToggleProject = useCallback(

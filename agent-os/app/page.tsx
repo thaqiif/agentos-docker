@@ -95,6 +95,15 @@ function HomeContent() {
 
       const terminal = getTerminal();
 
+      // Already looking at it. Re-running the attach would detach the
+      // client and immediately reattach, which throws away the redraw and
+      // leaves whatever tmux was drawing half on screen. A stopped session
+      // is the exception: clicking it is a request to start it again.
+      if (terminal && attachedTmux === name && record?.alive !== false) {
+        terminal.focus();
+        return;
+      }
+
       // Nothing is mounted while the welcome screen is up. Recording the
       // attachment is enough: that mounts the terminal, and its connect
       // handler runs the same command once the pty is ready.

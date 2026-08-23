@@ -94,7 +94,11 @@ export function ThemeDialog({ open, onOpenChange }: ThemeDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="gap-0 overflow-hidden border-border-strong bg-popover p-0 shadow-md sm:max-w-md"
+        // No scrim, and parked against the right edge rather than centred:
+        // picking a theme is pointless if the thing it repaints is hidden
+        // behind the picker and dimmed to near-black.
+        overlayClassName="bg-transparent"
+        className="top-4 bottom-4 left-auto right-4 grid-rows-[auto_1fr_auto] translate-x-0 translate-y-0 gap-0 overflow-hidden border-border-strong bg-popover p-0 shadow-lg shadow-black/40 sm:max-w-xs"
       >
         <DialogHeader className="sr-only">
           <DialogTitle>Theme</DialogTitle>
@@ -104,7 +108,7 @@ export function ThemeDialog({ open, onOpenChange }: ThemeDialogProps) {
           <span className="tech-label">theme</span>
         </div>
 
-        <div className="scrollbar-thin max-h-[420px] overflow-y-auto">
+        <div className="scrollbar-thin min-h-0 overflow-y-auto">
           <ThemeRow
             label="System"
             description="Follow the operating system"
@@ -147,7 +151,7 @@ export function ThemeDialog({ open, onOpenChange }: ThemeDialogProps) {
 
         <div className="border-border flex items-center justify-between border-t px-4 py-2">
           <span className="font-mono text-[10px] tracking-[0.12em] text-foreground-subtle uppercase">
-            esc close
+            esc or click outside to close
           </span>
         </div>
       </DialogContent>
