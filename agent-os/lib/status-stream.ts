@@ -1,8 +1,9 @@
 /**
- * Session Status Stream
+ * Terminal Status Stream
  *
- * A single server-wide ticker that samples every managed tmux session and
- * pushes changes to subscribed clients over SSE.
+ * A single server-wide ticker that samples every tmux session and pushes
+ * changes to subscribed clients over SSE. Entries are keyed by tmux session
+ * name, which is a terminal's only identity.
  *
  * Why a singleton: the detector shells out to tmux per session. If each
  * browser tab polled independently, cost scaled with tabs x sessions. One
@@ -14,17 +15,9 @@
  * 1 Hz tmux sweep it does not need.
  */
 
-import { exec } from "child_process";
-import { promisify } from "util";
 import { statusDetector, type SessionStatus } from "@/lib/status-detector";
-import {
-  getManagedSessionPattern,
-  getProviderIdFromSessionName,
-  getSessionIdFromName,
-  type ProviderId,
-} from "@/lib/providers/registry";
-
-const execAsync = promisify(exec);
+import { type ProviderId } from "@/lib/providers/registry";
+import { listTerminals } from "@/lib/terminals";
 
 const FAST_TICK_MS = 700; // something is running or blocked
 const SLOW_TICK_MS = 1500; // everything quiet
@@ -34,14 +27,13 @@ export interface SessionStatusEntry {
   sessionName: string;
   status: SessionStatus;
   lastLine: string;
+  /** Harness detected from the running process, or "shell" for a plain shell. */
   agentType: ProviderId;
 }
 
 export type StatusSnapshot = Record<string, SessionStatusEntry>;
 
 type Subscriber = (snapshot: StatusSnapshot) => void;
-
-const UUID_PATTERN = getManagedSessionPattern();
 
 // eslint-disable-next-line no-control-regex
 const ANSI = /\x1b\[[0-9;?]*[a-zA-Z]/g;
@@ -84,10 +76,9 @@ class StatusStream {
     return this.snapshot;
   }
 
-  /** Mark a session seen and re-sample so the change lands immediately. */
-  async acknowledge(sessionId: string): Promise<void> {
-    const entry = Object.entries(this.snapshot).find(([id]) => id === sessionId);
-    if (entry) statusDetector.acknowledge(entry[1].sessionName);
+  /** Mark a terminal seen and re-sample so the change lands immediately. */
+  async acknowledge(sessionName: string): Promise<void> {
+    statusDetector.acknowledge(sessionName);
     await this.tick();
   }
 
@@ -124,41 +115,33 @@ class StatusStream {
     this.timer.unref?.();
   }
 
-  private async listSessions(): Promise<string[]> {
-    try {
-      const { stdout } = await execAsync(
-        "tmux list-sessions -F '#{session_name}' 2>/dev/null || true"
-      );
-      return stdout.trim().split("\n").filter(Boolean);
-    } catch {
-      return [];
-    }
-  }
-
   private async tick(): Promise<void> {
     if (this.ticking) return;
     this.ticking = true;
 
     try {
       await statusDetector.refreshCache(true);
-      const managed = (await this.listSessions()).filter((s) =>
-        UUID_PATTERN.test(s)
-      );
+
+      // Every tmux session is a terminal, and the harness is whatever is
+      // running in it right now. Deriving the provider from the session
+      // name was always a guess, and a wrong one as soon as somebody
+      // started Claude inside a terminal that had been opened as a shell.
+      const terminals = await listTerminals();
 
       const next: StatusSnapshot = {};
 
       await Promise.all(
-        managed.map(async (sessionName) => {
-          const providerId = getProviderIdFromSessionName(sessionName);
+        terminals.map(async (terminal) => {
+          const providerId = terminal.provider;
           // One capture feeds both the classifier and the display tail.
-          const pane = await statusDetector.capturePane(sessionName);
-          const status = statusDetector.classify(sessionName, pane, providerId);
+          const pane = await statusDetector.capturePane(terminal.name);
+          const status = statusDetector.classify(terminal.name, pane, providerId);
 
-          next[getSessionIdFromName(sessionName)] = {
-            sessionName,
+          next[terminal.name] = {
+            sessionName: terminal.name,
             status,
             lastLine: lastVisibleLine(pane),
-            agentType: providerId ?? "claude",
+            agentType: providerId ?? "shell",
           };
         })
       );

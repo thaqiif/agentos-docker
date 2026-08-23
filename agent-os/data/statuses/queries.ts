@@ -1,50 +1,50 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import type { Session } from "@/lib/db";
+import type { TerminalRecord } from "@/lib/terminals";
 import type { SessionStatus } from "@/components/views/types";
-import { statusKeys } from "../sessions/keys";
+import { statusKeys } from "../terminals/keys";
 
 interface StatusResponse {
   statuses: Record<string, SessionStatus>;
 }
 
 async function fetchStatuses(
-  activeSessionId?: string | null
+  activeTerminal?: string | null
 ): Promise<StatusResponse> {
-  const url = activeSessionId
-    ? `/api/sessions/status?active=${encodeURIComponent(activeSessionId)}`
-    : "/api/sessions/status";
+  const url = activeTerminal
+    ? `/api/terminals/status?active=${encodeURIComponent(activeTerminal)}`
+    : "/api/terminals/status";
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch statuses");
   return res.json();
 }
 
-interface UseSessionStatusesOptions {
-  sessions: Session[];
-  activeSessionId?: string | null;
+interface UseTerminalStatusesOptions {
+  terminals: TerminalRecord[];
+  activeTerminal?: string | null;
   checkStateChanges: (
     states: Array<{
       id: string;
       name: string;
       status: SessionStatus["status"];
     }>,
-    activeSessionId?: string | null
+    activeTerminal?: string | null
   ) => void;
 }
 
 /**
- * Live session statuses.
+ * Live terminal statuses, keyed by tmux session name.
  *
- * Primary transport is SSE (`/api/sessions/status/stream`), which pushes a
+ * Primary transport is SSE (`/api/terminals/status/stream`), which pushes a
  * new snapshot within ~1s of anything changing. React Query still owns the
  * cache so every consumer reads one source, and its polling stays available
  * as a fallback for when the stream cannot connect.
  */
-export function useSessionStatusesQuery({
-  sessions,
-  activeSessionId,
+export function useTerminalStatusesQuery({
+  terminals,
+  activeTerminal,
   checkStateChanges,
-}: UseSessionStatusesOptions) {
+}: UseTerminalStatusesOptions) {
   const queryClient = useQueryClient();
   const [streamConnected, setStreamConnected] = useState(false);
   const streamConnectedRef = useRef(false);
@@ -63,14 +63,14 @@ export function useSessionStatusesQuery({
     let attempts = 0;
     let disposed = false;
 
-    const queryKey = [...statusKeys.all, activeSessionId ?? null];
+    const queryKey = [...statusKeys.all, activeTerminal ?? null];
 
     const connect = () => {
       if (disposed) return;
 
-      const url = activeSessionId
-        ? `/api/sessions/status/stream?active=${encodeURIComponent(activeSessionId)}`
-        : "/api/sessions/status/stream";
+      const url = activeTerminal
+        ? `/api/terminals/status/stream?active=${encodeURIComponent(activeTerminal)}`
+        : "/api/terminals/status/stream";
 
       source = new EventSource(url);
 
@@ -106,13 +106,13 @@ export function useSessionStatusesQuery({
       source?.close();
       setStreamConnected(false);
     };
-  }, [activeSessionId, queryClient]);
+  }, [activeTerminal, queryClient]);
 
   // ── Polling fallback ───────────────────────────────────────────────────
   // Disabled while the stream is healthy; takes over the moment it is not.
   const query = useQuery({
-    queryKey: [...statusKeys.all, activeSessionId ?? null],
-    queryFn: () => fetchStatuses(activeSessionId),
+    queryKey: [...statusKeys.all, activeTerminal ?? null],
+    queryFn: () => fetchStatuses(activeTerminal),
     placeholderData: (prev) => prev,
     staleTime: 2000,
     refetchInterval: streamConnected ? false : 3000,
@@ -124,17 +124,16 @@ export function useSessionStatusesQuery({
 
     const statuses = query.data.statuses;
 
-    const sessionStates = sessions.map((s) => ({
-      id: s.id,
-      name: s.name,
-      status: (statuses[s.id]?.status || "dead") as SessionStatus["status"],
+    const terminalStates = terminals.map((t) => ({
+      id: t.id,
+      name: t.name,
+      status: (statuses[t.id]?.status || "dead") as SessionStatus["status"],
     }));
-    checkStateChanges(sessionStates, activeSessionId);
-    // Note: claude_session_id is now updated server-side in /api/sessions/status
-  }, [query.data, sessions, activeSessionId, checkStateChanges]);
+    checkStateChanges(terminalStates, activeTerminal);
+  }, [query.data, terminals, activeTerminal, checkStateChanges]);
 
   return {
-    sessionStatuses: query.data?.statuses ?? {},
+    terminalStatuses: query.data?.statuses ?? {},
     isLoading: query.isLoading && !query.data,
   };
 }

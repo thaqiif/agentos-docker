@@ -1,7 +1,6 @@
 "use client";
 
-import { SessionList } from "@/components/SessionList";
-import { NewSessionDialog } from "@/components/NewSessionDialog";
+import { TerminalList } from "@/components/TerminalList";
 import { StartServerDialog } from "@/components/DevServers/StartServerDialog";
 import { SidebarFooter } from "@/components/SidebarFooter";
 import { SwipeSidebar } from "@/components/mobile/SwipeSidebar";
@@ -10,21 +9,17 @@ import type { ViewProps } from "./types";
 import { fileOpenActions } from "@/stores/fileOpen";
 
 export function MobileView({
-  sessions,
+  terminals,
   projects,
-  sessionStatuses,
+  terminalStatuses,
   sidebarOpen,
   setSidebarOpen,
   activeSession,
-  showNewSessionDialog,
-  setShowNewSessionDialog,
-  newSessionProjectId,
   showQuickSwitcher,
   setShowQuickSwitcher,
-  attachToSession,
-  handleNewSessionInProject,
-  handleOpenTerminal,
-  handleSessionCreated,
+  attachToTerminal,
+  handleNewTerminal,
+  handleCloseTerminal,
   handleCreateProject,
   handleStartDevServer,
   handleCreateDevServer,
@@ -39,16 +34,14 @@ export function MobileView({
         <div className="flex h-full flex-col">
           {/* Session list */}
           <div className="min-h-0 flex-1 overflow-hidden">
-            <SessionList
+            <TerminalList
               activeSessionId={activeSession?.id}
-              sessionStatuses={sessionStatuses}
+              terminalStatuses={terminalStatuses}
               onSelect={(id) => {
-                const session = sessions.find((s) => s.id === id);
-                if (session) attachToSession(session);
-                setSidebarOpen(false);
-              }}
-              onNewSessionInProject={handleNewSessionInProject}
-              onOpenTerminal={handleOpenTerminal}
+            attachToTerminal(id);
+          }}
+              onNewTerminal={handleNewTerminal}
+              onCloseTerminal={handleCloseTerminal}
               onStartDevServer={handleStartDevServer}
               onCreateDevServer={handleCreateDevServer}
             />
@@ -64,24 +57,13 @@ export function MobileView({
       </div>
 
       {/* Dialogs */}
-      <NewSessionDialog
-        open={showNewSessionDialog}
-        projects={projects}
-        selectedProjectId={newSessionProjectId ?? undefined}
-        onClose={() => setShowNewSessionDialog(false)}
-        onCreated={handleSessionCreated}
-        onCreateProject={handleCreateProject}
-      />
       <QuickSwitcher
-        sessions={sessions}
+        terminals={terminals}
         open={showQuickSwitcher}
         onOpenChange={setShowQuickSwitcher}
         currentSessionId={activeSession?.id}
         activeSessionWorkingDir={activeSession?.working_directory ?? undefined}
-        onSelectSession={(sessionId) => {
-          const session = sessions.find((s) => s.id === sessionId);
-          if (session) attachToSession(session);
-        }}
+        onSelectSession={(name) => attachToTerminal(name)}
         onSelectFile={(file, line) => {
           // Convert relative path to absolute by prepending working directory
           const absolutePath = activeSession?.working_directory

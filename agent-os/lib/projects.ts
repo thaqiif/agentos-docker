@@ -16,7 +16,6 @@ import {
   type Project,
   type ProjectDevServer,
   type ProjectRepository,
-  type Session,
   type DevServerType,
 } from "./db";
 import { resolveModelForAgent } from "./model-catalog";
@@ -275,11 +274,9 @@ export function deleteProject(id: string): boolean {
   const project = getProject(id);
   if (!project || project.is_uncategorized) return false;
 
-  // Move all sessions to Uncategorized
-  const sessions = queries.getSessionsByProject(db).all(id) as Session[];
-  for (const session of sessions) {
-    queries.updateSessionProject(db).run("uncategorized", session.id);
-  }
+  // Terminals need no cleanup: a terminal's project is derived from its
+  // working directory, so removing the project simply leaves its terminals
+  // resolving to Uncategorized on the next listing.
 
   // Delete dev server instances
   queries.deleteDevServersByProject(db).run(id);
@@ -290,23 +287,6 @@ export function deleteProject(id: string): boolean {
   // Delete project
   queries.deleteProject(db).run(id);
   return true;
-}
-
-/**
- * Get sessions for a project
- */
-export function getProjectSessions(projectId: string): Session[] {
-  return queries.getSessionsByProject(db).all(projectId) as Session[];
-}
-
-/**
- * Move a session to a project
- */
-export function moveSessionToProject(
-  sessionId: string,
-  projectId: string
-): void {
-  queries.updateSessionProject(db).run(projectId, sessionId);
 }
 
 /**

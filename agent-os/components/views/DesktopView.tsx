@@ -1,6 +1,5 @@
 "use client";
 
-import { NewSessionDialog } from "@/components/NewSessionDialog";
 import { NotificationSettings } from "@/components/NotificationSettings";
 import { StartServerDialog } from "@/components/DevServers/StartServerDialog";
 import { DesktopSidebar } from "./DesktopSidebar";
@@ -23,13 +22,10 @@ import { fileOpenActions } from "@/stores/fileOpen";
 import { useSidebarPinned } from "@/hooks/useSidebarPinned";
 
 export function DesktopView({
-  sessions,
+  terminals,
   projects,
-  sessionStatuses,
+  terminalStatuses,
   activeSession,
-  showNewSessionDialog,
-  setShowNewSessionDialog,
-  newSessionProjectId,
   showNotificationSettings,
   setShowNotificationSettings,
   showQuickSwitcher,
@@ -38,10 +34,9 @@ export function DesktopView({
   permissionGranted,
   updateSettings,
   requestPermission,
-  attachToSession,
-  handleNewSessionInProject,
-  handleOpenTerminal,
-  handleSessionCreated,
+  attachToTerminal,
+  handleNewTerminal,
+  handleCloseTerminal,
   handleCreateProject,
   handleStartDevServer,
   handleCreateDevServer,
@@ -57,13 +52,12 @@ export function DesktopView({
         isPinned={isPinned}
         togglePin={togglePin}
         activeSessionId={activeSession?.id}
-        sessionStatuses={sessionStatuses}
+        terminalStatuses={terminalStatuses}
         onSelect={(id) => {
-          const session = sessions.find((s) => s.id === id);
-          if (session) attachToSession(session);
-        }}
-        onNewSessionInProject={handleNewSessionInProject}
-        onOpenTerminal={handleOpenTerminal}
+            attachToTerminal(id);
+          }}
+        onNewTerminal={handleNewTerminal}
+        onCloseTerminal={handleCloseTerminal}
         onStartDevServer={handleStartDevServer}
         onCreateDevServer={handleCreateDevServer}
       />
@@ -125,28 +119,25 @@ export function DesktopView({
               onOpenChange={setShowNotificationSettings}
               settings={notificationSettings}
               permissionGranted={permissionGranted}
-              waitingSessions={sessions
-                .filter((s) => {
+              waitingSessions={terminals
+                .filter((t) => {
                   // Anything wanting attention: blocked on input, or
                   // finished and not looked at yet.
-                  const status = sessionStatuses[s.id]?.status;
+                  const status = terminalStatuses[t.id]?.status;
                   return status === "waiting" || status === "done";
                 })
-                .map((s) => ({ id: s.id, name: s.name }))}
+                .map((t) => ({ id: t.id, name: t.name }))}
               onUpdateSettings={updateSettings}
               onRequestPermission={requestPermission}
-              onSelectSession={(id) => {
-                const session = sessions.find((s) => s.id === id);
-                if (session) attachToSession(session);
-              }}
+              onSelectSession={(id) => attachToTerminal(id)}
             />
             <Button
               size="sm"
               className="h-7 font-mono text-[10px] tracking-[0.12em] uppercase"
-              onClick={() => setShowNewSessionDialog(true)}
+              onClick={() => handleNewTerminal()}
             >
               <Plus className="mr-1 h-3.5 w-3.5" />
-              New Session
+              New Terminal
             </Button>
           </div>
         </header>
@@ -156,24 +147,13 @@ export function DesktopView({
       </div>
 
       {/* Dialogs */}
-      <NewSessionDialog
-        open={showNewSessionDialog}
-        projects={projects}
-        selectedProjectId={newSessionProjectId ?? undefined}
-        onClose={() => setShowNewSessionDialog(false)}
-        onCreated={handleSessionCreated}
-        onCreateProject={handleCreateProject}
-      />
       <QuickSwitcher
-        sessions={sessions}
+        terminals={terminals}
         open={showQuickSwitcher}
         onOpenChange={setShowQuickSwitcher}
         currentSessionId={activeSession?.id}
         activeSessionWorkingDir={activeSession?.working_directory ?? undefined}
-        onSelectSession={(sessionId) => {
-          const session = sessions.find((s) => s.id === sessionId);
-          if (session) attachToSession(session);
-        }}
+        onSelectSession={(name) => attachToTerminal(name)}
         onSelectFile={(file, line) => {
           // Convert relative path to absolute by prepending working directory
           const absolutePath = activeSession?.working_directory

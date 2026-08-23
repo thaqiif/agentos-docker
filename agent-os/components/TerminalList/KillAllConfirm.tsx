@@ -1,0 +1,49 @@
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { terminalKeys } from "@/data/terminals/keys";
+
+interface KillAllConfirmProps {
+  onCancel: () => void;
+  onComplete: () => void;
+}
+
+export function KillAllConfirm({ onCancel, onComplete }: KillAllConfirmProps) {
+  const queryClient = useQueryClient();
+  const [killing, setKilling] = useState(false);
+
+  const handleKillAll = async () => {
+    setKilling(true);
+    try {
+      await fetch("/api/tmux/kill-all", { method: "POST" });
+      await queryClient.invalidateQueries({ queryKey: terminalKeys.all });
+      onComplete();
+    } catch (error) {
+      console.error("Failed to kill sessions:", error);
+    } finally {
+      setKilling(false);
+    }
+  };
+
+  return (
+    <div className="border-border bg-surface-raised mx-4 mb-3 border p-3">
+      <p className="tech-label">tmux kill-all</p>
+      <p className="mt-1.5 mb-2 text-sm font-medium text-destructive">
+        Kill all tmux sessions?
+      </p>
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={handleKillAll}
+          disabled={killing}
+        >
+          {killing ? "Killing..." : "Yes, kill all"}
+        </Button>
+        <Button size="sm" variant="ghost" onClick={onCancel} disabled={killing}>
+          Cancel
+        </Button>
+      </div>
+    </div>
+  );
+}

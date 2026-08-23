@@ -27,24 +27,18 @@ import { Pane } from "@/components/Pane";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useViewport } from "@/hooks/useViewport";
 import { useViewportHeight } from "@/hooks/useViewportHeight";
-import { useSessions } from "@/hooks/useSessions";
+import { useTerminals } from "@/hooks/useTerminals";
 import { useProjects } from "@/hooks/useProjects";
 import { useDevServersManager } from "@/hooks/useDevServersManager";
-import { useSessionStatuses } from "@/hooks/useSessionStatuses";
-import type { Session } from "@/lib/db";
+import { useTerminalStatuses } from "@/hooks/useTerminalStatuses";
+import type { TerminalRecord } from "@/lib/terminals";
 import type { TerminalHandle } from "@/components/Terminal";
-import { getProvider } from "@/lib/providers";
 import { DesktopView } from "@/components/views/DesktopView";
 import { MobileView } from "@/components/views/MobileView";
-import { getPendingPrompt, clearPendingPrompt } from "@/stores/initialPrompt";
 
 function HomeContent() {
   // UI State
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
-  const [newSessionProjectId, setNewSessionProjectId] = useState<string | null>(
-    null
-  );
   const [showNotificationSettings, setShowNotificationSettings] =
     useState(false);
   const [showQuickSwitcher, setShowQuickSwitcher] = useState(false);
@@ -56,7 +50,8 @@ function HomeContent() {
   const { isMobile, isHydrated } = useViewport();
 
   // Data hooks
-  const { sessions, fetchSessions } = useSessions();
+  const { terminals, fetchTerminals, createTerminal, killTerminal } =
+    useTerminals();
   const { projects, fetchProjects } = useProjects();
   const {
     startDevServerProjectId,
@@ -64,24 +59,6 @@ function HomeContent() {
     startDevServer,
     createDevServer,
   } = useDevServersManager();
-
-  // Helper to get init script command from API
-  const getInitScriptCommand = useCallback(
-    async (agentCommand: string): Promise<string> => {
-      try {
-        const res = await fetch("/api/sessions/init-script", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ agentCommand }),
-        });
-        const data = await res.json();
-        return data.command || agentCommand;
-      } catch {
-        return agentCommand;
-      }
-    },
-    []
-  );
 
   // Set CSS variable for viewport height (handles mobile keyboard)
   useViewportHeight();
@@ -93,7 +70,6 @@ function HomeContent() {
     debugLog(ref ? "Terminal registered" : "Terminal unregistered");
   }, []);
 
-  // The workbench has a single terminal, so there is nothing to search.
   const getTerminal = useCallback((): TerminalHandle | undefined => {
     if (!terminalRef.current) {
       debugLog("NO TERMINAL AVAILABLE");
@@ -102,120 +78,51 @@ function HomeContent() {
     return terminalRef.current;
   }, []);
 
-  // Build tmux command for a session
-  const buildSessionCommand = useCallback(
-    async (
-      session: Session
-    ): Promise<{ sessionName: string; cwd: string; command: string }> => {
-      const provider = getProvider(session.agent_type || "claude");
-      const sessionName = session.tmux_name || `${provider.id}-${session.id}`;
-      const cwd = session.working_directory?.replace("~", "$HOME") || "$HOME";
-
-      // Shell sessions just open a terminal - no agent command
-      if (provider.id === "shell") {
-        return { sessionName, cwd, command: "" };
-      }
-
-      // TODO: Add explicit "Enable Orchestration" toggle that creates .mcp.json
-      // for conductor sessions. Removed auto-creation because it pollutes projects
-      // with .mcp.json files that aren't in their .gitignore.
-      // See: /api/sessions/[id]/mcp-config, lib/mcp-config.ts
-
-      // Get parent session ID for forking
-      let parentSessionId: string | null = null;
-      if (!session.claude_session_id && session.parent_session_id) {
-        const parentSession = sessions.find(
-          (s) => s.id === session.parent_session_id
-        );
-        parentSessionId = parentSession?.claude_session_id || null;
-      }
-
-      // Check for pending initial prompt
-      const initialPrompt = getPendingPrompt(session.id);
-      if (initialPrompt) {
-        clearPendingPrompt(session.id);
-      }
-
-      const flags = provider.buildFlags({
-        sessionId: session.claude_session_id,
-        parentSessionId,
-        autoApprove: session.auto_approve,
-        model: session.model,
-        initialPrompt: initialPrompt || undefined,
-      });
-      const flagsStr = flags.join(" ");
-
-      const agentCmd = `${provider.command} ${flagsStr}`;
-      const command = await getInitScriptCommand(agentCmd);
-
-      return { sessionName, cwd, command };
-    },
-    [sessions, getInitScriptCommand]
-  );
-
-  // Attach a session to the terminal
-  const runSessionInTerminal = useCallback(
-    (
-      terminal: TerminalHandle,
-      sessionInfo: { sessionName: string; cwd: string; command: string }
-    ) => {
-      const { sessionName, cwd, command } = sessionInfo;
-      const tmuxNew = command
-        ? `tmux new -s ${sessionName} -c "${cwd}" "${command}"`
-        : `tmux new -s ${sessionName} -c "${cwd}"`;
-      terminal.sendCommand(
-        `tmux set -g mouse on 2>/dev/null; tmux attach -t ${sessionName} 2>/dev/null || ${tmuxNew}`
-      );
-      attach(sessionName);
-      terminal.focus();
-    },
-    [attach]
-  );
-
-  // Attach a terminal to the workbench view.
-  //
-  // The pty is a plain shell. If it is already inside tmux we detach first
-  // (Ctrl-B d) and interrupt whatever is on the command line, then attach
-  // to the requested session — creating it if it does not exist yet.
-  const attachToSession = useCallback(
-    async (session: Session) => {
+  /**
+   * Point the workbench at a tmux session.
+   *
+   * The pty behind the terminal is a plain shell, so "attaching" means
+   * running `tmux attach` in it. If it is already inside tmux we detach
+   * first (Ctrl-B d) and clear whatever is on the command line, otherwise
+   * the attach command would be typed into the running program instead of
+   * the shell.
+   */
+  const attachToTerminal = useCallback(
+    (name: string) => {
       const terminal = getTerminal();
       if (!terminal) {
-        debugLog(
-          `ERROR: No terminal available to attach session: ${session.name}`
-        );
+        debugLog(`ERROR: No terminal available to attach: ${name}`);
         return;
       }
 
       const isInTmux = !!attachedTmux;
-
-      if (isInTmux) {
-        terminal.sendInput("\x02d");
-      }
+      if (isInTmux) terminal.sendInput("\x02d");
 
       setTimeout(
         () => {
           terminal.sendInput("\x03");
-          setTimeout(async () => {
-            const sessionInfo = await buildSessionCommand(session);
-            runSessionInTerminal(terminal, sessionInfo);
+          setTimeout(() => {
+            // Mouse mode makes tmux's own splits usable in the browser.
+            terminal.sendCommand(
+              `tmux set -g mouse on 2>/dev/null; tmux attach -t ${name}`
+            );
+            attach(name);
+            terminal.focus();
           }, 50);
         },
         isInTmux ? 100 : 0
       );
     },
-    [getTerminal, attachedTmux, buildSessionCommand, runSessionInTerminal]
+    [getTerminal, attachedTmux, attach]
   );
+
+  // The attached tmux session is what the workbench is looking at.
+  const activeSession = terminals.find((t) => t.tmux_name === attachedTmux);
 
   // Notification click handler
   const handleNotificationClick = useCallback(
-    (sessionId: string) => {
-      const session = sessions.find((s) => s.id === sessionId);
-      if (session) {
-        attachToSession(session);
-      }
-    },
-    [sessions, attachToSession]
+    (name: string) => attachToTerminal(name),
+    [attachToTerminal]
   );
 
   // Notifications
@@ -227,13 +134,10 @@ function HomeContent() {
     permissionGranted,
   } = useNotifications({ onSessionClick: handleNotificationClick });
 
-  // The attached tmux session is what the workbench is looking at.
-  const activeSession = sessions.find((s) => s.tmux_name === attachedTmux);
-
-  // Session statuses
-  const { sessionStatuses } = useSessionStatuses({
-    sessions,
-    activeSessionId: activeSession?.id,
+  // Terminal statuses
+  const { terminalStatuses } = useTerminalStatuses({
+    terminals,
+    activeTerminal: activeSession?.id,
     checkStateChanges,
   });
 
@@ -254,57 +158,58 @@ function HomeContent() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Session selection handler
-  const handleSelectSession = useCallback(
-    (sessionId: string) => {
-      debugLog(`handleSelectSession called for: ${sessionId}`);
-      const session = sessions.find((s) => s.id === sessionId);
-      if (session) {
-        debugLog(`Found session: ${session.name}, calling attachToSession`);
-        attachToSession(session);
-      } else {
-        debugLog(
-          `Session not found in sessions array (length: ${sessions.length})`
-        );
-      }
+  const handleSelectTerminal = useCallback(
+    (name: string) => {
+      debugLog(`handleSelectTerminal: ${name}`);
+      attachToTerminal(name);
     },
-    [sessions, attachToSession]
+    [attachToTerminal]
   );
 
   // Pane renderer
   const renderPane = useCallback(
     () => (
       <Pane
-        sessions={sessions}
+        terminals={terminals}
         projects={projects}
         onRegisterTerminal={registerTerminalRef}
         onMenuClick={isMobile ? () => setSidebarOpen(true) : undefined}
-        onSelectSession={handleSelectSession}
+        onSelectTerminal={handleSelectTerminal}
       />
     ),
-    [sessions, projects, registerTerminalRef, isMobile, handleSelectSession]
+    [terminals, projects, registerTerminalRef, isMobile, handleSelectTerminal]
   );
 
-  // New session in project handler
-  const handleNewSessionInProject = useCallback((projectId: string) => {
-    setNewSessionProjectId(projectId);
-    setShowNewSessionDialog(true);
-  }, []);
+  /**
+   * Open a new terminal.
+   *
+   * It is a plain shell in a working directory — no harness is chosen here.
+   * Starting Claude, Codex, OpenCode or Command Code is done by typing its
+   * name, and the status detector picks that up from the running process.
+   */
+  const handleNewTerminal = useCallback(
+    async (projectId?: string) => {
+      const project = projectId
+        ? projects.find((p) => p.id === projectId)
+        : undefined;
 
-  // Session created handler (shared between desktop/mobile)
-  const handleSessionCreated = useCallback(
-    async (sessionId: string) => {
-      setShowNewSessionDialog(false);
-      setNewSessionProjectId(null);
-      await fetchSessions();
+      const terminal = await createTerminal({
+        cwd: project?.working_directory,
+        projectId,
+      });
 
-      const res = await fetch(`/api/sessions/${sessionId}`);
-      const data = await res.json();
-      if (!data.session) return;
-
-      setTimeout(() => attachToSession(data.session), 100);
+      await fetchTerminals();
+      setTimeout(() => attachToTerminal(terminal.name), 100);
     },
-    [fetchSessions, attachToSession]
+    [projects, createTerminal, fetchTerminals, attachToTerminal]
+  );
+
+  const handleCloseTerminal = useCallback(
+    async (name: string) => {
+      await killTerminal(name);
+      await fetchTerminals();
+    },
+    [killTerminal, fetchTerminals]
   );
 
   // Project created handler (shared between desktop/mobile)
@@ -329,54 +234,20 @@ function HomeContent() {
     [fetchProjects]
   );
 
-  // Open terminal in project handler (shell session, not AI agent)
-  const handleOpenTerminal = useCallback(
-    async (projectId: string) => {
-      const project = projects.find((p) => p.id === projectId);
-      if (!project) return;
-
-      // Create a shell session with the project's working directory
-      const res = await fetch("/api/sessions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: `${project.name} Terminal`,
-          workingDirectory: project.working_directory || "~",
-          agentType: "shell",
-          projectId,
-        }),
-      });
-
-      const data = await res.json();
-      if (!data.session) return;
-
-      await fetchSessions();
-
-      // Small delay to ensure state updates, then attach
-      setTimeout(() => {
-        attachToSession(data.session);
-      }, 100);
-    },
-    [projects, fetchSessions, attachToSession]
-  );
-
   const startDevServerProject = startDevServerProjectId
     ? (projects.find((p) => p.id === startDevServerProjectId) ?? null)
     : null;
 
   // View props
   const viewProps = {
-    sessions,
+    terminals,
     projects,
-    sessionStatuses,
+    terminalStatuses,
     sidebarOpen,
     setSidebarOpen,
-    activeSession,
+    activeSession: activeSession as TerminalRecord | undefined,
     copiedSessionId,
     setCopiedSessionId,
-    showNewSessionDialog,
-    setShowNewSessionDialog,
-    newSessionProjectId,
     showNotificationSettings,
     setShowNotificationSettings,
     showQuickSwitcher,
@@ -385,10 +256,9 @@ function HomeContent() {
     permissionGranted,
     updateSettings,
     requestPermission,
-    attachToSession,
-    handleNewSessionInProject,
-    handleOpenTerminal,
-    handleSessionCreated,
+    attachToTerminal,
+    handleNewTerminal,
+    handleCloseTerminal,
     handleCreateProject,
     handleStartDevServer: startDevServer,
     handleCreateDevServer: createDevServer,

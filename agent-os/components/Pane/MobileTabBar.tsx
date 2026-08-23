@@ -19,7 +19,8 @@ import {
   Circle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Session, Project } from "@/lib/db";
+import type { Project } from "@/lib/db";
+import type { TerminalRecord } from "@/lib/terminals";
 import type { LucideIcon } from "lucide-react";
 
 import type { ViewMode } from "@/lib/panes";
@@ -63,23 +64,23 @@ function ViewModeButton({
 }
 
 interface MobileTabBarProps {
-  session: Session | null | undefined;
-  sessions: Session[];
+  terminal: TerminalRecord | null | undefined;
+  terminals: TerminalRecord[];
   projects: Project[];
   viewMode: ViewMode;
   onMenuClick?: () => void;
   onViewModeChange: (mode: ViewMode) => void;
-  onSelectSession?: (sessionId: string) => void;
+  onSelectTerminal?: (name: string) => void;
 }
 
 export function MobileTabBar({
-  session,
-  sessions,
+  terminal: session,
+  terminals: sessions,
   projects,
   viewMode,
   onMenuClick,
   onViewModeChange,
-  onSelectSession,
+  onSelectTerminal: onSelectSession,
 }: MobileTabBarProps) {
   // Find current session index and calculate prev/next
   const currentIndex = session
@@ -171,7 +172,7 @@ export function MobileTabBar({
               className="hover:bg-accent active:bg-accent flex min-w-0 flex-1 items-center justify-center gap-1 rounded-md px-2 py-1"
             >
               <span className="truncate text-sm font-medium">
-                {session?.name || "No session"}
+                {session?.name || "No terminal"}
                 {projectName && projectName !== "Uncategorized" && (
                   <span className="text-muted-foreground font-normal">
                     {" "}
@@ -187,7 +188,6 @@ export function MobileTabBar({
             className="max-h-[300px] min-w-[200px] overflow-y-auto"
           >
             {sessions
-              .filter((s) => !s.conductor_session_id)
               .map((s) => {
                 const sessionProject = s.project_id
                   ? projects.find((p) => p.id === s.project_id)

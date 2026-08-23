@@ -10,12 +10,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Terminal, GitBranch, Check } from "lucide-react";
-import type { Session } from "@/lib/db";
+import type { TerminalRecord } from "@/lib/terminals";
 import { CodeSearchResults } from "@/components/CodeSearch/CodeSearchResults";
 import { useRipgrepAvailable } from "@/data/code-search";
 
-interface QuickSwitcherProps {
-  sessions: Session[];
+export interface QuickSwitcherProps {
+  terminals: TerminalRecord[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelectSession: (sessionId: string) => void;
@@ -54,7 +54,7 @@ function ModeCell({
  * Triggered by Cmd+K or button tap
  */
 export function QuickSwitcher({
-  sessions,
+  terminals: sessions,
   open,
   onOpenChange,
   onSelectSession,
@@ -192,7 +192,7 @@ export function QuickSwitcher({
             ref={inputRef}
             placeholder={
               mode === "sessions" || !ripgrepAvailable
-                ? "search sessions"
+                ? "search terminals"
                 : "search code (min 3 chars)"
             }
             value={query}
@@ -207,14 +207,17 @@ export function QuickSwitcher({
           {mode === "sessions" ? (
             filteredSessions.length === 0 ? (
               <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
-                <span className="tech-label">sessions 000</span>
-                <span className="tech-meta">No sessions found</span>
+                <span className="tech-label">terminals 000</span>
+                <span className="tech-meta">No terminals found</span>
               </div>
             ) : (
               filteredSessions.map((session, index) => {
                 const isSelected = index === selectedIndex;
                 const isCurrent = session.id === currentSessionId;
-                const time = formatTime(session.updated_at);
+                // tmux reports last activity in seconds since the epoch.
+                const time = formatTime(
+                  new Date(session.activity * 1000).toISOString()
+                );
                 return (
                   <button
                     key={session.id}
@@ -235,11 +238,7 @@ export function QuickSwitcher({
                       {String(index + 1).padStart(2, "0")}
                     </span>
 
-                    {session.worktree_path ? (
-                      <GitBranch className="text-muted-foreground h-3 w-3 shrink-0" />
-                    ) : (
-                      <Terminal className="text-muted-foreground h-3 w-3 shrink-0" />
-                    )}
+                    <Terminal className="text-muted-foreground h-3 w-3 shrink-0" />
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
@@ -284,7 +283,7 @@ export function QuickSwitcher({
           </span>
           {mode === "sessions" && (
             <span className="tech-label">
-              {String(filteredSessions.length).padStart(2, "0")} sessions
+              {String(filteredSessions.length).padStart(2, "0")} terminals
             </span>
           )}
         </div>

@@ -43,8 +43,7 @@ interface ProjectCardProps {
   onClick?: () => void;
   onToggleExpanded?: (expanded: boolean) => void;
   onEdit?: () => void;
-  onNewSession?: () => void;
-  onOpenTerminal?: () => void;
+  onNewTerminal?: () => void;
   onStartDevServer?: () => void;
   onOpenInEditor?: () => void;
   onDelete?: () => void;
@@ -58,8 +57,7 @@ export function ProjectCard({
   onClick,
   onToggleExpanded,
   onEdit,
-  onNewSession,
-  onOpenTerminal,
+  onNewTerminal,
   onStartDevServer,
   onOpenInEditor,
   onDelete,
@@ -74,10 +72,9 @@ export function ProjectCard({
   const hasRunningServers = runningDevServers.length > 0;
   // Uncategorized can have New Session, Open Terminal, and Rename, but not Edit/Delete/DevServer
   const hasActions = project.is_uncategorized
-    ? onNewSession || onOpenTerminal || onRename
+    ? onNewTerminal || onRename
     : onEdit ||
-      onNewSession ||
-      onOpenTerminal ||
+      onNewTerminal ||
       onStartDevServer ||
       onDelete ||
       onRename;
@@ -127,16 +124,10 @@ export function ProjectCard({
 
     return (
       <>
-        {onNewSession && (
-          <MenuItem onClick={() => onNewSession()}>
-            <Plus className="mr-2 h-3 w-3" />
-            New session
-          </MenuItem>
-        )}
-        {onOpenTerminal && (
-          <MenuItem onClick={() => onOpenTerminal()}>
+        {onNewTerminal && (
+          <MenuItem onClick={() => onNewTerminal()}>
             <Terminal className="mr-2 h-3 w-3" />
-            Open terminal
+            New terminal
           </MenuItem>
         )}
         {onEdit && (

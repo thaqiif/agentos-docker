@@ -42,11 +42,11 @@ export function GenericSkeletonLoader({
   );
 }
 
-interface SessionCardSkeletonProps {
+interface TerminalCardSkeletonProps {
   count?: number;
 }
 
-export function SessionCardSkeleton({ count = 3 }: SessionCardSkeletonProps) {
+export function TerminalCardSkeleton({ count = 3 }: TerminalCardSkeletonProps) {
   return (
     <div className="divide-border divide-y">
       {Array.from({ length: count }).map((_, i) => (
@@ -77,7 +77,7 @@ export function ProjectSectionSkeleton({
             <ShimmeringLoader className="h-3 w-3" delayIndex={i} />
             <ShimmeringLoader className="h-3 w-24" delayIndex={i} />
           </div>
-          <SessionCardSkeleton count={2} />
+          <TerminalCardSkeleton count={2} />
         </div>
       ))}
     </div>

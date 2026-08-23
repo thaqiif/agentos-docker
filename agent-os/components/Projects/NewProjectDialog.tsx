@@ -24,10 +24,7 @@ import type { NewProjectDialogProps } from "./NewProjectDialog.types";
 import { useNewProjectForm } from "./hooks/useNewProjectForm";
 import { DevServersSection } from "./DevServersSection";
 import { DirectoryField } from "./DirectoryField";
-import {
-  CreatingOverlay,
-  type StepConfig,
-} from "@/components/NewSessionDialog/CreatingOverlay";
+import { CreatingOverlay, type StepConfig } from "./CreatingOverlay";
 
 const cloneSteps: StepConfig[] = [
   { id: CLONE_STEP.CLONING, label: "Cloning repository", icon: GitBranch },
@@ -52,7 +49,6 @@ export function NewProjectDialog({
       <DialogContent className="scrollbar-thin max-h-[90vh] max-w-lg gap-0 overflow-y-auto p-0">
         {form.isCloning && (
           <CreatingOverlay
-            isWorktree={false}
             step={form.cloneStep}
             steps={cloneSteps}
             hint="This may take a moment depending on the repository size"

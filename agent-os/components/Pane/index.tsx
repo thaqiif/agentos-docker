@@ -5,7 +5,8 @@ import dynamic from "next/dynamic";
 import { usePanes } from "@/contexts/PaneContext";
 import { useViewport } from "@/hooks/useViewport";
 import type { TerminalHandle } from "@/components/Terminal";
-import type { Session, Project } from "@/lib/db";
+import type { Project } from "@/lib/db";
+import type { TerminalRecord } from "@/lib/terminals";
 import { sessionRegistry } from "@/lib/client/session-registry";
 import { cn } from "@/lib/utils";
 import { useFileEditor } from "@/hooks/useFileEditor";
@@ -42,11 +43,11 @@ const GitPanel = dynamic(
 );
 
 interface PaneProps {
-  sessions: Session[];
+  terminals: TerminalRecord[];
   projects: Project[];
   onRegisterTerminal: (ref: TerminalHandle | null) => void;
   onMenuClick?: () => void;
-  onSelectSession?: (sessionId: string) => void;
+  onSelectTerminal?: (name: string) => void;
 }
 
 /**
@@ -58,11 +59,11 @@ interface PaneProps {
  * a tab strip on each is now a single surface showing whatever tmux draws.
  */
 export const Pane = memo(function Pane({
-  sessions,
+  terminals,
   projects,
   onRegisterTerminal,
   onMenuClick,
-  onSelectSession,
+  onSelectTerminal,
 }: PaneProps) {
   const { isMobile } = useViewport();
   const {
@@ -81,8 +82,8 @@ export const Pane = memo(function Pane({
   // The attached tmux session is the source of truth for which working
   // directory the Files and Git views point at.
   const session = useMemo(
-    () => sessions.find((s) => s.tmux_name === attachedTmux) ?? null,
-    [sessions, attachedTmux]
+    () => terminals.find((t) => t.tmux_name === attachedTmux) ?? null,
+    [terminals, attachedTmux]
   );
 
   const fileEditor = useFileEditor();
@@ -139,7 +140,7 @@ export const Pane = memo(function Pane({
   // Swipe between terminals on mobile.
   const touchStartX = useRef<number | null>(null);
   const currentIndex = session
-    ? sessions.findIndex((s) => s.id === session.id)
+    ? terminals.findIndex((t) => t.id === session.id)
     : -1;
   const SWIPE_THRESHOLD = 120;
 
@@ -161,11 +162,11 @@ export const Pane = memo(function Pane({
       if (Math.abs(diff) <= SWIPE_THRESHOLD) return;
 
       const nextIndex = diff > 0 ? currentIndex - 1 : currentIndex + 1;
-      if (nextIndex >= 0 && nextIndex < sessions.length) {
-        onSelectSession?.(sessions[nextIndex].id);
+      if (nextIndex >= 0 && nextIndex < terminals.length) {
+        onSelectTerminal?.(terminals[nextIndex].id);
       }
     },
-    [viewMode, currentIndex, sessions, onSelectSession]
+    [viewMode, currentIndex, terminals, onSelectTerminal]
   );
 
   const savedState = sessionRegistry.getTerminalState(paneId, "terminal");
@@ -205,13 +206,13 @@ export const Pane = memo(function Pane({
           lives in the workbench top bar, so the pane has no chrome. */}
       {isMobile && (
         <MobileTabBar
-          session={session}
-          sessions={sessions}
+          terminal={session}
+          terminals={terminals}
           projects={projects}
           viewMode={viewMode}
           onMenuClick={onMenuClick}
           onViewModeChange={setViewMode}
-          onSelectSession={onSelectSession}
+          onSelectTerminal={onSelectTerminal}
         />
       )}
 

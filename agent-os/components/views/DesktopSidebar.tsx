@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { SessionList } from "@/components/SessionList";
+import { TerminalList } from "@/components/TerminalList";
 import { SidebarFooter } from "@/components/SidebarFooter";
 import { cn } from "@/lib/utils";
 
@@ -12,13 +12,13 @@ interface DesktopSidebarProps {
   isPinned: boolean;
   togglePin: () => void;
   activeSessionId?: string;
-  sessionStatuses: React.ComponentProps<typeof SessionList>["sessionStatuses"];
-  onSelect: (sessionId: string) => void;
-  onNewSessionInProject: (projectId: string) => void;
-  onOpenTerminal: (projectId: string) => void;
+  terminalStatuses: React.ComponentProps<typeof TerminalList>["terminalStatuses"];
+  onSelect: (name: string) => void;
+  onNewTerminal: (projectId?: string) => void;
+  onCloseTerminal: (projectId: string) => void;
   onStartDevServer: (projectId: string) => void;
   onCreateDevServer: React.ComponentProps<
-    typeof SessionList
+    typeof TerminalList
   >["onCreateDevServer"];
 }
 
@@ -26,10 +26,10 @@ export function DesktopSidebar({
   isPinned,
   togglePin,
   activeSessionId,
-  sessionStatuses,
+  terminalStatuses,
   onSelect,
-  onNewSessionInProject,
-  onOpenTerminal,
+  onNewTerminal,
+  onCloseTerminal,
   onStartDevServer,
   onCreateDevServer,
 }: DesktopSidebarProps) {
@@ -58,12 +58,12 @@ export function DesktopSidebar({
   const content = (
     <div className="flex h-full flex-col">
       <div className="min-h-0 flex-1 overflow-hidden">
-        <SessionList
+        <TerminalList
           activeSessionId={activeSessionId}
-          sessionStatuses={sessionStatuses}
+          terminalStatuses={terminalStatuses}
           onSelect={onSelect}
-          onNewSessionInProject={onNewSessionInProject}
-          onOpenTerminal={onOpenTerminal}
+          onNewTerminal={onNewTerminal}
+          onCloseTerminal={onCloseTerminal}
           onStartDevServer={onStartDevServer}
           onCreateDevServer={onCreateDevServer}
           pinControls={{ isPinned, onTogglePin: togglePin }}
