@@ -16,11 +16,18 @@
  * forever — which made the status row useless.
  *
  * Detection strategy, in priority order:
+ *   0. State the harness reported through a hook   -> as reported
  *   1. Harness busy marker in the pane tail        -> running
  *   2. Harness prompt marker in the pane tail      -> waiting
  *   3. Pane content changed since the last tick    -> running
  *   4. Harness ready marker (idle input box)       -> done / idle
  *   5. Quiet, no ready marker, recently ran        -> done / idle
+ *
+ * Step 0 is the only one that is not a guess. Claude Code, Command Code,
+ * Codex and OpenCode can each report some of their state directly (see
+ * lib/status-hooks.ts); where they do, we believe them. The pane reader
+ * below covers everything they cannot report and every harness that has no
+ * hooks at all.
  *
  * Content diffing (step 3) is the harness-agnostic backbone: if what the
  * terminal is rendering changed between two samples, something is happening,
@@ -35,6 +42,7 @@ import {
   getProviderIdFromSessionName,
   type ProviderId,
 } from "@/lib/providers/registry";
+import { readHookState } from "@/lib/status-hooks";
 import {
   getHarnessSignals,
   CLAUDE_FAMILY,
@@ -206,10 +214,35 @@ class SessionStatusDetector {
   classify(
     sessionName: string,
     rawPane: string,
-    providerId: ProviderId | null
+    providerId: ProviderId | null,
+    hookState: SessionStatus | null = null
   ): SessionStatus {
     const tracker = this.getTracker(sessionName);
     const now = Date.now();
+
+    // ── 0. The harness told us ─────────────────────────────────────────
+    // A reported state is fact, not inference, so it short-circuits the
+    // pane heuristics entirely. Tracker bookkeeping still runs so that
+    // "seen by the user" keeps working: a reported "done" the user has
+    // already looked at settles to idle exactly like a detected one.
+    if (hookState) {
+      if (hookState === "running" || hookState === "waiting") {
+        tracker.lastActivityAt = now;
+        tracker.hasRun = true;
+        tracker.acknowledged = false;
+        return this.remember(tracker, hookState);
+      }
+
+      if (hookState === "done") {
+        tracker.hasRun = true;
+        return this.remember(
+          tracker,
+          tracker.acknowledged ? "idle" : "done"
+        );
+      }
+
+      return this.remember(tracker, "idle");
+    }
 
     const normalized = normalizePane(rawPane);
 
@@ -329,7 +362,8 @@ class SessionStatusDetector {
 
     const providerId = getProviderIdFromSessionName(sessionName);
     const content = await this.capturePane(sessionName);
-    return this.classify(sessionName, content, providerId);
+    const hookState = await readHookState(sessionName);
+    return this.classify(sessionName, content, providerId, hookState);
   }
 
   /**

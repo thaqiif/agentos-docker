@@ -184,6 +184,18 @@ chown -R agent:agent "${AGENT_OS_REPO:-/opt/agent-os}/.next/cache"
 gosu agent git config --global credential.helper \
     "store --file=${HOME}/.gitstate/credentials"
 
+# ---- Agent status hooks -----------------------------------------------------
+# Let each harness report its own state instead of having AgentOS guess it
+# from the terminal. Idempotent and config-merging, so it is safe on every
+# start and leaves the user's own hooks alone. Runs as the agent user because
+# it writes into that user's home.
+AGENT_OS_DIR="${AGENT_OS_REPO:-/opt/agent-os}"
+if [ -x "${AGENT_OS_DIR}/scripts/install-agent-hooks.sh" ]; then
+    setpriv --reuid=agent --regid=agent --init-groups -- \
+        "${AGENT_OS_DIR}/scripts/install-agent-hooks.sh" \
+        || echo "warning: agent status hooks not installed"
+fi
+
 # AgentOS' server.ts reads the listening port from $PORT. Upstream's CLI exposes
 # it as AGENT_OS_PORT, so map it through here to keep that name working.
 export PORT="${AGENT_OS_PORT:-3011}"

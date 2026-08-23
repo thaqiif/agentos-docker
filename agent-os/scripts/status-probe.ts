@@ -109,6 +109,34 @@ async function runFixtures() {
     "idle"
   );
 
+  // ── Hook-reported state ────────────────────────────────────────────────
+  // A harness that reports its own state outranks the pane reader. These
+  // are the cases the reader gets wrong on its own: a Claude Code footer
+  // that looks idle while a tool is running, and a Codex pane that looks
+  // busy after the turn has actually finished.
+  const h = "probe-hook";
+  check(
+    "hook running beats idle-looking pane",
+    statusDetector.classify(h, `❯ \n${CC_FOOTER}`, "claude", "running"),
+    "running"
+  );
+  check(
+    "hook waiting beats quiet pane",
+    statusDetector.classify(h, `❯ \n${CC_FOOTER}`, "claude", "waiting"),
+    "waiting"
+  );
+  check(
+    "hook done beats busy-looking pane",
+    statusDetector.classify(h, "Working (esc to interrupt)", "codex", "done"),
+    "done"
+  );
+  statusDetector.acknowledge(h);
+  check(
+    "hook done, acknowledged -> idle",
+    statusDetector.classify(h, "Working (esc to interrupt)", "codex", "done"),
+    "idle"
+  );
+
   // A single frame without the busy counter must not drop out of "running":
   // the activity cooldown exists to absorb exactly this.
   const f = "probe-flicker";

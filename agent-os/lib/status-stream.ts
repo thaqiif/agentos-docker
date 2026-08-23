@@ -18,6 +18,7 @@
 import { statusDetector, type SessionStatus } from "@/lib/status-detector";
 import { type ProviderId } from "@/lib/providers/registry";
 import { listTerminals } from "@/lib/terminals";
+import { readHookState } from "@/lib/status-hooks";
 
 const FAST_TICK_MS = 700; // something is running or blocked
 const SLOW_TICK_MS = 1500; // everything quiet
@@ -134,8 +135,16 @@ class StatusStream {
         terminals.map(async (terminal) => {
           const providerId = terminal.provider;
           // One capture feeds both the classifier and the display tail.
-          const pane = await statusDetector.capturePane(terminal.name);
-          const status = statusDetector.classify(terminal.name, pane, providerId);
+          const [pane, hookState] = await Promise.all([
+            statusDetector.capturePane(terminal.name),
+            readHookState(terminal.name),
+          ]);
+          const status = statusDetector.classify(
+            terminal.name,
+            pane,
+            providerId,
+            hookState
+          );
 
           next[terminal.name] = {
             sessionName: terminal.name,

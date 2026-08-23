@@ -235,3 +235,27 @@ The `agent-os` CLI script itself is not removed. Delete it manually:
 ```bash
 rm $(which agent-os)
 ```
+
+## Terminal status hooks
+
+AgentOS shows a live state for every terminal. Where it can, it gets that
+state from the harness itself rather than reading the terminal.
+
+`scripts/install-agent-hooks.sh` wires this up. It runs on container start,
+is idempotent, and merges into each harness's existing config rather than
+replacing it.
+
+| Harness      | Mechanism                              | Reports              |
+| ------------ | -------------------------------------- | -------------------- |
+| Claude Code  | `~/.claude/settings.json` hooks         | running, waiting, done |
+| Command Code | `~/.commandcode/settings.json` hooks    | running, waiting, done |
+| Codex        | `notify` in `~/.codex/config.toml`      | done                 |
+| OpenCode     | `~/.config/opencode/plugin/`            | done, waiting        |
+
+Codex supports a single event (`agent-turn-complete`) with no approval or
+turn-start event, so it can only report completion. Anything a harness does
+not report falls back to reading the tmux pane, which is also what every
+plain shell uses.
+
+Reports are written to `~/.agent-os/status/<tmux-session>.json` and expire
+after 30 minutes, so a harness killed mid-turn cannot pin a stale state.
