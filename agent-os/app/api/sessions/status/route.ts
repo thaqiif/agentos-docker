@@ -157,7 +157,7 @@ function getAgentTypeFromSessionName(sessionName: string): AgentType {
   return getProviderIdFromSessionName(sessionName) || "claude";
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const sessions = await getTmuxSessions();
 
@@ -169,6 +169,19 @@ export async function GET() {
 
     const db = getDb();
     const sessionsToUpdate: string[] = [];
+
+    // The session the user is currently viewing counts as acknowledged: its
+    // "needs input" state is already on screen, so it shouldn't keep pulsing.
+    // Without this, any session that ran once stays "waiting" forever because
+    // nothing else ever calls statusDetector.acknowledge().
+    const url = new URL(request.url);
+    const activeId = url.searchParams.get("active");
+    if (activeId) {
+      const activeSessionName = managedSessions.find(
+        (s) => getSessionIdFromName(s) === activeId
+      );
+      if (activeSessionName) statusDetector.acknowledge(activeSessionName);
+    }
 
     // Process all sessions in parallel for speed
     const sessionPromises = managedSessions.map(async (sessionName) => {

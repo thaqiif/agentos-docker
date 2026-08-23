@@ -247,14 +247,20 @@ class SessionStatusDetector {
     if (Date.now() - this.cache.updatedAt < CONFIG.CACHE_VALIDITY_MS) return;
 
     try {
+      // "@" separator: tmux mangles "\t" into "_" when the server runs
+      // without a UTF-8 locale (LANG unset or C), which emptied this cache
+      // and made every live session report "dead".
       const { stdout } = await execAsync(
-        `tmux list-sessions -F '#{session_name}\t#{session_activity}' 2>/dev/null || echo ""`
+        `tmux list-sessions -F '#{session_name}@#{session_activity}' 2>/dev/null || echo ""`
       );
 
       const newData = new Map<string, number>();
       for (const line of stdout.trim().split("\n")) {
         if (!line) continue;
-        const [name, activity] = line.split("\t");
+        const idx = line.lastIndexOf("@");
+        if (idx === -1) continue;
+        const name = line.slice(0, idx);
+        const activity = line.slice(idx + 1);
         if (name && activity) newData.set(name, parseInt(activity, 10) || 0);
       }
 

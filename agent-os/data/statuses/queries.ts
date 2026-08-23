@@ -8,8 +8,11 @@ interface StatusResponse {
   statuses: Record<string, SessionStatus>;
 }
 
-async function fetchStatuses(): Promise<StatusResponse> {
-  const res = await fetch("/api/sessions/status");
+async function fetchStatuses(activeSessionId?: string | null): Promise<StatusResponse> {
+  const url = activeSessionId
+    ? `/api/sessions/status?active=${encodeURIComponent(activeSessionId)}`
+    : "/api/sessions/status";
+  const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch statuses");
   return res.json();
 }
@@ -33,8 +36,11 @@ export function useSessionStatusesQuery({
   checkStateChanges,
 }: UseSessionStatusesOptions) {
   const query = useQuery({
-    queryKey: statusKeys.all,
-    queryFn: fetchStatuses,
+    queryKey: [...statusKeys.all, activeSessionId ?? null],
+    queryFn: () => fetchStatuses(activeSessionId),
+    // Keep showing the previous poll while refetching after a session switch,
+    // so statuses don't flash "dead" for a beat on the new cache entry.
+    placeholderData: (prev) => prev,
     staleTime: 2000,
     refetchInterval: (query) => {
       const statuses = query.state.data?.statuses;
