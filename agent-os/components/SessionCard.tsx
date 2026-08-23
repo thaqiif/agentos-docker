@@ -6,7 +6,7 @@ import {
   GitFork,
   GitBranch,
   GitPullRequest,
-  Circle,
+  Check,
   AlertCircle,
   Loader2,
   MoreHorizontal,
@@ -44,7 +44,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import type { Session, Group } from "@/lib/db";
 import type { ProjectWithDevServers } from "@/lib/projects";
 
-type TmuxStatus = "idle" | "running" | "waiting" | "error" | "dead";
+type TmuxStatus = "idle" | "running" | "waiting" | "done" | "error" | "dead";
 
 interface SessionCardProps {
   session: Session;
@@ -73,6 +73,32 @@ interface SessionCardProps {
   onHoverEnd?: () => void;
 }
 
+/**
+ * Status dot.
+ *
+ * A plain span, not a lucide <Circle>: stacking `bg-current` and
+ * `rounded-full` on an SVG painted a filled square behind a stroked ring,
+ * which is why the indicator rendered as a smudge at 6px.
+ */
+function StatusDot({
+  className,
+  hollow = false,
+}: {
+  className?: string;
+  hollow?: boolean;
+}) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "block h-1.5 w-1.5 rounded-full",
+        hollow ? "border border-current" : "bg-current",
+        className
+      )}
+    />
+  );
+}
+
 const statusConfig: Record<
   TmuxStatus,
   { color: string; label: string; icon: React.ReactNode }
@@ -80,17 +106,22 @@ const statusConfig: Record<
   idle: {
     color: "text-muted-foreground",
     label: "idle",
-    icon: <Circle className="h-1.5 w-1.5 rounded-full bg-current" />,
+    icon: <StatusDot hollow />,
   },
   running: {
     color: "text-status-running",
     label: "working",
-    icon: <Circle className="h-2 w-2 rounded-full bg-current" />,
+    icon: <StatusDot className="animate-status-pulse" />,
   },
   waiting: {
     color: "text-status-waiting animate-status-pulse",
     label: "needs input",
     icon: <AlertCircle className="h-3 w-3" />,
+  },
+  done: {
+    color: "text-status-info",
+    label: "done",
+    icon: <Check className="h-3 w-3" />,
   },
   error: {
     color: "text-status-error",
@@ -100,12 +131,17 @@ const statusConfig: Record<
   dead: {
     color: "text-foreground-subtle",
     label: "stopped",
-    icon: <Circle className="h-1.5 w-1.5 rounded-full border border-current" />,
+    icon: <StatusDot hollow className="opacity-60" />,
   },
 };
 
 /** Statuses whose terminal tail is worth surfacing on the status row */
-const DETAIL_STATUSES = new Set<TmuxStatus>(["running", "waiting", "error"]);
+const DETAIL_STATUSES = new Set<TmuxStatus>([
+  "running",
+  "waiting",
+  "done",
+  "error",
+]);
 
 function cleanPaneLine(line?: string | null): string | null {
   if (!line) return null;
@@ -146,9 +182,7 @@ export function SessionCard({
   const config = statusConfig[status];
   // First class is the color; drops the pulse animation class for text use
   const statusTextColor =
-    status === "running" || status === "waiting" || status === "error"
-      ? config.color.split(" ")[0]
-      : "text-muted-foreground";
+    status === "idle" ? "text-muted-foreground" : config.color.split(" ")[0];
   const liveDetail = cleanPaneLine(statusDetail);
   const showDetail = DETAIL_STATUSES.has(status) && liveDetail;
   const [isEditing, setIsEditing] = useState(false);
@@ -485,8 +519,10 @@ export function SessionCard({
             </a>
           )}
 
-          {/* Time ago */}
-          <span className="hidden flex-shrink-0 font-mono text-[10px] text-muted-foreground group-hover:hidden sm:block">
+          {/* Right slot: timestamp, swapped for the actions menu on hover.
+              Previously the menu button was only faded with opacity, so it
+              kept its box and left a dead gap after the timestamp. */}
+          <span className="hidden flex-shrink-0 font-mono text-[10px] text-muted-foreground sm:block md:group-hover:hidden">
             {timeAgo}
           </span>
 
@@ -497,7 +533,7 @@ export function SessionCard({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="h-6 w-6 flex-shrink-0 opacity-100 md:h-5 md:w-5 md:opacity-0 md:group-hover:opacity-100"
+                  className="inline-flex h-6 w-6 flex-shrink-0 md:hidden md:h-5 md:w-5 md:group-hover:inline-flex"
                 >
                   <MoreHorizontal className="h-3 w-3" />
                 </Button>

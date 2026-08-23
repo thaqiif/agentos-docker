@@ -5,7 +5,7 @@ import type { TabData } from "@/lib/panes";
 
 export interface SessionStatus {
   sessionName: string;
-  status: "idle" | "running" | "waiting" | "error" | "dead";
+  status: "idle" | "running" | "waiting" | "done" | "error" | "dead";
   lastLine?: string;
   claudeSessionId?: string | null;
 }

@@ -68,7 +68,8 @@ export function ProjectCard({
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(project.name);
   const inputRef = useRef<HTMLInputElement>(null);
-  const justStartedEditingRef = useRef(false);
+  /** Guards against Enter and the follow-up blur both committing. */
+  const committedRef = useRef(false);
 
   const hasRunningServers = runningDevServers.length > 0;
   // Uncategorized can have New Session, Open Terminal, and Rename, but not Edit/Delete/DevServer
@@ -82,29 +83,33 @@ export function ProjectCard({
       onRename;
 
   useEffect(() => {
-    if (isEditing && inputRef.current) {
-      const input = inputRef.current;
-      // Mark that we just started editing to ignore immediate blur
-      justStartedEditingRef.current = true;
-      // Small timeout to ensure input is fully mounted
-      setTimeout(() => {
-        input.focus();
-        input.select();
-        // Clear the flag after focus is established
-        setTimeout(() => {
-          justStartedEditingRef.current = false;
-        }, 100);
-      }, 0);
-    }
-  }, [isEditing]);
+    if (!isEditing) return;
+    committedRef.current = false;
+    // Always start from the project's current name, so a cancelled edit
+    // does not leak into the next one.
+    setEditName(project.name);
 
-  const handleRename = () => {
-    // Ignore blur events that happen immediately after starting to edit
-    if (justStartedEditingRef.current) return;
+    // rAF rather than a timeout race: by the next frame Radix has finished
+    // unmounting the menu, so nothing steals focus back off the input.
+    const frame = requestAnimationFrame(() => {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isEditing, project.name]);
 
-    if (editName.trim() && editName !== project.name && onRename) {
-      onRename(editName.trim());
-    }
+  const commitRename = () => {
+    if (committedRef.current) return;
+    committedRef.current = true;
+
+    const next = editName.trim();
+    if (next && next !== project.name) onRename?.(next);
+    setIsEditing(false);
+  };
+
+  const cancelRename = () => {
+    committedRef.current = true;
+    setEditName(project.name);
     setIsEditing(false);
   };
 
@@ -181,17 +186,21 @@ export function ProjectCard({
     <div
       onClick={handleClick}
       className={cn(
-        "group relative flex cursor-pointer items-center gap-2 overflow-hidden rounded-none px-2 py-1.5",
-        "min-h-[36px] md:min-h-[28px]",
+        "group relative flex cursor-pointer items-center gap-2.5 overflow-hidden rounded-none px-2 py-2",
+        "min-h-[40px] md:min-h-[34px]",
         "hover:bg-accent/50"
       )}
     >
       {/* Expand/collapse toggle */}
-      <button className="mr-0.5 flex-shrink-0 p-0.5">
+      <button
+        aria-hidden
+        tabIndex={-1}
+        className="flex-shrink-0 text-muted-foreground transition-transform duration-150"
+      >
         {project.expanded ? (
-          <ChevronDown className="text-muted-foreground h-3.5 w-3.5" />
+          <ChevronDown className="h-3.5 w-3.5" />
         ) : (
-          <ChevronRight className="text-muted-foreground h-3.5 w-3.5" />
+          <ChevronRight className="h-3.5 w-3.5" />
         )}
       </button>
 
@@ -202,19 +211,24 @@ export function ProjectCard({
           type="text"
           value={editName}
           onChange={(e) => setEditName(e.target.value)}
-          onBlur={handleRename}
+          onBlur={commitRename}
           onKeyDown={(e) => {
-            if (e.key === "Enter") handleRename();
+            e.stopPropagation();
+            if (e.key === "Enter") {
+              e.preventDefault();
+              commitRename();
+            }
             if (e.key === "Escape") {
-              setEditName(project.name);
-              setIsEditing(false);
+              e.preventDefault();
+              cancelRename();
             }
           }}
           onClick={(e) => e.stopPropagation()}
-          className="min-w-0 flex-1 border-b border-primary bg-transparent font-mono text-xs outline-none"
+          onDoubleClick={(e) => e.stopPropagation()}
+          className="min-w-0 flex-1 border-b border-primary bg-transparent text-sm font-medium outline-none"
         />
       ) : (
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 leading-tight">
           <span className="block truncate text-sm font-medium">
             {project.name}
           </span>
@@ -242,8 +256,9 @@ export function ProjectCard({
         </Tooltip>
       )}
 
-      {/* Session count */}
-      <span className="flex-shrink-0 font-mono text-[10px] text-muted-foreground">
+      {/* Session count — swapped for the actions menu on hover so the row
+          has no reserved-but-empty box sitting after it. */}
+      <span className="flex-shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground md:group-hover:hidden">
         {String(sessionCount).padStart(2, "0")}
       </span>
 
@@ -254,12 +269,18 @@ export function ProjectCard({
             <Button
               variant="ghost"
               size="icon-sm"
-              className="h-7 w-7 flex-shrink-0 opacity-100 md:h-6 md:w-6 md:opacity-0 md:group-hover:opacity-100"
+              className="inline-flex h-7 w-7 flex-shrink-0 md:hidden md:h-6 md:w-6 md:group-hover:inline-flex"
             >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+          <DropdownMenuContent
+            align="end"
+            // Without this Radix returns focus to the trigger on close, which
+            // instantly blurs the rename input and cancelled every rename.
+            onCloseAutoFocus={(e) => e.preventDefault()}
+            onClick={(e) => e.stopPropagation()}
+          >
             {renderMenuItems(false)}
           </DropdownMenuContent>
         </DropdownMenu>
@@ -272,7 +293,9 @@ export function ProjectCard({
     return (
       <ContextMenu>
         <ContextMenuTrigger asChild>{cardContent}</ContextMenuTrigger>
-        <ContextMenuContent>{renderMenuItems(true)}</ContextMenuContent>
+        <ContextMenuContent onCloseAutoFocus={(e) => e.preventDefault()}>
+          {renderMenuItems(true)}
+        </ContextMenuContent>
       </ContextMenu>
     );
   }

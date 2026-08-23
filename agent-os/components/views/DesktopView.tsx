@@ -187,7 +187,12 @@ export function DesktopView({
               settings={notificationSettings}
               permissionGranted={permissionGranted}
               waitingSessions={sessions
-                .filter((s) => sessionStatuses[s.id]?.status === "waiting")
+                .filter((s) => {
+                  // Anything wanting attention: blocked on input, or
+                  // finished and not looked at yet.
+                  const status = sessionStatuses[s.id]?.status;
+                  return status === "waiting" || status === "done";
+                })
                 .map((s) => ({ id: s.id, name: s.name }))}
               onUpdateSettings={updateSettings}
               onRequestPermission={requestPermission}

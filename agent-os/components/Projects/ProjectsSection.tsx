@@ -11,7 +11,7 @@ import type { ProjectWithDevServers } from "@/lib/projects";
 
 interface SessionStatus {
   sessionName: string;
-  status: "idle" | "running" | "waiting" | "error" | "dead";
+  status: "idle" | "running" | "waiting" | "done" | "error" | "dead";
   lastLine?: string;
 }
 
@@ -156,7 +156,7 @@ export function ProjectsSection({
         const projectDevServers = getProjectDevServers(project.id);
 
         return (
-          <div key={project.id} className="space-y-0.5 py-0.5 first:pt-0">
+          <div key={project.id} className="space-y-1 py-1.5 first:pt-0.5">
             {/* Project header */}
             <ProjectCard
               project={project}
@@ -195,7 +195,7 @@ export function ProjectsSection({
 
             {/* Project contents when expanded */}
             {project.expanded && (
-              <div className="border-border ml-3 space-y-px border-l pl-1.5">
+              <div className="ml-4 space-y-0.5 pb-1 pl-1">
                 {/* Dev servers for this project */}
                 {projectDevServers.length > 0 && (
                   <div className="space-y-px pb-0.5">
@@ -307,7 +307,7 @@ export function ProjectsSection({
 
                         {/* Nested workers */}
                         {hasWorkers && (
-                          <div className="border-border ml-3 space-y-px border-l pl-1.5">
+                          <div className="ml-4 space-y-0.5 pb-1 pl-1">
                             {workers.map((worker) => (
                               <SessionCard
                                 key={worker.id}

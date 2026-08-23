@@ -4,14 +4,10 @@ import { promisify } from "util";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-import { statusDetector, type SessionStatus } from "@/lib/status-detector";
+import type { SessionStatus } from "@/lib/status-detector";
 import type { AgentType } from "@/lib/providers";
-import {
-  getManagedSessionPattern,
-  getProviderIdFromSessionName,
-  getSessionIdFromName,
-} from "@/lib/providers/registry";
 import { getDb } from "@/lib/db";
+import { statusStream } from "@/lib/status-stream";
 
 const execAsync = promisify(exec);
 
@@ -21,17 +17,6 @@ interface SessionStatusResponse {
   lastLine?: string;
   claudeSessionId?: string | null;
   agentType?: AgentType;
-}
-
-async function getTmuxSessions(): Promise<string[]> {
-  try {
-    const { stdout } = await execAsync(
-      "tmux list-sessions -F '#{session_name}' 2>/dev/null || true"
-    );
-    return stdout.trim().split("\n").filter(Boolean);
-  } catch {
-    return [];
-  }
 }
 
 async function getTmuxSessionCwd(sessionName: string): Promise<string | null> {
@@ -135,96 +120,52 @@ async function getClaudeSessionId(sessionName: string): Promise<string | null> {
   return null;
 }
 
-async function getLastLine(sessionName: string): Promise<string> {
-  try {
-    const { stdout } = await execAsync(
-      `tmux capture-pane -t "${sessionName}" -p -S -5 2>/dev/null || echo ""`
-    );
-    const lines = stdout.trim().split("\n").filter(Boolean);
-    return lines.pop() || "";
-  } catch {
-    return "";
-  }
-}
-
-// UUID pattern for agent-os managed sessions (derived from registry)
-const UUID_PATTERN = getManagedSessionPattern();
 
 // Track previous statuses to detect changes
 const previousStatuses = new Map<string, SessionStatus>();
 
-function getAgentTypeFromSessionName(sessionName: string): AgentType {
-  return getProviderIdFromSessionName(sessionName) || "claude";
-}
 
 export async function GET(request: Request) {
   try {
-    const sessions = await getTmuxSessions();
-
-    // Get status for agent-os managed sessions
-    const managedSessions = sessions.filter((s) => UUID_PATTERN.test(s));
-
-    // Use the new status detector
-    const statusMap: Record<string, SessionStatusResponse> = {};
-
-    const db = getDb();
-    const sessionsToUpdate: string[] = [];
-
-    // The session the user is currently viewing counts as acknowledged: its
-    // "needs input" state is already on screen, so it shouldn't keep pulsing.
-    // Without this, any session that ran once stays "waiting" forever because
-    // nothing else ever calls statusDetector.acknowledge().
     const url = new URL(request.url);
     const activeId = url.searchParams.get("active");
-    if (activeId) {
-      const activeSessionName = managedSessions.find(
-        (s) => getSessionIdFromName(s) === activeId
-      );
-      if (activeSessionName) statusDetector.acknowledge(activeSessionName);
-    }
 
-    // Process all sessions in parallel for speed
-    const sessionPromises = managedSessions.map(async (sessionName) => {
-      const [status, claudeSessionId, lastLine] = await Promise.all([
-        statusDetector.getStatus(sessionName),
-        getClaudeSessionId(sessionName),
-        getLastLine(sessionName),
-      ]);
-      const id = getSessionIdFromName(sessionName);
-      const agentType = getAgentTypeFromSessionName(sessionName);
+    // The session the user is currently viewing counts as seen, so a
+    // finished ("done") session settles back to idle once they open it.
+    if (activeId) await statusStream.acknowledge(activeId);
 
-      return { sessionName, id, status, claudeSessionId, lastLine, agentType };
-    });
+    // Same engine the SSE stream uses, so the polling fallback can never
+    // disagree with the live stream.
+    const snapshot = await statusStream.getSnapshot();
 
-    const results = await Promise.all(sessionPromises);
+    const db = getDb();
+    const statusMap: Record<string, SessionStatusResponse> = {};
+    const sessionsToUpdate: string[] = [];
 
-    for (const {
-      sessionName,
-      id,
-      status,
-      claudeSessionId,
-      lastLine,
-      agentType,
-    } of results) {
-      // Track status changes - update DB when session becomes active
+    const entries = Object.entries(snapshot);
+
+    // claude_session_id resolution touches the filesystem, so keep it off
+    // the status tick and do it here where a slower response is fine.
+    const claudeIds = await Promise.all(
+      entries.map(async ([, entry]) => getClaudeSessionId(entry.sessionName))
+    );
+
+    entries.forEach(([id, entry], i) => {
       const prevStatus = previousStatuses.get(id);
-      if (status === "running" || status === "waiting") {
-        if (prevStatus !== status) {
-          sessionsToUpdate.push(id);
-        }
+      if (entry.status === "running" || entry.status === "waiting") {
+        if (prevStatus !== entry.status) sessionsToUpdate.push(id);
       }
-      previousStatuses.set(id, status);
+      previousStatuses.set(id, entry.status);
 
       statusMap[id] = {
-        sessionName,
-        status,
-        lastLine,
-        claudeSessionId,
-        agentType,
+        sessionName: entry.sessionName,
+        status: entry.status,
+        lastLine: entry.lastLine,
+        claudeSessionId: claudeIds[i],
+        agentType: entry.agentType as AgentType,
       };
-    }
+    });
 
-    // Batch update sessions and claude_session_id in a single transaction
     const updateStatusStmt = db.prepare(
       "UPDATE sessions SET updated_at = datetime('now') WHERE id = ?"
     );
@@ -232,19 +173,13 @@ export async function GET(request: Request) {
       "UPDATE sessions SET claude_session_id = ? WHERE id = ? AND (claude_session_id IS NULL OR claude_session_id != ?)"
     );
 
-    for (const id of sessionsToUpdate) {
-      updateStatusStmt.run(id);
-    }
+    for (const id of sessionsToUpdate) updateStatusStmt.run(id);
 
-    // Update claude_session_id directly here instead of requiring separate API calls
-    for (const { id, claudeSessionId } of results) {
-      if (claudeSessionId) {
+    entries.forEach(([id], i) => {
+      const claudeSessionId = claudeIds[i];
+      if (claudeSessionId)
         updateClaudeIdStmt.run(claudeSessionId, id, claudeSessionId);
-      }
-    }
-
-    // Cleanup old trackers
-    statusDetector.cleanup();
+    });
 
     return NextResponse.json({ statuses: statusMap });
   } catch (error) {

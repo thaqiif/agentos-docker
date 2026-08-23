@@ -2,190 +2,97 @@
  * Session Status Detection System
  *
  * States:
- * - "running" (GREEN): Sustained activity within cooldown period
- * - "waiting" (YELLOW): Cooldown expired, NOT acknowledged (needs attention)
- * - "idle" (GRAY): Cooldown expired, acknowledged (user saw it)
- * - "dead": Session doesn't exist
+ * - "running" : the harness is actively working
+ * - "waiting" : the harness is BLOCKED on the user (permission dialog,
+ *               y/n choice, question). Nothing progresses until answered.
+ * - "done"    : the harness finished its work and is idle at its input box,
+ *               and the user has not looked at it since. Attention-worthy,
+ *               but not blocking.
+ * - "idle"    : quiet and already seen by the user, or never ran.
+ * - "dead"    : the tmux session no longer exists.
  *
- * Detection Strategy:
- * 1. Busy indicators + recent activity (highest priority - actively working)
- * 2. Waiting patterns - user input needed
- * 3. Spike detection - activity timestamp changes (2+ in 1s = sustained)
- * 4. Cooldown - 2s grace period after activity stops
+ * "waiting" and "done" are deliberately distinct. The previous version
+ * collapsed them — any session that had ever run reported "needs input"
+ * forever — which made the status row useless.
+ *
+ * Detection strategy, in priority order:
+ *   1. Harness busy marker in the pane tail        -> running
+ *   2. Harness prompt marker in the pane tail      -> waiting
+ *   3. Pane content changed since the last tick    -> running
+ *   4. Harness ready marker (idle input box)       -> done / idle
+ *   5. Quiet, no ready marker, recently ran        -> done / idle
+ *
+ * Content diffing (step 3) is the harness-agnostic backbone: if what the
+ * terminal is rendering changed between two samples, something is happening,
+ * whatever CLI is producing it. The per-harness patterns in
+ * `providers/harness-signals.ts` sharpen the edges around that.
  */
 
 import { exec } from "child_process";
 import { promisify } from "util";
-import { getProviderIdFromSessionName } from "@/lib/providers/registry";
+import { createHash } from "crypto";
+import {
+  getProviderIdFromSessionName,
+  type ProviderId,
+} from "@/lib/providers/registry";
+import {
+  getHarnessSignals,
+  CLAUDE_FAMILY,
+  getUniversalReadySignals,
+  BUSY_COUNTER_PATTERNS,
+  isShellProvider,
+} from "@/lib/providers/harness-signals";
 
 const execAsync = promisify(exec);
 
-// Configuration constants
 const CONFIG = {
-  ACTIVITY_COOLDOWN_MS: 2000, // Grace period after activity
-  SPIKE_WINDOW_MS: 1000, // Window to detect sustained activity
-  SUSTAINED_THRESHOLD: 2, // Changes needed to confirm activity
-  CACHE_VALIDITY_MS: 2000, // How long tmux cache is valid
-  RECENT_ACTIVITY_MS: 120000, // Window for "recent" activity (2 min, tmux updates slowly)
+  /** Grace period after the last observed activity before we call it stopped. */
+  ACTIVITY_COOLDOWN_MS: 2500,
+  /** How long the tmux session list stays valid. */
+  CACHE_VALIDITY_MS: 1000,
+  /** Lines of pane tail used for signal matching. */
+  SIGNAL_TAIL_LINES: 12,
+  /** Lines of pane tail hashed for content-change detection. */
+  DIFF_TAIL_LINES: 40,
 } as const;
 
-// Detection patterns
-
-/** Providers whose busy state uses the whimsical-verbs + token counter UI */
-const CLAUDE_FAMILY = new Set(["claude", "claude-a", "claude-b", "claude-c"]);
-
 /**
- * Busy indicators shared across terminal agent harnesses.
- * Kept conservative: only phrases shown while work streams, never in
- * approval dialogs (those belong to WAITING_PATTERNS).
+ * Whimsical verbs Claude Code cycles through while working. Only meaningful
+ * next to a token counter, and only for the Claude family.
  */
-const GENERIC_BUSY_INDICATORS = [
-  "esc to interrupt",
-  "(esc to interrupt)",
-  "· esc to interrupt",
-  "ctrl+c to interrupt",
-  "(ctrl-c to interrupt)",
-];
-
-function hasSpinner(text: string): boolean {
-  for (const ch of text) {
-    const code = ch.codePointAt(0);
-    // Braille spinner block (U+2800–U+28FF) used by most TUI harnesses
-    if (code !== undefined && code >= 0x2800 && code <= 0x28ff) return true;
-  }
-  return false;
-}
-
 const WHIMSICAL_WORDS = [
-  "accomplishing",
-  "actioning",
-  "actualizing",
-  "baking",
-  "booping",
-  "brewing",
-  "calculating",
-  "cerebrating",
-  "channelling",
-  "churning",
-  "clauding",
-  "coalescing",
-  "cogitating",
-  "combobulating",
-  "computing",
-  "concocting",
-  "conjuring",
-  "considering",
-  "contemplating",
-  "cooking",
-  "crafting",
-  "creating",
-  "crunching",
-  "deciphering",
-  "deliberating",
-  "determining",
-  "discombobulating",
-  "divining",
-  "doing",
-  "effecting",
-  "elucidating",
-  "enchanting",
-  "envisioning",
-  "finagling",
-  "flibbertigibbeting",
-  "forging",
-  "forming",
-  "frolicking",
-  "generating",
-  "germinating",
-  "hatching",
-  "herding",
-  "honking",
-  "hustling",
-  "ideating",
-  "imagining",
-  "incubating",
-  "inferring",
-  "jiving",
-  "manifesting",
-  "marinating",
-  "meandering",
-  "moseying",
-  "mulling",
-  "mustering",
-  "musing",
-  "noodling",
-  "percolating",
-  "perusing",
-  "philosophising",
-  "pondering",
-  "pontificating",
-  "processing",
-  "puttering",
-  "puzzling",
-  "reticulating",
-  "ruminating",
-  "scheming",
-  "schlepping",
-  "shimmying",
-  "shucking",
-  "simmering",
-  "smooshing",
-  "spelunking",
-  "spinning",
-  "stewing",
-  "sussing",
-  "synthesizing",
-  "thinking",
-  "tinkering",
-  "transmuting",
-  "unfurling",
-  "unravelling",
-  "vibing",
-  "wandering",
-  "whirring",
-  "wibbling",
-  "wizarding",
-  "working",
-  "wrangling",
+  "accomplishing", "actioning", "actualizing", "baking", "brewing",
+  "calculating", "cerebrating", "channelling", "churning", "clauding",
+  "coalescing", "cogitating", "computing", "concocting", "conjuring",
+  "considering", "contemplating", "cooking", "crafting", "creating",
+  "crunching", "deciphering", "deliberating", "determining", "digesting",
+  "discombobulating", "divining", "doing", "effecting", "elucidating",
+  "enchanting", "envisioning", "fabricating", "fashioning", "finagling",
+  "flibbertigibbeting", "forging", "forming", "generating", "germinating",
+  "hatching", "herding", "honking", "hustling", "ideating", "imagining",
+  "incubating", "inferring", "jiving", "manifesting", "marinating",
+  "meandering", "moseying", "mulling", "mustering", "musing", "noodling",
+  "percolating", "perusing", "philosophising", "pondering", "pontificating",
+  "processing", "puttering", "puzzling", "reticulating", "ruminating",
+  "scheming", "schlepping", "shucking", "simmering", "smooshing",
+  "spelunking", "spinning", "stewing", "summoning", "synthesizing",
+  "thinking", "tinkering", "transmuting", "unfurling", "unravelling",
+  "vibing", "wandering", "whirring", "wibbling", "working", "wrangling",
 ];
 
-/**
- * Waiting patterns: consent/choice prompts. Word-anchored and
- * question-shaped so transcript prose doesn't false-positive.
- */
-const WAITING_PATTERNS = [
-  /\[Y\/n\]/i,
-  /\[y\/N\]/i,
-  /\(y\/n\)/i,
-  /\by\/n\b/i,
-  /Allow\?/i,
-  /Approve\?/i,
-  /Continue\?/i,
-  /Press Enter to/i,
-  /Press (enter|return|any key)/i,
-  /waiting for input/i,
-  /\(yes\/no\)/i,
-  /Do you want to/i,
-  /Enter to confirm.*Esc to cancel/i,
-  />\s*1\.\s*Yes/,
-  /Yes, allow all/i,
-  /allow all edits/i,
-  /allow all commands/i,
-  // Harness-agnostic consent phrasing (Codex/Aider/Cursor/OpenCode/etc.)
-  /(allow|approve|proceed|confirm|continue|trust)[^\n]{0,60}\?/i,
-  /\bapprove command\b/i,
-  /\bto approve\b/i,
-  /\brun this command\b/i,
-];
-
-export type SessionStatus = "running" | "waiting" | "idle" | "dead";
+export type SessionStatus = "running" | "waiting" | "done" | "idle" | "dead";
 
 interface StateTracker {
-  lastChangeTime: number;
+  /** Hash of the pane tail at the previous sample. */
+  lastHash: string;
+  /** Wall clock of the last tick that showed activity. */
+  lastActivityAt: number;
+  /** True once we have seen this session actually working. */
+  hasRun: boolean;
+  /** The user has viewed this session since it last stopped. */
   acknowledged: boolean;
-  lastActivityTimestamp: number;
-  spikeWindowStart: number | null;
-  spikeChangeCount: number;
+  /** Status returned on the previous tick, for transition detection. */
+  lastStatus: SessionStatus | null;
 }
 
 interface SessionCache {
@@ -193,58 +100,54 @@ interface SessionCache {
   updatedAt: number;
 }
 
-// Content analysis helpers
-function checkBusyIndicators(content: string, providerId: string | null): boolean {
-  const lines = content.split("\n");
-  // Focus on last 10 lines to avoid old scrollback false positives
-  const recentContent = lines.slice(-10).join("\n").toLowerCase();
-
-  // Text indicators in recent lines (generic across harnesses)
-  if (GENERIC_BUSY_INDICATORS.some((ind) => recentContent.includes(ind)))
-    return true;
-
-  // Claude family: whimsical verb + token counter pattern in recent lines
-  if (
-    (providerId === null || CLAUDE_FAMILY.has(providerId)) &&
-    recentContent.includes("tokens") &&
-    WHIMSICAL_WORDS.some((w) => recentContent.includes(w))
-  )
-    return true;
-
-  // Spinners in last 5 lines (braille block, shared by most TUI harnesses)
-  const last5 = lines.slice(-5).join("");
-  if (hasSpinner(last5)) return true;
-
+/** Braille block covers the spinner glyphs used by essentially every TUI. */
+function hasSpinner(text: string): boolean {
+  for (const ch of text) {
+    const code = ch.codePointAt(0);
+    if (code !== undefined && code >= 0x2800 && code <= 0x28ff) return true;
+  }
   return false;
 }
 
-function checkWaitingPatterns(
-  content: string,
-  allowQuestionHeuristic: boolean
-): boolean {
-  const recentLines = content.split("\n").slice(-5).join("\n");
+/**
+ * Strip the things that change without meaning anything: ANSI escapes, box
+ * drawing, spinner frames, and trailing whitespace. What survives is the
+ * text the user would actually read.
+ */
+function normalizePane(raw: string): string {
+  return raw
+    // eslint-disable-next-line no-control-regex
+    .replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, "")
+    // eslint-disable-next-line no-control-regex
+    .replace(/\x1b\][^\x07]*\x07/g, "")
+    .replace(/[⠀-⣿]/g, "") // spinner frames
+    .replace(/[─-╿]/g, "") // box drawing
+    .split("\n")
+    .map((l) => l.replace(/\s+$/, ""))
+    .join("\n");
+}
 
-  // Universal heuristic: a quiet session whose last visible line is a
-  // question is asking for input regardless of harness phrasing.
-  // Suppressed right after activity bursts to avoid catching streamed
-  // transcript text mid-output.
-  if (allowQuestionHeuristic) {
-    const lastLine = [...content.split("\n")]
-      .reverse()
-      .find((l) => l.trim().length > 0);
-    if (lastLine && lastLine.trimEnd().endsWith("?")) return true;
-  }
+function tail(text: string, lines: number): string {
+  return text.split("\n").slice(-lines).join("\n");
+}
 
-  return WAITING_PATTERNS.some((p) => p.test(recentLines));
+function hashOf(text: string): string {
+  return createHash("sha1").update(text).digest("hex");
+}
+
+/** Claude-family busy line: a whimsical verb next to a token counter. */
+function hasClaudeBusyLine(haystack: string): boolean {
+  if (!haystack.includes("tokens")) return false;
+  return WHIMSICAL_WORDS.some((w) => haystack.includes(w));
 }
 
 class SessionStatusDetector {
   private trackers = new Map<string, StateTracker>();
   private cache: SessionCache = { data: new Map(), updatedAt: 0 };
 
-  // Cache management
-  async refreshCache(): Promise<void> {
-    if (Date.now() - this.cache.updatedAt < CONFIG.CACHE_VALIDITY_MS) return;
+  async refreshCache(force = false): Promise<void> {
+    if (!force && Date.now() - this.cache.updatedAt < CONFIG.CACHE_VALIDITY_MS)
+      return;
 
     try {
       // "@" separator: tmux mangles "\t" into "_" when the server runs
@@ -274,142 +177,157 @@ class SessionStatusDetector {
     return this.cache.data.has(name);
   }
 
-  getTimestamp(name: string): number {
-    return this.cache.data.get(name) || 0;
-  }
-
   async capturePane(name: string): Promise<string> {
     try {
       const { stdout } = await execAsync(
         `tmux capture-pane -t "${name}" -p 2>/dev/null || echo ""`
       );
-      return stdout.trim();
+      return stdout.replace(/\s+$/, "");
     } catch {
       return "";
     }
   }
 
-  private getTracker(name: string, timestamp: number): StateTracker {
+  private getTracker(name: string): StateTracker {
     let tracker = this.trackers.get(name);
     if (!tracker) {
       tracker = {
-        lastChangeTime: Date.now() - CONFIG.ACTIVITY_COOLDOWN_MS,
+        lastHash: "",
+        lastActivityAt: 0,
+        hasRun: false,
         acknowledged: true,
-        lastActivityTimestamp: timestamp,
-        spikeWindowStart: null,
-        spikeChangeCount: 0,
+        lastStatus: null,
       };
       this.trackers.set(name, tracker);
     }
     return tracker;
   }
 
-  // Spike detection: filters single activity spikes from sustained activity
-  private processSpikeDetection(
-    tracker: StateTracker,
-    currentTimestamp: number
-  ): "running" | null {
+  /**
+   * Classify one session from a freshly captured pane.
+   *
+   * Split out from getStatus so the streaming ticker can reuse a single
+   * capture for both the status and the visible tail line.
+   */
+  classify(
+    sessionName: string,
+    rawPane: string,
+    providerId: ProviderId | null
+  ): SessionStatus {
+    const tracker = this.getTracker(sessionName);
     const now = Date.now();
-    const timestampChanged = tracker.lastActivityTimestamp !== currentTimestamp;
 
-    if (timestampChanged) {
-      tracker.lastActivityTimestamp = currentTimestamp;
+    const normalized = normalizePane(rawPane);
+    const signalTail = tail(normalized, CONFIG.SIGNAL_TAIL_LINES).toLowerCase();
+    const diffTail = tail(normalized, CONFIG.DIFF_TAIL_LINES);
 
-      const windowExpired =
-        tracker.spikeWindowStart === null ||
-        now - tracker.spikeWindowStart > CONFIG.SPIKE_WINDOW_MS;
+    const hash = hashOf(diffTail);
+    const contentChanged = tracker.lastHash !== "" && tracker.lastHash !== hash;
+    tracker.lastHash = hash;
 
-      if (windowExpired) {
-        // Start new detection window
-        tracker.spikeWindowStart = now;
-        tracker.spikeChangeCount = 1;
-      } else {
-        // Within window - count change
-        tracker.spikeChangeCount++;
-        if (tracker.spikeChangeCount >= CONFIG.SUSTAINED_THRESHOLD) {
-          // Sustained activity confirmed
-          tracker.lastChangeTime = now;
-          tracker.acknowledged = false;
-          tracker.spikeWindowStart = null;
-          tracker.spikeChangeCount = 0;
-          return "running";
-        }
-      }
-    } else if (
-      tracker.spikeChangeCount === 1 &&
-      tracker.spikeWindowStart !== null
-    ) {
-      // Check if single spike should be filtered
-      if (now - tracker.spikeWindowStart > CONFIG.SPIKE_WINDOW_MS) {
-        tracker.spikeWindowStart = null;
-        tracker.spikeChangeCount = 0;
+    const signals = getHarnessSignals(providerId);
+    const isShell = isShellProvider(providerId);
+
+    // Provider-specific first, then the cross-harness union: a session named
+    // "shell-*" may well have Claude or Codex running inside it.
+    const readyMatched =
+      signals.ready.some((p) => p.test(signalTail)) ||
+      getUniversalReadySignals().some((p) => p.test(signalTail));
+
+    const promptMatched = signals.prompt.some((p) => p.test(signalTail));
+
+    // ── 1. Actively working ────────────────────────────────────────────
+    // Two tiers. A spinner or a token/elapsed counter is hard evidence of
+    // streaming. Plain busy *text* is soft: current Claude Code prints
+    // "esc to interrupt" in its permanent footer hint even while idle, so
+    // an idle input box vetoes a text-only match.
+    const hardBusy =
+      hasSpinner(tail(rawPane, 6)) ||
+      BUSY_COUNTER_PATTERNS.some((p) => p.test(signalTail)) ||
+      (providerId !== null &&
+        CLAUDE_FAMILY.has(providerId) &&
+        hasClaudeBusyLine(signalTail));
+
+    const textBusy = !isShell && signals.busy.some((p) => p.test(signalTail));
+
+    const busyMatched = hardBusy || (textBusy && !readyMatched);
+
+    if (busyMatched) {
+      tracker.lastActivityAt = now;
+      tracker.hasRun = true;
+      tracker.acknowledged = false;
+      return this.remember(tracker, "running");
+    }
+
+    // ── 2. Blocked on the user ─────────────────────────────────────────
+    // A prompt marker outranks content change: a permission dialog with a
+    // blinking caret still means the harness is stopped and waiting.
+    if (promptMatched) {
+      tracker.hasRun = true;
+      tracker.acknowledged = false;
+      return this.remember(tracker, "waiting");
+    }
+
+    // The generic "last visible line is a question" heuristic. Only trusted
+    // when the harness is NOT sitting at its idle input box — otherwise a
+    // question the agent merely printed in its finished output would read as
+    // a blocking prompt, which is exactly the bug this separation fixes.
+    if (!readyMatched && !isShell) {
+      const lastLine = normalized
+        .split("\n")
+        .reverse()
+        .find((l) => l.trim().length > 0);
+      if (lastLine && lastLine.trimEnd().endsWith("?")) {
+        tracker.hasRun = true;
+        tracker.acknowledged = false;
+        return this.remember(tracker, "waiting");
       }
     }
 
-    return null;
+    // ── 3. Content moved since the last sample ─────────────────────────
+    if (contentChanged) {
+      tracker.lastActivityAt = now;
+      tracker.hasRun = true;
+      tracker.acknowledged = false;
+      return this.remember(tracker, "running");
+    }
+
+    // ── 4. Within the cooldown after activity stopped ──────────────────
+    // Only holds "running" if we have not already seen the idle input box.
+    // A ready marker is definitive: the harness is done, no grace needed.
+    if (!readyMatched && now - tracker.lastActivityAt < CONFIG.ACTIVITY_COOLDOWN_MS) {
+      return this.remember(tracker, "running");
+    }
+
+    // ── 5. Stopped ─────────────────────────────────────────────────────
+    if (tracker.acknowledged || !tracker.hasRun) {
+      return this.remember(tracker, "idle");
+    }
+    return this.remember(tracker, "done");
   }
 
-  private isInSpikeWindow(tracker: StateTracker): boolean {
-    return (
-      tracker.spikeWindowStart !== null &&
-      Date.now() - tracker.spikeWindowStart < CONFIG.SPIKE_WINDOW_MS
-    );
-  }
-
-  private isInCooldown(tracker: StateTracker): boolean {
-    return Date.now() - tracker.lastChangeTime < CONFIG.ACTIVITY_COOLDOWN_MS;
-  }
-
-  private getIdleOrWaiting(tracker: StateTracker): SessionStatus {
-    return tracker.acknowledged ? "idle" : "waiting";
+  private remember(tracker: StateTracker, status: SessionStatus): SessionStatus {
+    tracker.lastStatus = status;
+    return status;
   }
 
   async getStatus(sessionName: string): Promise<SessionStatus> {
     await this.refreshCache();
-    const providerId = getProviderIdFromSessionName(sessionName);
 
-    // Dead check
     if (!this.sessionExists(sessionName)) {
       this.trackers.delete(sessionName);
       return "dead";
     }
 
-    const timestamp = this.getTimestamp(sessionName);
-    const tracker = this.getTracker(sessionName, timestamp);
+    const providerId = getProviderIdFromSessionName(sessionName);
     const content = await this.capturePane(sessionName);
-
-    // 1. Busy indicators in last 10 lines (highest priority - harness is actively working)
-    // No activity timestamp check needed since we only look at recent terminal lines
-    if (checkBusyIndicators(content, providerId)) {
-      tracker.lastChangeTime = Date.now();
-      tracker.acknowledged = false;
-      return "running";
-    }
-
-    // 2. Waiting patterns (only if not actively running). The generic
-    //    "last line is a question" heuristic stays off while the session
-    //    shows fresh activity so streamed transcript text can't trip it.
-    if (checkWaitingPatterns(content, !this.isInCooldown(tracker)))
-      return "waiting";
-
-    // 3. Spike detection
-    const spikeResult = this.processSpikeDetection(tracker, timestamp);
-    if (spikeResult) return spikeResult;
-
-    // 4. During spike window, maintain stable status
-    if (this.isInSpikeWindow(tracker)) {
-      return this.isInCooldown(tracker)
-        ? "running"
-        : this.getIdleOrWaiting(tracker);
-    }
-
-    // 5. Cooldown check
-    if (this.isInCooldown(tracker)) return "running";
-
-    // 6. Cooldown expired
-    return this.getIdleOrWaiting(tracker);
+    return this.classify(sessionName, content, providerId);
   }
 
+  /**
+   * Mark a session as seen by the user. Clears "done" back to "idle" and
+   * stops a resolved "waiting" from sticking around.
+   */
   acknowledge(sessionName: string): void {
     const tracker = this.trackers.get(sessionName);
     if (tracker) tracker.acknowledged = true;

@@ -2,7 +2,7 @@ import type { Session, Group } from "@/lib/db";
 
 export interface SessionStatus {
   sessionName: string;
-  status: "idle" | "running" | "waiting" | "error" | "dead";
+  status: "idle" | "running" | "waiting" | "done" | "error" | "dead";
   lastLine?: string;
 }
 

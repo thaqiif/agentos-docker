@@ -106,7 +106,7 @@
     --surface-raised: 35 25% 98%;
     --foreground-subtle: 30 15% 52%;
     --border-strong: 35 15% 76%;
-    --grid-line: rgb(30 20% 10% / 0.05);
+    --grid-line: hsl(30 20% 10% / 0.05);
     --status-running: 168 60% 38%;
     --status-waiting: 28 85% 48%;
     --status-info: 217 80% 52%;
@@ -146,7 +146,7 @@
     --surface-raised: 210 20% 99%;
     --foreground-subtle: 215 20% 55%;
     --border-strong: 210 16% 80%;
-    --grid-line: rgb(213 25% 15% / 0.05);
+    --grid-line: hsl(213 25% 15% / 0.05);
     --status-running: 168 60% 38%;
     --status-waiting: 28 85% 48%;
     --status-info: 217 80% 52%;
@@ -186,7 +186,7 @@
     --surface-raised: 210 17% 99%;
     --foreground-subtle: 210 8% 55%;
     --border-strong: 210 10% 80%;
-    --grid-line: rgb(210 20% 15% / 0.05);
+    --grid-line: hsl(210 20% 15% / 0.05);
     --status-running: 168 60% 38%;
     --status-waiting: 28 85% 48%;
     --status-info: 217 80% 52%;
@@ -226,7 +226,7 @@
     --surface-raised: 340 25% 98%;
     --foreground-subtle: 340 15% 55%;
     --border-strong: 340 18% 78%;
-    --grid-line: rgb(340 30% 15% / 0.05);
+    --grid-line: hsl(340 30% 15% / 0.05);
     --status-running: 168 60% 38%;
     --status-waiting: 28 85% 48%;
     --status-info: 217 80% 52%;
@@ -266,7 +266,7 @@
     --surface-raised: 260 30% 99%;
     --foreground-subtle: 260 12% 55%;
     --border-strong: 260 16% 79%;
-    --grid-line: rgb(260 25% 15% / 0.05);
+    --grid-line: hsl(260 25% 15% / 0.05);
     --status-running: 168 60% 38%;
     --status-waiting: 28 85% 48%;
     --status-info: 217 80% 52%;
@@ -306,7 +306,7 @@
     --surface-raised: 160 30% 97%;
     --foreground-subtle: 160 20% 52%;
     --border-strong: 160 18% 76%;
-    --grid-line: rgb(160 35% 12% / 0.05);
+    --grid-line: hsl(160 35% 12% / 0.05);
     --status-running: 168 60% 38%;
     --status-waiting: 28 85% 48%;
     --status-info: 217 80% 52%;
@@ -346,7 +346,7 @@
     --surface-raised: 20 35% 98%;
     --foreground-subtle: 20 15% 52%;
     --border-strong: 20 18% 76%;
-    --grid-line: rgb(20 30% 12% / 0.05);
+    --grid-line: hsl(20 30% 12% / 0.05);
     --status-running: 168 60% 38%;
     --status-waiting: 28 85% 48%;
     --status-info: 217 80% 52%;

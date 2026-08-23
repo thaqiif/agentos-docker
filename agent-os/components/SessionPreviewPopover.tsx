@@ -7,7 +7,7 @@ import type { Session } from "@/lib/db";
 
 interface SessionPreviewPopoverProps {
   session: Session | null;
-  status?: "idle" | "running" | "waiting" | "error" | "dead";
+  status?: "idle" | "running" | "waiting" | "done" | "error" | "dead";
   position: { x: number; y: number };
 }
 

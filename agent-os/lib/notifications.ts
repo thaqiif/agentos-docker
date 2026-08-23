@@ -20,7 +20,7 @@ export const defaultSettings: NotificationSettings = {
   events: {
     waiting: true,
     error: true,
-    completed: false, // Off by default - can be noisy
+    completed: true, // "done" is now an explicit detector state, not a guess
   },
 };
 
@@ -44,21 +44,42 @@ export function saveSettings(settings: NotificationSettings): void {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 }
 
-export async function requestNotificationPermission(): Promise<boolean> {
-  if (typeof window === "undefined" || !("Notification" in window)) {
-    return false;
+export type PermissionOutcome =
+  | "granted"
+  | "denied"
+  | "dismissed"
+  | "unsupported"
+  | "insecure-context";
+
+/**
+ * Why a request can fail without the browser prompting at all:
+ *  - the Notification API is missing entirely (some mobile webviews)
+ *  - the page is not a secure context, which silently disables it over
+ *    plain http on a LAN address — the common case for a self-hosted
+ *    AgentOS reached at http://<host>:3011
+ *  - permission was already denied, in which case the browser will never
+ *    re-prompt and the user has to clear it in site settings
+ *
+ * Callers need to tell these apart to say anything useful, so this returns
+ * the outcome rather than a bare boolean.
+ */
+export async function requestNotificationPermission(): Promise<PermissionOutcome> {
+  if (typeof window === "undefined") return "unsupported";
+
+  const secure = window.isSecureContext;
+
+  if (typeof Notification === "undefined") {
+    // A non-secure origin is the usual reason the API is absent.
+    return secure === false ? "insecure-context" : "unsupported";
   }
 
-  if (Notification.permission === "granted") {
-    return true;
-  }
-
-  if (Notification.permission === "denied") {
-    return false;
-  }
+  if (Notification.permission === "granted") return "granted";
+  if (Notification.permission === "denied") return "denied";
 
   const permission = await Notification.requestPermission();
-  return permission === "granted";
+  if (permission === "granted") return "granted";
+  if (permission === "denied") return "denied";
+  return "dismissed";
 }
 
 export function canSendBrowserNotification(): boolean {
@@ -71,12 +92,15 @@ export function canSendBrowserNotification(): boolean {
 export function sendBrowserNotification(
   title: string,
   options?: NotificationOptions,
-  onClick?: () => void
+  onClick?: () => void,
+  /** Send even when the tab is focused. Used by the "send a test" action. */
+  force = false
 ): Notification | null {
   if (!canSendBrowserNotification()) return null;
 
-  // Only send if page is not focused
-  if (document.hasFocus()) return null;
+  // Real events only interrupt when the user is looking elsewhere; an
+  // in-app toast already covers the focused case.
+  if (!force && document.hasFocus()) return null;
 
   const notification = new Notification(title, {
     icon: "/favicon.ico",
