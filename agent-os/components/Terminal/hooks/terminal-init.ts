@@ -38,6 +38,10 @@ export function createTerminal(
     cursorStyle: "bar",
     cursorWidth: 2,
     allowProposedApi: true,
+    // Right-click belongs to the TUI, not to xterm and not to the browser.
+    // xterm would otherwise select the word under the cursor, which fights
+    // with any app that tracks the mouse itself.
+    rightClickSelectsWord: false,
     theme: terminalTheme,
   });
 
@@ -104,8 +108,23 @@ export function createTerminal(
   // Use capture phase to intercept before browser default
   document.addEventListener("keydown", handleKeyDown, true);
 
+  // Suppress the desktop browser context menu over the terminal.
+  //
+  // When the running TUI has mouse reporting on (DECSET 1000/1002/1003),
+  // xterm already encodes the right-click and writes it to the PTY, so the
+  // app draws its own menu — the native one on top of that is pure noise.
+  // When mouse reporting is off, right-click should simply do nothing
+  // rather than opening a browser menu over the pane. preventDefault covers
+  // both cases without swallowing the event xterm needs to see.
+  const handleContextMenu = (event: MouseEvent) => {
+    event.preventDefault();
+  };
+
+  container.addEventListener("contextmenu", handleContextMenu);
+
   const cleanup = () => {
     document.removeEventListener("keydown", handleKeyDown, true);
+    container.removeEventListener("contextmenu", handleContextMenu);
   };
 
   return { term, fitAddon, searchAddon, cleanup };
