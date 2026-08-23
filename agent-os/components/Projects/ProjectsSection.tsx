@@ -30,7 +30,6 @@ interface ProjectsSectionProps {
   onNewSession?: (projectId: string) => void;
   onOpenTerminal?: (projectId: string) => void;
   onSelectSession: (sessionId: string) => void;
-  onOpenSessionInTab?: (sessionId: string) => void;
   onMoveSession?: (sessionId: string, projectId: string) => void;
   onForkSession?: (sessionId: string) => void;
   onSummarize?: (sessionId: string) => void;
@@ -61,7 +60,6 @@ export function ProjectsSection({
   onNewSession,
   onOpenTerminal,
   onSelectSession,
-  onOpenSessionInTab,
   onMoveSession,
   onForkSession,
   onSummarize,
@@ -252,11 +250,6 @@ export function ProjectsSection({
                                 handleToggleSelect(session.id, shiftKey)
                               }
                               onClick={() => onSelectSession(session.id)}
-                              onOpenInTab={
-                                onOpenSessionInTab
-                                  ? () => onOpenSessionInTab(session.id)
-                                  : undefined
-                              }
                               onMoveToProject={
                                 onMoveSession
                                   ? (projectId) =>
@@ -327,11 +320,6 @@ export function ProjectsSection({
                                   handleToggleSelect(worker.id, shiftKey)
                                 }
                                 onClick={() => onSelectSession(worker.id)}
-                                onOpenInTab={
-                                  onOpenSessionInTab
-                                    ? () => onOpenSessionInTab(worker.id)
-                                    : undefined
-                                }
                                 onDelete={
                                   onDeleteSession
                                     ? () => onDeleteSession(worker.id)

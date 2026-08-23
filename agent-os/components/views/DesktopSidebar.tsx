@@ -14,7 +14,6 @@ interface DesktopSidebarProps {
   activeSessionId?: string;
   sessionStatuses: React.ComponentProps<typeof SessionList>["sessionStatuses"];
   onSelect: (sessionId: string) => void;
-  onOpenInTab: (sessionId: string) => void;
   onNewSessionInProject: (projectId: string) => void;
   onOpenTerminal: (projectId: string) => void;
   onStartDevServer: (projectId: string) => void;
@@ -29,7 +28,6 @@ export function DesktopSidebar({
   activeSessionId,
   sessionStatuses,
   onSelect,
-  onOpenInTab,
   onNewSessionInProject,
   onOpenTerminal,
   onStartDevServer,
@@ -64,7 +62,6 @@ export function DesktopSidebar({
           activeSessionId={activeSessionId}
           sessionStatuses={sessionStatuses}
           onSelect={onSelect}
-          onOpenInTab={onOpenInTab}
           onNewSessionInProject={onNewSessionInProject}
           onOpenTerminal={onOpenTerminal}
           onStartDevServer={onStartDevServer}

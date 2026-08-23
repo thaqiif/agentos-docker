@@ -17,7 +17,6 @@ import {
   Sparkles,
   Square,
   CheckSquare,
-  ExternalLink,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -61,7 +60,6 @@ interface SessionCardProps {
   onToggleSelect?: (shiftKey: boolean) => void;
   // Navigation
   onClick?: () => void;
-  onOpenInTab?: () => void;
   onMove?: (groupPath: string) => void;
   onMoveToProject?: (projectId: string) => void;
   onFork?: () => void;
@@ -166,7 +164,6 @@ export function SessionCard({
   isInSelectMode,
   onToggleSelect,
   onClick,
-  onOpenInTab,
   onMove,
   onMoveToProject,
   onFork,
@@ -256,8 +253,7 @@ export function SessionCard({
     onFork ||
     onDelete ||
     onRename ||
-    onCreatePR ||
-    onOpenInTab;
+    onCreatePR;
 
   // Handle card click - coordinates selection with navigation
   const handleCardClick = (e: React.MouseEvent) => {
@@ -314,12 +310,6 @@ export function SessionCard({
             </div>
             <MenuSeparator />
           </>
-        )}
-        {onOpenInTab && (
-          <MenuItem onClick={() => onOpenInTab()}>
-            <ExternalLink className="mr-2 h-3 w-3" />
-            Open in new tab
-          </MenuItem>
         )}
         {onRename && (
           <MenuItem onClick={() => setIsEditing(true)}>

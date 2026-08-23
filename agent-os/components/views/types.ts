@@ -1,7 +1,6 @@
 import type { Session } from "@/lib/db";
 import type { ProjectWithDevServers } from "@/lib/projects";
 import type { NotificationSettings } from "@/lib/notifications";
-import type { TabData } from "@/lib/panes";
 
 export interface SessionStatus {
   sessionName: string;
@@ -17,7 +16,6 @@ export interface ViewProps {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
   activeSession: Session | undefined;
-  focusedActiveTab: TabData | null;
   copiedSessionId: boolean;
   setCopiedSessionId: (copied: boolean) => void;
 
@@ -38,7 +36,6 @@ export interface ViewProps {
 
   // Handlers
   attachToSession: (session: Session) => void;
-  openSessionInNewTab: (session: Session) => void;
   handleNewSessionInProject: (projectId: string) => void;
   handleOpenTerminal: (projectId: string) => void;
   handleSessionCreated: (sessionId: string) => Promise<void>;
@@ -62,5 +59,5 @@ export interface ViewProps {
   setStartDevServerProjectId: (id: string | null) => void;
 
   // Pane
-  renderPane: (paneId: string) => React.ReactNode;
+  renderPane: () => React.ReactNode;
 }

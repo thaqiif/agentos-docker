@@ -15,7 +15,6 @@ import {
   Terminal as TerminalIcon,
   FolderOpen,
   GitBranch,
-  Users,
   ChevronDown,
   Circle,
 } from "lucide-react";
@@ -23,7 +22,7 @@ import { cn } from "@/lib/utils";
 import type { Session, Project } from "@/lib/db";
 import type { LucideIcon } from "lucide-react";
 
-type ViewMode = "terminal" | "files" | "git" | "workers";
+import type { ViewMode } from "@/lib/panes";
 
 interface ViewModeButtonProps {
   mode: ViewMode;
@@ -68,8 +67,6 @@ interface MobileTabBarProps {
   sessions: Session[];
   projects: Project[];
   viewMode: ViewMode;
-  isConductor: boolean;
-  workerCount: number;
   onMenuClick?: () => void;
   onViewModeChange: (mode: ViewMode) => void;
   onSelectSession?: (sessionId: string) => void;
@@ -80,8 +77,6 @@ export function MobileTabBar({
   sessions,
   projects,
   viewMode,
-  isConductor,
-  workerCount,
   onMenuClick,
   onViewModeChange,
   onSelectSession,
@@ -261,19 +256,6 @@ export function MobileTabBar({
             icon={GitBranch}
             onClick={onViewModeChange}
           />
-          {isConductor && (
-            <ViewModeButton
-              mode="workers"
-              currentMode={viewMode}
-              icon={Users}
-              onClick={onViewModeChange}
-              badge={
-                <span className="bg-primary/20 text-primary rounded px-1 text-[10px]">
-                  {workerCount}
-                </span>
-              }
-            />
-          )}
         </div>
       )}
     </div>

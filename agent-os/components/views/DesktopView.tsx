@@ -11,7 +11,7 @@ import {
   Plus,
   Command,
 } from "lucide-react";
-import { PaneLayout } from "@/components/PaneLayout";
+import { WorkbenchBar } from "./WorkbenchBar";
 import {
   Tooltip,
   TooltipContent,
@@ -27,7 +27,6 @@ export function DesktopView({
   projects,
   sessionStatuses,
   activeSession,
-  focusedActiveTab,
   showNewSessionDialog,
   setShowNewSessionDialog,
   newSessionProjectId,
@@ -40,7 +39,6 @@ export function DesktopView({
   updateSettings,
   requestPermission,
   attachToSession,
-  openSessionInNewTab,
   handleNewSessionInProject,
   handleOpenTerminal,
   handleSessionCreated,
@@ -58,15 +56,11 @@ export function DesktopView({
       <DesktopSidebar
         isPinned={isPinned}
         togglePin={togglePin}
-        activeSessionId={focusedActiveTab?.sessionId || undefined}
+        activeSessionId={activeSession?.id}
         sessionStatuses={sessionStatuses}
         onSelect={(id) => {
           const session = sessions.find((s) => s.id === id);
           if (session) attachToSession(session);
-        }}
-        onOpenInTab={(id) => {
-          const session = sessions.find((s) => s.id === id);
-          if (session) openSessionInNewTab(session);
         }}
         onNewSessionInProject={handleNewSessionInProject}
         onOpenTerminal={handleOpenTerminal}
@@ -107,6 +101,8 @@ export function DesktopView({
               </div>
             )}
           </div>
+
+          <WorkbenchBar />
 
           <div className="flex shrink-0 items-center gap-1">
             <Tooltip>
@@ -155,10 +151,8 @@ export function DesktopView({
           </div>
         </header>
 
-        {/* Pane Layout - full height */}
-        <div className="min-h-0 flex-1">
-          <PaneLayout renderPane={renderPane} />
-        </div>
+        {/* Single terminal surface - full height */}
+        <div className="min-h-0 flex-1">{renderPane()}</div>
       </div>
 
       {/* Dialogs */}
@@ -174,7 +168,7 @@ export function DesktopView({
         sessions={sessions}
         open={showQuickSwitcher}
         onOpenChange={setShowQuickSwitcher}
-        currentSessionId={focusedActiveTab?.sessionId ?? undefined}
+        currentSessionId={activeSession?.id}
         activeSessionWorkingDir={activeSession?.working_directory ?? undefined}
         onSelectSession={(sessionId) => {
           const session = sessions.find((s) => s.id === sessionId);

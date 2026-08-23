@@ -4,7 +4,6 @@ import { SessionList } from "@/components/SessionList";
 import { NewSessionDialog } from "@/components/NewSessionDialog";
 import { StartServerDialog } from "@/components/DevServers/StartServerDialog";
 import { SidebarFooter } from "@/components/SidebarFooter";
-import { PaneLayout } from "@/components/PaneLayout";
 import { SwipeSidebar } from "@/components/mobile/SwipeSidebar";
 import { QuickSwitcher } from "@/components/QuickSwitcher";
 import type { ViewProps } from "./types";
@@ -17,14 +16,12 @@ export function MobileView({
   sidebarOpen,
   setSidebarOpen,
   activeSession,
-  focusedActiveTab,
   showNewSessionDialog,
   setShowNewSessionDialog,
   newSessionProjectId,
   showQuickSwitcher,
   setShowQuickSwitcher,
   attachToSession,
-  openSessionInNewTab,
   handleNewSessionInProject,
   handleOpenTerminal,
   handleSessionCreated,
@@ -43,16 +40,11 @@ export function MobileView({
           {/* Session list */}
           <div className="min-h-0 flex-1 overflow-hidden">
             <SessionList
-              activeSessionId={focusedActiveTab?.sessionId || undefined}
+              activeSessionId={activeSession?.id}
               sessionStatuses={sessionStatuses}
               onSelect={(id) => {
                 const session = sessions.find((s) => s.id === id);
                 if (session) attachToSession(session);
-                setSidebarOpen(false);
-              }}
-              onOpenInTab={(id) => {
-                const session = sessions.find((s) => s.id === id);
-                if (session) openSessionInNewTab(session);
                 setSidebarOpen(false);
               }}
               onNewSessionInProject={handleNewSessionInProject}
@@ -68,7 +60,7 @@ export function MobileView({
 
       {/* Terminal fills the screen */}
       <div className="min-h-0 w-full flex-1">
-        <PaneLayout renderPane={renderPane} />
+        {renderPane()}
       </div>
 
       {/* Dialogs */}
@@ -84,7 +76,7 @@ export function MobileView({
         sessions={sessions}
         open={showQuickSwitcher}
         onOpenChange={setShowQuickSwitcher}
-        currentSessionId={focusedActiveTab?.sessionId ?? undefined}
+        currentSessionId={activeSession?.id}
         activeSessionWorkingDir={activeSession?.working_directory ?? undefined}
         onSelectSession={(sessionId) => {
           const session = sessions.find((s) => s.id === sessionId);
