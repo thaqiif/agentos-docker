@@ -5,7 +5,7 @@
 # under agent-os/ in this repo with our downstream UI patches already applied)
 # into a self-contained image and runs it in the foreground as a non-root user.
 
-FROM node:20-bookworm-slim
+FROM node:22-bookworm-slim
 
 # ---- System dependencies AgentOS needs at runtime ----
 # tmux: drives the terminal sessions  |  ripgrep: code search
