@@ -28,7 +28,6 @@ mkdir -p \
     "${HOME}/.claude" \
     "${HOME}/.codex" \
     "${HOME}/.commandcode" \
-    "${HOME}/.zero" \
     "${HOME}/.ssh" \
     "${HOME}/.gitstate" \
     "${HOME}/.local/bin"

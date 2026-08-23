@@ -97,13 +97,8 @@ const PROVIDER_SIGNALS: Partial<Record<ProviderId, Partial<HarnessSignals>>> = {
     ready: [/\? for shortcuts/],
   },
 
-  // Command Code / Zero are Claude Code forks: same chrome.
+  // Command Code is a Claude Code fork: same chrome.
   commandcode: {
-    busy: [/·\s*↑?\s*[\d.]+k?\s*tokens/, /\(\d+s\s*·/],
-    prompt: [/^\s*❯?\s*\d\.\s+yes\b/m, /\byes, and don't ask again\b/],
-    ready: [/\? for shortcuts/],
-  },
-  zero: {
     busy: [/·\s*↑?\s*[\d.]+k?\s*tokens/, /\(\d+s\s*·/],
     prompt: [/^\s*❯?\s*\d\.\s+yes\b/m, /\byes, and don't ask again\b/],
     ready: [/\? for shortcuts/],
@@ -134,69 +129,6 @@ const PROVIDER_SIGNALS: Partial<Record<ProviderId, Partial<HarnessSignals>>> = {
       /^\s*\d\.\s+(allow|deny|always)\b/m,
     ],
     ready: [/\/help\b/, /ctrl\+\w to\b/, /\bnew session\b/],
-  },
-
-  // ── Kilo Code ─────────────────────────────────────────────────────────
-  kilocode: {
-    busy: [/\bthinking\b/, /\bexecuting\b/, /esc to interrupt/],
-    prompt: [/\bapprove\b.*\?/, /^\s*\d\.\s+(yes|approve)\b/m],
-    ready: [/\/help\b/, /type a message/],
-  },
-
-  // ── Gemini CLI ────────────────────────────────────────────────────────
-  // Busy: spinner + "(esc to cancel, N s)"
-  // Prompt: "Apply this change?" with ●/○ radio choices
-  // Ready: "Type your message or @path/to/file"
-  gemini: {
-    busy: [/esc to cancel/, /\(\d+s\)/, /\bloading\b/],
-    prompt: [
-      /apply this change\?/,
-      /\ballow execution\b/,
-      /^\s*[●○]\s+(yes|no)\b/m,
-      /^\s*\d\.\s+yes\b/m,
-    ],
-    ready: [/type your message/, /@path\/to\/file/, /\/help for more/],
-  },
-
-  // ── Aider ─────────────────────────────────────────────────────────────
-  // Aider is readline-based, not a full TUI: its prompt is a literal
-  // "> " at column 0 and its questions end in "(Y)es/(N)o".
-  aider: {
-    busy: [/^\s*\.\.\./m, /\bapplying edit\b/, /\bcommitting\b/],
-    prompt: [
-      /\(y\)es\/\(n\)o/,
-      /\(y\)es\/\(n\)o\/\(a\)ll/,
-      /add .* to the chat\?/,
-      // Aider's own questions are caught by the last-line heuristic; a
-      // catch-all "any line ending in ?" matched its transcript prose too.
-    ],
-    ready: [/^\s*>\s*$/m, /^\s*multi>\s*$/m, /tokens?, \$\d/],
-  },
-
-  // ── Cursor CLI (cursor-agent) ─────────────────────────────────────────
-  cursor: {
-    busy: [/\bgenerating\b/, /esc to interrupt/, /\bthinking\b/],
-    prompt: [/\brun this command\?/, /^\s*\d\.\s+(yes|run)\b/m, /\baccept\?/],
-    ready: [/ctrl\+c to exit/, /type your message/],
-  },
-
-  // ── Amp ───────────────────────────────────────────────────────────────
-  amp: {
-    busy: [/\bthinking\b/, /esc to interrupt/, /\brunning\b\s*[.…]/],
-    prompt: [/\ballow\b.*\?/, /^\s*\d\.\s+(yes|allow)\b/m],
-    ready: [/\/help\b/, /ctrl\+c to (exit|quit)/],
-  },
-
-  // ── Pi / Oh My Pi ─────────────────────────────────────────────────────
-  pi: {
-    busy: [/\bthinking\b/, /esc to interrupt/],
-    prompt: [/\bconfirm\b.*\?/, /^\s*\d\.\s+yes\b/m],
-    ready: [/\/help\b/, /type a message/],
-  },
-  omp: {
-    busy: [/\bthinking\b/, /esc to interrupt/],
-    prompt: [/\bconfirm\b.*\?/, /^\s*\d\.\s+yes\b/m],
-    ready: [/\/help\b/, /type a message/],
   },
 
   // ── Plain shell ───────────────────────────────────────────────────────
@@ -245,7 +177,6 @@ export const CLAUDE_FAMILY = new Set<ProviderId>([
   "claude-b",
   "claude-c",
   "commandcode",
-  "zero",
 ]);
 
 /** Shell sessions get no agent-style heuristics at all. */
@@ -319,7 +250,6 @@ const FOOTER_NOISE: Partial<Record<ProviderId, RegExp[]>> = {
   "claude-b": CLAUDE_FOOTER_NOISE,
   "claude-c": CLAUDE_FOOTER_NOISE,
   commandcode: CLAUDE_FOOTER_NOISE,
-  zero: CLAUDE_FOOTER_NOISE,
 };
 
 export function getFooterNoise(providerId: ProviderId | null): RegExp[] {

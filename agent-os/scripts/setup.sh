@@ -29,7 +29,7 @@ echo "tmux: $(tmux -V)"
 
 # Check AI coding CLI
 AI_CLI_FOUND=""
-for cli in claude codex opencode kilo gemini aider cursor-agent amp pi omp; do
+for cli in claude codex opencode commandcode; do
     if command -v "$cli" &> /dev/null; then
         AI_CLI_FOUND="$AI_CLI_FOUND $cli"
     fi
@@ -37,7 +37,7 @@ done
 
 if [ -z "$AI_CLI_FOUND" ]; then
     echo "Error: no supported AI coding CLI is installed"
-    echo "Install one of: Claude Code, Codex, OpenCode, Kilo Code CLI, Gemini CLI, Aider, Cursor CLI, Amp, Pi, or Oh My Pi"
+    echo "Install one of: Claude Code, Codex, OpenCode, or Command Code"
     exit 1
 fi
 echo "AI CLI(s):$AI_CLI_FOUND"

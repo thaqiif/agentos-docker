@@ -70,9 +70,8 @@ You need at least one AI coding CLI installed. The installer will prompt you to 
 | ----------- | --------- | ------------------------------------------ |
 | Claude Code | Anthropic | `npm install -g @anthropic-ai/claude-code` |
 | Codex       | OpenAI    | `npm install -g @openai/codex`             |
-| Aider       | Multi-LLM | `pip install aider-chat`                   |
-| Gemini CLI  | Google    | `npm install -g gemini-cli`                |
-| Kilo Code CLI | Kilo   | `npm install -g @kilocode/cli`             |
+| OpenCode    | Multi-LLM | `npm install -g opencode-ai`               |
+| Command Code| Command   | `npm install -g command-code`              |
 
 ## Configuration
 

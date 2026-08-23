@@ -47,19 +47,11 @@ import type {
 const AGENT_OPTIONS: { value: AgentType; label: string }[] = [
   { value: "claude", label: "Claude Code" },
   { value: "commandcode", label: "Command Code" },
-  { value: "zero", label: "Zero" },
   { value: "claude-a", label: "Claude (a)" },
   { value: "claude-b", label: "Claude (b)" },
   { value: "claude-c", label: "Claude (c)" },
   { value: "codex", label: "Codex" },
   { value: "opencode", label: "OpenCode" },
-  { value: "kilocode", label: "Kilo Code" },
-  { value: "gemini", label: "Gemini CLI" },
-  { value: "aider", label: "Aider" },
-  { value: "cursor", label: "Cursor CLI" },
-  { value: "amp", label: "Amp" },
-  { value: "pi", label: "Pi" },
-  { value: "omp", label: "Oh My Pi" },
 ];
 
 interface DevServerConfig {

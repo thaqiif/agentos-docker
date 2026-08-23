@@ -61,14 +61,6 @@ const CASES: Case[] = [
   ["codex prompt", "codex", "Allow command?\n1) Yes  2) No", "waiting"],
   ["codex ready", "codex", "▌\nsend q to quit", "idle"],
 
-  // ── Gemini ─────────────────────────────────────────────────────────────
-  ["gemini busy", "gemini", "⠹ Loading... (esc to cancel, 4s)", "running"],
-  ["gemini prompt", "gemini", "Apply this change?\n● Yes\n○ No", "waiting"],
-  ["gemini ready", "gemini", "Type your message or @path/to/file", "idle"],
-
-  // ── Aider ──────────────────────────────────────────────────────────────
-  ["aider prompt", "aider", "Add main.py to the chat? (Y)es/(N)o", "waiting"],
-  ["aider ready", "aider", "> ", "idle"],
 
   // ── Plain shell ────────────────────────────────────────────────────────
   ["shell ready", "shell", "user@host:~$ ", "idle"],

@@ -92,23 +92,11 @@ export const AGENT_OPTIONS: {
 }[] = [
   { value: "claude", label: "Claude Code", description: "Anthropic's CLI" },
   { value: "commandcode", label: "Command Code", description: "Learns your coding taste" },
-  { value: "zero", label: "Zero", description: "Terminal coding agent you own" },
   { value: "claude-a", label: "Claude (a)", description: "a profile" },
   { value: "claude-b", label: "Claude (b)", description: "b profile" },
   { value: "claude-c", label: "Claude (c)", description: "c profile" },
   { value: "codex", label: "Codex", description: "OpenAI's CLI" },
   { value: "opencode", label: "OpenCode", description: "Multi-provider CLI" },
-  { value: "kilocode", label: "Kilo Code", description: "Kilo's AI coding CLI" },
-  { value: "gemini", label: "Gemini CLI", description: "Google's CLI" },
-  { value: "aider", label: "Aider", description: "AI pair programming" },
-  { value: "cursor", label: "Cursor CLI", description: "Cursor's AI agent" },
-  { value: "amp", label: "Amp", description: "Multi-model coding agent" },
-  { value: "pi", label: "Pi", description: "Extensible coding harness" },
-  {
-    value: "omp",
-    label: "Oh My Pi",
-    description: "Enhanced Pi coding harness",
-  },
 ];
 
 // Props for main dialog
