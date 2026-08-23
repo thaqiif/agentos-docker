@@ -42,7 +42,6 @@ export function ThemeToggle() {
           className="h-8 gap-2 px-2 font-mono"
           aria-label="Change theme"
         >
-          <span className="tech-label">theme</span>
           <span className="text-muted-foreground font-mono text-[10px] tracking-[0.08em] uppercase">
             <span suppressHydrationWarning>{currentValue}</span>
           </span>

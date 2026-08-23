@@ -322,6 +322,11 @@ export function GitDrawer({
               <p className="tech-meta">
                 {error?.message ?? "failed to load git status"}
               </p>
+              {/* Name the directory that was checked. "Not a git repository"
+                  on its own gives the user nothing to act on. */}
+              <p className="tech-meta text-foreground-subtle break-all">
+                {workingDirectory}
+              </p>
               <Button
                 variant="outline"
                 size="sm"
