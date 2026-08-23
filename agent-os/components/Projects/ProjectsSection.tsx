@@ -121,7 +121,6 @@ export function ProjectsSection({
             {/* Project header */}
             <ProjectCard
               project={project}
-              sessionCount={projectSessions.length}
               runningDevServers={runningServers}
               onToggleExpanded={(expanded) =>
                 onToggleProject?.(project.id, expanded)

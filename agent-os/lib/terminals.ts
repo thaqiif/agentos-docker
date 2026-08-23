@@ -204,11 +204,14 @@ export interface TerminalRecord {
   panes: number;
   attached: boolean;
   activity: number;
+  /** False when the tmux session is gone; selecting it starts one again. */
+  alive: boolean;
 }
 
 export function toRecord(
   terminal: Terminal,
-  projectId: string | null
+  projectId: string | null,
+  alive = true
 ): TerminalRecord {
   return {
     id: terminal.name,
@@ -220,6 +223,7 @@ export function toRecord(
     panes: terminal.panes,
     attached: terminal.attached,
     activity: terminal.activity,
+    alive,
   };
 }
 

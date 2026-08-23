@@ -62,65 +62,30 @@ export interface TerminalCardProps {
   onHoverEnd?: () => void;
 }
 
-/**
- * Status dot.
- *
- * A plain span, not a lucide <Circle>: stacking `bg-current` and
- * `rounded-full` on an SVG painted a filled square behind a stroked ring,
- * which is why the indicator rendered as a smudge at 6px.
- */
-function StatusDot({
-  className,
-  hollow = false,
-}: {
-  className?: string;
-  hollow?: boolean;
-}) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        "block h-1.5 w-1.5 rounded-full",
-        hollow ? "border border-current" : "bg-current",
-        className
-      )}
-    />
-  );
-}
-
-const statusConfig: Record<
-  TmuxStatus,
-  { color: string; label: string; icon: React.ReactNode }
-> = {
+const statusConfig: Record<TmuxStatus, { color: string; label: string }> = {
   idle: {
     color: "text-muted-foreground",
     label: "idle",
-    icon: <StatusDot hollow />,
   },
   running: {
     color: "text-status-running",
     label: "working",
-    icon: <StatusDot className="animate-status-pulse" />,
   },
   waiting: {
     color: "text-status-waiting animate-status-pulse",
     label: "needs input",
-    icon: <AlertCircle className="h-3 w-3" />,
   },
   done: {
     color: "text-status-info",
     label: "done",
-    icon: <Check className="h-3 w-3" />,
   },
   error: {
     color: "text-status-error",
     label: "error",
-    icon: <AlertCircle className="h-3 w-3" />,
   },
   dead: {
     color: "text-foreground-subtle",
     label: "stopped",
-    icon: <StatusDot hollow className="opacity-60" />,
   },
 };
 
@@ -158,7 +123,7 @@ export function TerminalCard({
   onHoverEnd,
 }: TerminalCardProps) {
   // tmux reports last activity in seconds since the epoch.
-  const timeAgo = getTimeAgo(new Date(session.activity * 1000).toISOString());
+  const timeAgo = getTimeAgo(session.activity);
   const status = tmuxStatus || "dead";
   const config = statusConfig[status];
   // First class is the color; drops the pulse animation class for text use
@@ -339,20 +304,6 @@ export function TerminalCard({
         </button>
       )}
 
-      {/* Status indicator - hidden when in select mode */}
-      {!isInSelectMode && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className={cn("flex-shrink-0", config.color)}>
-              {config.icon}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="right">
-            <span className="capitalize">{config.label}</span>
-          </TooltipContent>
-        </Tooltip>
-      )}
-
       {/* Two-line content: title row + live status row */}
       <div className="min-w-0 flex-1">
         {/* Line 1 — session name + inline meta/actions */}
@@ -455,10 +406,11 @@ export function TerminalCard({
   return cardContent;
 }
 
-function getTimeAgo(dateStr: string): string {
-  const date = new Date(dateStr + "Z"); // Assume UTC
+/** @param activity tmux last-activity stamp, in seconds since the epoch. */
+function getTimeAgo(activity: number): string {
+  if (!activity) return "";
   const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
+  const diffMs = now.getTime() - activity * 1000;
   const diffMins = Math.floor(diffMs / 60000);
 
   if (diffMins < 1) return "just now";
@@ -470,5 +422,5 @@ function getTimeAgo(dateStr: string): string {
   const diffDays = Math.floor(diffHours / 24);
   if (diffDays < 7) return `${diffDays}d ago`;
 
-  return date.toLocaleDateString();
+  return new Date(activity * 1000).toLocaleDateString();
 }

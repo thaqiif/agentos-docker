@@ -14,6 +14,32 @@ function getStmt(db: Database.Database, sql: string): Database.Statement {
 }
 
 export const queries = {
+  // Terminals registry
+  rememberTerminal: (db: Database.Database) =>
+    getStmt(
+      db,
+      `INSERT INTO terminals (name, working_directory)
+       VALUES (?, ?)
+       ON CONFLICT(name) DO UPDATE SET
+         working_directory = excluded.working_directory,
+         last_seen_at = datetime('now')`
+    ),
+
+  touchTerminal: (db: Database.Database) =>
+    getStmt(
+      db,
+      `UPDATE terminals SET last_seen_at = datetime('now') WHERE name = ?`
+    ),
+
+  getAllTerminals: (db: Database.Database) =>
+    getStmt(db, `SELECT * FROM terminals ORDER BY created_at ASC`),
+
+  forgetTerminal: (db: Database.Database) =>
+    getStmt(db, `DELETE FROM terminals WHERE name = ?`),
+
+  renameTerminalRow: (db: Database.Database) =>
+    getStmt(db, `UPDATE terminals SET name = ? WHERE name = ?`),
+
   // Projects
   createProject: (db: Database.Database) =>
     getStmt(

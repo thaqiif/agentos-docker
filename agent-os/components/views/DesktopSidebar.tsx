@@ -2,8 +2,8 @@
 
 import { useRef, useState } from "react";
 import { TerminalList } from "@/components/TerminalList";
-import { SidebarFooter } from "@/components/SidebarFooter";
 import { cn } from "@/lib/utils";
+import { useSidebarWidth } from "@/hooks/useSidebarWidth";
 
 // Delay before an unpinned, hover-revealed sidebar collapses again
 const COLLAPSE_DELAY_MS = 300;
@@ -35,6 +35,7 @@ export function DesktopSidebar({
 }: DesktopSidebarProps) {
   // When unpinned, the sidebar floats and reveals on hover near the left edge
   const [revealed, setRevealed] = useState(false);
+  const { width, isResizing, startResize } = useSidebarWidth();
   const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cancelCollapse = () => {
@@ -55,6 +56,21 @@ export function DesktopSidebar({
     setRevealed(true);
   };
 
+  // Drag handle sitting on the sidebar's right edge. It is wider than it
+  // looks so it is actually grabbable, but only the 1px line is painted.
+  const resizeHandle = (
+    <div
+      onMouseDown={startResize}
+      role="separator"
+      aria-orientation="vertical"
+      className={cn(
+        "absolute top-0 right-0 z-50 h-full w-1 cursor-col-resize transition-colors",
+        "after:absolute after:inset-y-0 after:-left-1 after:w-3 after:content-['']",
+        isResizing ? "bg-primary/50" : "hover:bg-primary/30"
+      )}
+    />
+  );
+
   const content = (
     <div className="flex h-full flex-col">
       <div className="min-h-0 flex-1 overflow-hidden">
@@ -69,14 +85,21 @@ export function DesktopSidebar({
           pinControls={{ isPinned, onTogglePin: togglePin }}
         />
       </div>
-      <SidebarFooter />
     </div>
   );
 
   if (isPinned) {
     return (
-      <div className="bg-sidebar-background border-sidebar-border w-60 flex-shrink-0 overflow-hidden border-r transition-all duration-200">
+      <div
+        style={{ width }}
+        className={cn(
+          "bg-sidebar-background border-sidebar-border relative flex-shrink-0 overflow-hidden border-r",
+          // No width transition while dragging, or the panel lags the cursor.
+          !isResizing && "transition-[width] duration-200"
+        )}
+      >
         {content}
+        {resizeHandle}
       </div>
     );
   }
@@ -91,12 +114,14 @@ export function DesktopSidebar({
       <div
         onMouseEnter={revealNow}
         onMouseLeave={scheduleCollapse}
+        style={{ width }}
         className={cn(
-          "bg-sidebar-background border-sidebar-border fixed top-0 left-0 z-40 h-full w-60 overflow-hidden border-r transition-transform duration-200 ease-out",
+          "bg-sidebar-background border-sidebar-border fixed top-0 left-0 z-40 h-full overflow-hidden border-r transition-transform duration-200 ease-out",
           revealed ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {content}
+        {resizeHandle}
       </div>
     </>
   );

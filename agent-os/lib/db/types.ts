@@ -2,6 +2,13 @@ import type { AgentType } from "../providers";
 
 
 
+export interface TerminalRow {
+  name: string;
+  working_directory: string;
+  created_at: string;
+  last_seen_at: string;
+}
+
 export interface Project {
   id: string;
   name: string;

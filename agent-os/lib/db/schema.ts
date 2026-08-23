@@ -2,6 +2,19 @@ import type Database from "better-sqlite3";
 
 export function createSchema(db: Database.Database): void {
   db.exec(`
+    -- Terminals registry
+    --
+    -- tmux remains the source of truth for what is *running*. This table
+    -- only remembers that a terminal exists and where it lives, so killing
+    -- its tmux session leaves the entry in the sidebar to be restarted
+    -- rather than making it vanish.
+    CREATE TABLE IF NOT EXISTS terminals (
+      name TEXT PRIMARY KEY,
+      working_directory TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      last_seen_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     -- Dev servers table
     CREATE TABLE IF NOT EXISTS dev_servers (
       id TEXT PRIMARY KEY,

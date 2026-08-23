@@ -95,6 +95,14 @@ function HomeContent() {
         return;
       }
 
+      // A terminal whose tmux session has been killed is still listed, so
+      // attaching has to be able to start it again. The fallback runs in
+      // the shell, which also closes the race where the session dies
+      // between the listing and the click.
+      const record = terminals.find((t) => t.tmux_name === name);
+      const cwd = record?.working_directory || "$HOME";
+      const start = `tmux new -s ${name} -c "${cwd}"`;
+
       const isInTmux = !!attachedTmux;
       if (isInTmux) terminal.sendInput("\x02d");
 
@@ -104,16 +112,18 @@ function HomeContent() {
           setTimeout(() => {
             // Mouse mode makes tmux's own splits usable in the browser.
             terminal.sendCommand(
-              `tmux set -g mouse on 2>/dev/null; tmux attach -t ${name}`
+              `tmux set -g mouse on 2>/dev/null; tmux attach -t ${name} 2>/dev/null || ${start}`
             );
             attach(name);
             terminal.focus();
+            // The restart changes what the listing should say.
+            void fetchTerminals();
           }, 50);
         },
         isInTmux ? 100 : 0
       );
     },
-    [getTerminal, attachedTmux, attach]
+    [getTerminal, attachedTmux, attach, terminals, fetchTerminals]
   );
 
   // The attached tmux session is what the workbench is looking at.

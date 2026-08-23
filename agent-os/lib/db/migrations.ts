@@ -164,6 +164,20 @@ const migrations: Migration[] = [
       db.exec(`DROP TABLE IF EXISTS groups`);
     },
   },
+  {
+    id: 15,
+    name: "add_terminals_registry",
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS terminals (
+          name TEXT PRIMARY KEY,
+          working_directory TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          last_seen_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+      `);
+    },
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

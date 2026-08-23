@@ -2,7 +2,6 @@
 
 import { TerminalList } from "@/components/TerminalList";
 import { StartServerDialog } from "@/components/DevServers/StartServerDialog";
-import { SidebarFooter } from "@/components/SidebarFooter";
 import { SwipeSidebar } from "@/components/mobile/SwipeSidebar";
 import { QuickSwitcher } from "@/components/QuickSwitcher";
 import type { ViewProps } from "./types";
@@ -47,7 +46,6 @@ export function MobileView({
             />
           </div>
 
-          <SidebarFooter />
         </div>
       </SwipeSidebar>
 

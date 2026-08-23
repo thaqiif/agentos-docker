@@ -1,23 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listTerminals, createTerminal, toRecord } from "@/lib/terminals";
+import { createTerminal, toRecord } from "@/lib/terminals";
+import {
+  listKnownTerminals,
+  rememberTerminal,
+} from "@/lib/terminal-registry";
 import { getAllProjects } from "@/lib/projects";
 import { resolveProjectForPath } from "@/lib/terminal-projects";
 
 /**
- * GET /api/terminals - every tmux session, with its harness and project.
+ * GET /api/terminals - every terminal, with its harness and project.
  *
- * tmux is the source of truth: a session started from a plain shell shows
- * up here exactly like one started from the UI, and one killed outside the
- * UI disappears without anything needing to be reconciled.
+ * tmux is the source of truth for what is running: a session started from a
+ * plain shell shows up here exactly like one started from the UI. The
+ * registry adds terminals whose session has been killed, which come back
+ * marked `alive: false` so they can be restarted rather than disappearing.
  */
 export async function GET() {
   try {
-    const terminals = await listTerminals();
+    const terminals = await listKnownTerminals();
     const projects = getAllProjects();
 
     return NextResponse.json(
       terminals.map((terminal) =>
-        toRecord(terminal, resolveProjectForPath(terminal.path, projects))
+        toRecord(
+          terminal,
+          resolveProjectForPath(terminal.path, projects),
+          terminal.alive
+        )
       )
     );
   } catch (error) {
@@ -52,6 +61,7 @@ export async function POST(request: NextRequest) {
     }
 
     const terminal = await createTerminal(workingDirectory);
+    rememberTerminal(terminal.name, terminal.path);
     const projects = getAllProjects();
 
     return NextResponse.json(

@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import {
   PanelLeftClose,
   PanelLeftOpen,
-  Plus,
   Command,
 } from "lucide-react";
 import { WorkbenchBar } from "./WorkbenchBar";
@@ -131,14 +130,6 @@ export function DesktopView({
               onRequestPermission={requestPermission}
               onSelectSession={(id) => attachToTerminal(id)}
             />
-            <Button
-              size="sm"
-              className="h-7 font-mono text-[10px] tracking-[0.12em] uppercase"
-              onClick={() => handleNewTerminal()}
-            >
-              <Plus className="mr-1 h-3.5 w-3.5" />
-              New Terminal
-            </Button>
           </div>
         </header>
 

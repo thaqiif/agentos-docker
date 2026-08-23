@@ -38,7 +38,6 @@ import type { Project, DevServer } from "@/lib/db";
 
 interface ProjectCardProps {
   project: Project;
-  sessionCount: number;
   runningDevServers?: DevServer[];
   onClick?: () => void;
   onToggleExpanded?: (expanded: boolean) => void;
@@ -52,7 +51,6 @@ interface ProjectCardProps {
 
 export function ProjectCard({
   project,
-  sessionCount,
   runningDevServers = [],
   onClick,
   onToggleExpanded,
@@ -70,14 +68,11 @@ export function ProjectCard({
   const committedRef = useRef(false);
 
   const hasRunningServers = runningDevServers.length > 0;
-  // Uncategorized can have New Session, Open Terminal, and Rename, but not Edit/Delete/DevServer
+  // Uncategorized can be renamed but not edited, deleted, or given a dev
+  // server. New terminal is its own button, not a menu entry.
   const hasActions = project.is_uncategorized
-    ? onNewTerminal || onRename
-    : onEdit ||
-      onNewTerminal ||
-      onStartDevServer ||
-      onDelete ||
-      onRename;
+    ? onRename
+    : onEdit || onStartDevServer || onDelete || onRename;
 
   useEffect(() => {
     if (!isEditing) return;
@@ -124,12 +119,6 @@ export function ProjectCard({
 
     return (
       <>
-        {onNewTerminal && (
-          <MenuItem onClick={() => onNewTerminal()}>
-            <Terminal className="mr-2 h-3 w-3" />
-            New terminal
-          </MenuItem>
-        )}
         {onEdit && (
           <MenuItem onClick={() => onEdit()}>
             <Settings className="mr-2 h-3 w-3" />
@@ -219,14 +208,18 @@ export function ProjectCard({
           className="min-w-0 flex-1 border-b border-primary bg-transparent text-sm font-medium outline-none"
         />
       ) : (
-        <div className="min-w-0 flex-1 leading-tight">
-          <span className="block truncate text-sm font-medium">
-            {project.name}
-          </span>
-          <span className="tech-meta block truncate">
-            {project.working_directory}
-          </span>
-        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="min-w-0 flex-1 truncate text-sm font-medium leading-tight">
+              {project.name}
+            </span>
+          </TooltipTrigger>
+          {/* The path is still worth having, just not on screen at all
+              times: it is the same prefix on most rows. */}
+          <TooltipContent side="right">
+            <p className="font-mono text-xs">{project.working_directory}</p>
+          </TooltipContent>
+        </Tooltip>
       )}
 
       {/* Running servers indicator */}
@@ -247,12 +240,27 @@ export function ProjectCard({
         </Tooltip>
       )}
 
-      {/* Session count keeps its box and fades; the menu overlays it on
-          desktop rather than joining the flow, so hovering does not shift
-          the row. */}
-      <span className="flex-shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground transition-opacity md:group-hover:opacity-0">
-        {String(sessionCount).padStart(2, "0")}
-      </span>
+      {/* New terminal, left of the actions menu */}
+      {onNewTerminal && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="h-7 w-7 flex-shrink-0 md:h-6 md:w-6"
+              onClick={(e) => {
+                e.stopPropagation();
+                onNewTerminal();
+              }}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>New terminal</p>
+          </TooltipContent>
+        </Tooltip>
+      )}
 
       {/* Actions menu */}
       {hasActions && (

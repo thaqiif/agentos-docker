@@ -12,9 +12,9 @@ const execFileAsync = promisify(execFile);
  * refresh; a tmux split is part of the session's own window layout and is
  * still there when you re-attach, from this browser or any other client.
  *
- * `-h` puts the new pane to the right (a vertical divider), `-v` puts it
- * below. tmux names these the opposite way round to most editors, so the
- * request speaks in UI terms and the mapping happens here.
+ * "Split horizontal" puts the new pane to the right, which is tmux's -h;
+ * "split vertical" puts it below, which is -v. The mapping used to be
+ * inverted, so each button produced the other split.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -34,9 +34,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // "Split horizontal" in the UI means a horizontal divider: the new pane
-    // sits below, which is tmux's -v.
-    const flag = direction === "horizontal" ? "-v" : "-h";
+    const flag = direction === "horizontal" ? "-h" : "-v";
 
     // execFile, not exec: session names reach us from the client and must
     // never be pasted into a shell string.
