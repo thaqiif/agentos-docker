@@ -67,7 +67,7 @@ export function ShellDrawer({
           <span className="text-primary font-mono text-xs leading-none">
             {">_"}
           </span>
-          <span className="tech-label">//shell</span>
+          <span className="tech-label">shell</span>
           <span className="tech-meta min-w-0 truncate">{workingDirectory}</span>
           <button
             onClick={() => copy(workingDirectory)}

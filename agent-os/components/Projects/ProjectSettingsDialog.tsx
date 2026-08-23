@@ -468,7 +468,7 @@ export function ProjectSettingsDialog({
       >
         <DialogContent className="scrollbar-thin max-h-[90vh] max-w-lg gap-0 overflow-y-auto p-0">
           <DialogHeader className="border-b border-border px-6 py-4">
-            <span className="tech-label">//project.settings</span>
+            <span className="tech-label">project.settings</span>
             <DialogTitle className="font-mono text-sm font-medium tracking-[0.16em] uppercase">
               Project Settings
             </DialogTitle>

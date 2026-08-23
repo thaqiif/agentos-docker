@@ -102,7 +102,7 @@ export function SessionListHeader({
           />
         </div>
       </div>
-      <p className="tech-label mt-1">//command center</p>
+      <p className="tech-label mt-1">command center</p>
     </div>
   );
 }

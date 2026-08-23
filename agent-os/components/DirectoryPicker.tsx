@@ -170,7 +170,7 @@ export function DirectoryPicker({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="flex max-h-[80vh] max-w-md flex-col">
         <DialogHeader>
-          <span className="tech-label">//dir.select</span>
+          <span className="tech-label">dir.select</span>
           <DialogTitle className="font-mono text-sm font-medium tracking-[0.16em] uppercase">
             Select Directory
           </DialogTitle>
@@ -224,12 +224,12 @@ export function DirectoryPicker({
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center gap-2 py-8">
-              <span className="text-destructive tech-label">//error</span>
+              <span className="text-destructive tech-label">error</span>
               <p className="tech-meta text-center">{error}</p>
             </div>
           ) : directories.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 py-8">
-              <p className="tech-label">//empty</p>
+              <p className="tech-label">empty</p>
               <p className="tech-meta">no subdirectories</p>
             </div>
           ) : (

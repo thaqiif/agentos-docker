@@ -168,7 +168,7 @@ export function QuickSwitcher({
 
         {/* Header strip */}
         <div className="border-border flex h-9 shrink-0 items-center justify-between border-b pl-4">
-          <span className="tech-label">//quick switch</span>
+          <span className="tech-label">quick switch</span>
           {ripgrepAvailable === true && (
             <div className="flex h-full items-stretch">
               <ModeCell
@@ -207,7 +207,7 @@ export function QuickSwitcher({
           {mode === "sessions" ? (
             filteredSessions.length === 0 ? (
               <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
-                <span className="tech-label">//sessions 000</span>
+                <span className="tech-label">sessions 000</span>
                 <span className="tech-meta">No sessions found</span>
               </div>
             ) : (

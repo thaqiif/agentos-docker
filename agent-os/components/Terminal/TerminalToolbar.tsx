@@ -160,7 +160,7 @@ function SnippetsModal({
       >
         {/* Header */}
         <div className="border-border flex items-center justify-between border-b px-4 py-2.5">
-          <span className="tech-label">//snippets</span>
+          <span className="tech-label">snippets</span>
           <div className="flex items-center">
             <button
               onClick={() => setIsAdding(!isAdding)}
@@ -273,7 +273,7 @@ function PasteModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
-          <span className="tech-label">//paste</span>
+          <span className="tech-label">paste</span>
           <button
             onClick={onClose}
             className="text-muted-foreground hover:bg-accent/50 hover:text-foreground p-1 transition-colors"

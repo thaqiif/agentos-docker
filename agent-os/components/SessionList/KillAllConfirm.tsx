@@ -27,7 +27,7 @@ export function KillAllConfirm({ onCancel, onComplete }: KillAllConfirmProps) {
 
   return (
     <div className="border-border bg-surface-raised mx-4 mb-3 border p-3">
-      <p className="tech-label">//tmux kill-all</p>
+      <p className="tech-label">tmux kill-all</p>
       <p className="mt-1.5 mb-2 text-sm font-medium text-destructive">
         Kill all tmux sessions?
       </p>

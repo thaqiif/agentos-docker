@@ -141,7 +141,7 @@ export function StartServerDialog({
         {/* Header */}
         <div className="border-border flex h-11 shrink-0 items-stretch justify-between border-b">
           <div className="flex min-w-0 items-center gap-2.5 px-4">
-            <span className="tech-label">//dev servers.start</span>
+            <span className="tech-label">dev servers.start</span>
             <h2 className="truncate font-mono text-sm font-medium tracking-[0.08em] uppercase">
               Start Dev Server
             </h2>
@@ -171,7 +171,7 @@ export function StartServerDialog({
           {/* Registered servers */}
           {projectDevServers.length > 0 && (
             <div>
-              <p className="tech-label px-4 pt-3">//registered</p>
+              <p className="tech-label px-4 pt-3">registered</p>
               <div className="mt-1 pb-2">
                 {projectDevServers.map((server, i) => (
                   <button
@@ -209,7 +209,7 @@ export function StartServerDialog({
 
           {/* Detected servers */}
           <div>
-            <p className="tech-label px-4 pt-3">//detected</p>
+            <p className="tech-label px-4 pt-3">detected</p>
             <div className="mt-1 pb-2">
               {loading ? (
                 <div className="flex items-center gap-2 px-4 py-4">

@@ -50,7 +50,7 @@ export function CreatingOverlay({
   return (
     <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-6 bg-background/95 backdrop-blur-sm">
       <div className="flex flex-col items-center gap-1">
-        <span className="tech-label">//session.create</span>
+        <span className="tech-label">session.create</span>
         <p className="text-primary animate-caret-blink font-mono text-sm tracking-[0.12em]">
           INITIALIZING_
         </p>

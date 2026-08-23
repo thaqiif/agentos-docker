@@ -60,10 +60,10 @@ export function FileChanges({
 
   const showAllButton = files.length > 1 && (onStageAll || onUnstageAll);
   const sectionLabel = isStaged
-    ? "//staged"
+    ? "staged"
     : title.toLowerCase().includes("untracked")
-      ? "//untracked"
-      : "//changes";
+      ? "untracked"
+      : "changes";
 
   // Group files by repo if enabled
   const groupedFiles = groupByRepo

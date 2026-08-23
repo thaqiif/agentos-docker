@@ -519,10 +519,11 @@ export function SessionCard({
             </a>
           )}
 
-          {/* Right slot: timestamp, swapped for the actions menu on hover.
-              Previously the menu button was only faded with opacity, so it
-              kept its box and left a dead gap after the timestamp. */}
-          <span className="hidden flex-shrink-0 font-mono text-[10px] text-muted-foreground sm:block md:group-hover:hidden">
+          {/* Right slot. The timestamp keeps its box and only fades, while
+              the menu button is lifted out of flow on desktop and overlays
+              it. Toggling the button's display instead made the whole row
+              reflow on hover; reserving a box for it left a dead gap. */}
+          <span className="hidden flex-shrink-0 font-mono text-[10px] text-muted-foreground transition-opacity sm:block md:group-hover:opacity-0">
             {timeAgo}
           </span>
 
@@ -533,7 +534,7 @@ export function SessionCard({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="inline-flex h-6 w-6 flex-shrink-0 md:hidden md:h-5 md:w-5 md:group-hover:inline-flex"
+                  className="inline-flex h-6 w-6 flex-shrink-0 transition-opacity md:absolute md:top-1/2 md:right-1 md:h-5 md:w-5 md:-translate-y-1/2 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
                 >
                   <MoreHorizontal className="h-3 w-3" />
                 </Button>

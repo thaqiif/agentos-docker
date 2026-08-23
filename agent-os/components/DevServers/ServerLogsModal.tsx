@@ -72,7 +72,7 @@ export function ServerLogsModal({
         {/* Header */}
         <div className="border-border flex h-11 shrink-0 items-stretch justify-between border-b">
           <div className="flex min-w-0 items-center gap-2.5 px-4">
-            <span className="tech-label">//logs</span>
+            <span className="tech-label">logs</span>
             <h2 className="truncate font-mono text-sm font-medium tracking-[0.08em] uppercase">
               {serverName}
             </h2>
@@ -116,7 +116,7 @@ export function ServerLogsModal({
             </div>
           ) : logs.length === 0 ? (
             <div className="tech-label flex h-full items-center justify-center">
-              //no output
+              no output
             </div>
           ) : (
             <div className="space-y-0.5">
@@ -141,7 +141,7 @@ export function ServerLogsModal({
 
         {/* Footer */}
         <div className="border-border text-muted-foreground flex shrink-0 items-center justify-between border-t px-4 py-1.5">
-          <span className="tech-meta">//auto-refresh 3s</span>
+          <span className="tech-meta">auto-refresh 3s</span>
           {refreshing && (
             <RefreshCw className="text-muted-foreground inline h-3 w-3 animate-spin" />
           )}

@@ -197,7 +197,7 @@ function PasteModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
-          <span className="tech-label">//paste</span>
+          <span className="tech-label">paste</span>
           <button
             onClick={onClose}
             className="text-muted-foreground hover:bg-accent/50 hover:text-foreground p-1 transition-colors"

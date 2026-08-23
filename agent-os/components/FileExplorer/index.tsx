@@ -255,7 +255,7 @@ function DesktopFileExplorer({
         style={{ width: treeWidth }}
       >
         <div className="bg-surface border-border flex h-9 shrink-0 items-center gap-2 border-b px-2.5">
-          <span className="tech-label">//files</span>
+          <span className="tech-label">files</span>
           <span className="tech-meta truncate">{workingDirectory}</span>
         </div>
         <div className="scrollbar-thin flex-1 overflow-y-auto">
@@ -266,12 +266,12 @@ function DesktopFileExplorer({
             </div>
           ) : error ? (
             <div className="flex h-32 flex-col items-center justify-center gap-2 p-4">
-              <span className="text-destructive tech-label">//error</span>
+              <span className="text-destructive tech-label">error</span>
               <p className="tech-meta text-center">{error}</p>
             </div>
           ) : files.length === 0 ? (
             <div className="flex h-32 flex-col items-center justify-center gap-2">
-              <p className="tech-label">//empty</p>
+              <p className="tech-label">empty</p>
               <p className="tech-meta">directory has no entries</p>
             </div>
           ) : (
@@ -327,7 +327,7 @@ function DesktopFileExplorer({
             />
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2">
-              <p className="tech-label">//editor</p>
+              <p className="tech-label">editor</p>
               <p className="tech-meta">no file open</p>
               <p className="tech-meta text-foreground-subtle">
                 ❯ select a file from the tree
@@ -451,7 +451,7 @@ function MobileFileExplorer({
   return (
     <div className="bg-background flex h-full w-full flex-col">
       <div className="bg-surface border-border flex h-12 shrink-0 flex-col justify-center gap-0.5 border-b px-3">
-        <span className="tech-label">//files</span>
+        <span className="tech-label">files</span>
         <span className="tech-meta truncate">{workingDirectory}</span>
       </div>
 
@@ -463,12 +463,12 @@ function MobileFileExplorer({
           </div>
         ) : error ? (
           <div className="flex h-32 flex-col items-center justify-center gap-2 p-4">
-            <span className="text-destructive tech-label">//error</span>
+            <span className="text-destructive tech-label">error</span>
             <p className="tech-meta text-center">{error}</p>
           </div>
         ) : files.length === 0 ? (
           <div className="flex h-32 flex-col items-center justify-center gap-2">
-            <p className="tech-label">//empty</p>
+            <p className="tech-label">empty</p>
             <p className="tech-meta">directory has no entries</p>
           </div>
         ) : (
@@ -515,7 +515,7 @@ function UnsavedChangesDialog({
     >
       <DialogContent showCloseButton={false}>
         <DialogHeader>
-          <span className="tech-label">//file.unsaved</span>
+          <span className="tech-label">file.unsaved</span>
           <DialogTitle className="font-mono text-sm font-medium tracking-[0.16em] uppercase">
             Unsaved changes
           </DialogTitle>

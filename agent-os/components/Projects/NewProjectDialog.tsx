@@ -60,7 +60,7 @@ export function NewProjectDialog({
         )}
         <DialogHeader className="border-b border-border px-6 py-4">
           <span className="tech-label">
-            {form.isCloneMode ? "//project.clone" : "//project.new"}
+            {form.isCloneMode ? "project.clone" : "project.new"}
           </span>
           <DialogTitle className="font-mono text-sm font-medium tracking-[0.16em] uppercase">
             {form.isCloneMode ? "Clone from GitHub" : "New Project"}

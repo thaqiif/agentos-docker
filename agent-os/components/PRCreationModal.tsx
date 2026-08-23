@@ -119,7 +119,7 @@ export function PRCreationModal({
 
         <div className="flex flex-1 flex-col items-center justify-center gap-2 p-4">
           <GitPullRequest className="text-primary mb-2 h-6 w-6" />
-          <p className="tech-label">//pr.exists_</p>
+          <p className="tech-label">pr.exists</p>
           <p className="tech-meta text-center">
             #{prData.existingPR.number} — {prData.existingPR.title}
           </p>
@@ -146,7 +146,7 @@ export function PRCreationModal({
         </div>
       ) : error && !prData ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 p-4">
-          <p className="tech-label text-status-error">//pr.error</p>
+          <p className="tech-label text-status-error">pr.error</p>
           <p className="text-status-error tech-meta">{error}</p>
           <Button
             variant="outline"
@@ -289,7 +289,7 @@ function Header({ onClose }: { onClose: () => void }) {
         <ChevronLeft className="h-4 w-4" />
       </button>
       <div className="flex min-w-0 flex-1 items-center px-3">
-        <span className="tech-label">//pr.create</span>
+        <span className="tech-label">pr.create</span>
       </div>
       <button
         onClick={onClose}

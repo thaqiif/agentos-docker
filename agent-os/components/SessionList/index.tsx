@@ -197,7 +197,7 @@ export function SessionList({
           {/* Error state */}
           {hasError && !isInitialLoading && (
             <div className="flex flex-col items-start justify-center px-4 py-12">
-              <span className="tech-label">//error</span>
+              <span className="tech-label">error</span>
               <p className="mt-2 font-mono text-xs text-status-error">
                 failed to load sessions
               </p>
@@ -219,7 +219,7 @@ export function SessionList({
             sessions.length === 0 &&
             projects.length <= 1 && (
               <div className="flex flex-col items-start justify-center px-4 py-12">
-                <span className="tech-label">//sessions 000</span>
+                <span className="tech-label">sessions 000</span>
                 <p className="mt-2 mb-3 text-xs text-muted-foreground">
                   Create a project to organize your sessions
                 </p>

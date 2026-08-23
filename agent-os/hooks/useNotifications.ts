@@ -37,8 +37,8 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
   const [permissionGranted, setPermissionGranted] = useState(false);
   const previousStates = useRef<Map<string, SessionStatus>>(new Map());
   const waitingCount = useRef(0);
-  // Track which sessions have been notified to prevent duplicates
-  const notifiedSessions = useRef<Set<string>>(new Set());
+  /** Last outcome announced per session, cleared when it starts running. */
+  const lastNotifiedStatus = useRef<Map<string, SessionStatus>>(new Map());
 
   // Load settings on mount
   useEffect(() => {
@@ -209,34 +209,31 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
           return;
         }
 
-        // Detect transitions and notify (with deduplication)
-        const notifyKey = `${session.id}-${currentStatus}`;
+        // One notification per session per episode.
+        //
+        // An "episode" is a stretch of work: it opens when the session goes
+        // running and closes when we have announced its outcome. Keying off
+        // the previous status alone was not enough — switching sessions
+        // re-keys the status query, and a replayed snapshot then looked like
+        // a fresh transition, so the same "done" fired again every time the
+        // user moved between sessions.
+        if (currentStatus === "running") {
+          lastNotifiedStatus.current.delete(session.id);
+        } else if (
+          currentStatus === "waiting" ||
+          currentStatus === "error" ||
+          currentStatus === "done"
+        ) {
+          const alreadyAnnounced =
+            lastNotifiedStatus.current.get(session.id) === currentStatus;
 
-        if (currentStatus === "waiting" && prevStatus !== "waiting") {
-          if (!notifiedSessions.current.has(notifyKey)) {
-            notifiedSessions.current.add(notifyKey);
-            notify("waiting", session.id, session.name);
-          }
-        } else if (currentStatus === "error" && prevStatus !== "error") {
-          if (!notifiedSessions.current.has(notifyKey)) {
-            notifiedSessions.current.add(notifyKey);
-            notify("error", session.id, session.name);
-          }
-        } else if (currentStatus === "done" && prevStatus !== "done") {
-          // "done" is the detector's explicit finished-and-unseen state, so
-          // completion no longer has to be inferred from a fall back to idle.
-          const completedKey = `${session.id}-completed`;
-          if (!notifiedSessions.current.has(completedKey)) {
-            notifiedSessions.current.add(completedKey);
-            notify("completed", session.id, session.name);
-          }
-        }
-
-        // Clear notification tracking when status changes away from notified state
-        if (prevStatus !== currentStatus) {
-          notifiedSessions.current.delete(`${session.id}-${prevStatus}`);
-          if (prevStatus === "idle") {
-            notifiedSessions.current.delete(`${session.id}-completed`);
+          if (!alreadyAnnounced) {
+            lastNotifiedStatus.current.set(session.id, currentStatus);
+            notify(
+              currentStatus === "done" ? "completed" : currentStatus,
+              session.id,
+              session.name
+            );
           }
         }
 

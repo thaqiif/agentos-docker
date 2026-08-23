@@ -50,7 +50,7 @@ export function DevServersSection({
             !expanded && "-rotate-90"
           )}
         />
-        <span className="tech-label">//dev servers</span>
+        <span className="tech-label">dev servers</span>
         <span className="ml-auto flex items-center gap-2.5">
           {runningCount > 0 && (
             <span className="text-status-running flex items-center gap-1 font-mono text-[9px] tracking-[0.14em] uppercase">

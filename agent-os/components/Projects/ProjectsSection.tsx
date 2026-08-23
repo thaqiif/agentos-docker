@@ -224,7 +224,7 @@ export function ProjectsSection({
                 {/* Project sessions */}
                 {projectSessions.length === 0 &&
                 projectDevServers.length === 0 ? (
-                  <p className="tech-label px-2 py-2">//sessions 000</p>
+                  <p className="tech-label px-2 py-2">sessions 000</p>
                 ) : projectSessions.length === 0 ? null : (
                   projectSessions.map((session) => {
                     const workers = workersByConduct[session.id] || [];

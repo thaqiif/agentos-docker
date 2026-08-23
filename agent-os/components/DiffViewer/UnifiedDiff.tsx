@@ -69,12 +69,12 @@ export function UnifiedDiff({
         <div className="scrollbar-thin overflow-x-auto">
           {diff.isBinary ? (
             <div className="px-4 py-6 text-center">
-              <p className="tech-label">//binary</p>
+              <p className="tech-label">binary</p>
               <p className="tech-meta">binary file not shown</p>
             </div>
           ) : diff.hunks.length === 0 ? (
             <div className="px-4 py-6 text-center">
-              <p className="tech-label">//diff.clean_</p>
+              <p className="tech-label">diff.clean</p>
               <p className="tech-meta">no changes</p>
             </div>
           ) : (

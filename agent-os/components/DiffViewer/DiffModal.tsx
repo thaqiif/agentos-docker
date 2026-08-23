@@ -86,7 +86,7 @@ export function DiffModal({
           />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2">
-            <p className="tech-label">//diff.empty_</p>
+            <p className="tech-label">diff.empty</p>
             <p className="tech-meta">no changes to display</p>
           </div>
         )}
@@ -140,7 +140,7 @@ export function DiffView({ diff, fileName }: DiffViewProps) {
   if (!diff) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 p-4">
-        <p className="tech-label">//diff.empty_</p>
+        <p className="tech-label">diff.empty</p>
         <p className="tech-meta">no changes to display</p>
       </div>
     );

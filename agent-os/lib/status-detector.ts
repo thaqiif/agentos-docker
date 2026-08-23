@@ -38,6 +38,8 @@ import {
 import {
   getHarnessSignals,
   CLAUDE_FAMILY,
+  getFooterNoise,
+  hasSpinnerGlyph,
   getUniversalReadySignals,
   BUSY_COUNTER_PATTERNS,
   isShellProvider,
@@ -100,14 +102,6 @@ interface SessionCache {
   updatedAt: number;
 }
 
-/** Braille block covers the spinner glyphs used by essentially every TUI. */
-function hasSpinner(text: string): boolean {
-  for (const ch of text) {
-    const code = ch.codePointAt(0);
-    if (code !== undefined && code >= 0x2800 && code <= 0x28ff) return true;
-  }
-  return false;
-}
 
 /**
  * Strip the things that change without meaning anything: ANSI escapes, box
@@ -218,7 +212,18 @@ class SessionStatusDetector {
     const now = Date.now();
 
     const normalized = normalizePane(rawPane);
-    const signalTail = tail(normalized, CONFIG.SIGNAL_TAIL_LINES).toLowerCase();
+
+    // Drop persistent footer chrome before matching. Otherwise a mode
+    // indicator or a static "esc to interrupt" hint pins the status.
+    const noise = getFooterNoise(providerId);
+    const denoised = noise.length
+      ? normalized
+          .split("\n")
+          .filter((l) => !noise.some((p) => p.test(l)))
+          .join("\n")
+      : normalized;
+
+    const signalTail = tail(denoised, CONFIG.SIGNAL_TAIL_LINES).toLowerCase();
     const diffTail = tail(normalized, CONFIG.DIFF_TAIL_LINES);
 
     const hash = hashOf(diffTail);
@@ -242,7 +247,7 @@ class SessionStatusDetector {
     // "esc to interrupt" in its permanent footer hint even while idle, so
     // an idle input box vetoes a text-only match.
     const hardBusy =
-      hasSpinner(tail(rawPane, 6)) ||
+      hasSpinnerGlyph(tail(rawPane, 6)) ||
       BUSY_COUNTER_PATTERNS.some((p) => p.test(signalTail)) ||
       (providerId !== null &&
         CLAUDE_FAMILY.has(providerId) &&
@@ -293,9 +298,12 @@ class SessionStatusDetector {
     }
 
     // ── 4. Within the cooldown after activity stopped ──────────────────
-    // Only holds "running" if we have not already seen the idle input box.
-    // A ready marker is definitive: the harness is done, no grace needed.
-    if (!readyMatched && now - tracker.lastActivityAt < CONFIG.ACTIVITY_COOLDOWN_MS) {
+    // The cooldown always applies. It used to be skipped whenever a ready
+    // marker matched, on the theory that a visible input box means the work
+    // is definitively over. That was wrong for any harness whose "ready"
+    // text is really persistent chrome: the grace period vanished and the
+    // status flickered between running and done between render frames.
+    if (now - tracker.lastActivityAt < CONFIG.ACTIVITY_COOLDOWN_MS) {
       return this.remember(tracker, "running");
     }
 

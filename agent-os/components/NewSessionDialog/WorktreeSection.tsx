@@ -34,7 +34,7 @@ export function WorktreeSection({
     <div className="border-t border-border pt-4">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="tech-label">//worktree</span>
+          <span className="tech-label">worktree</span>
           <label
             htmlFor="useWorktree"
             className="cursor-pointer text-sm text-foreground"

@@ -89,24 +89,24 @@ const PROVIDER_SIGNALS: Partial<Record<ProviderId, Partial<HarnessSignals>>> = {
       /^\s*❯?\s*\d\.\s+yes\b/m,
       /would you like to/,
     ],
-    ready: [
-      /\? for shortcuts/,
-      /bypassing permissions/,
-      /shift\+tab to cycle/,
-      /\bplan mode\b.*\bon\b/,
-    ],
+    // "bypassing permissions", "shift+tab to cycle" and "plan mode on" were
+    // here and were wrong: they are permission-MODE indicators, rendered in
+    // the footer whether the harness is working or idle. Treating them as
+    // ready made readyMatched permanently true, which suppressed the
+    // activity cooldown and made the status flicker.
+    ready: [/\? for shortcuts/],
   },
 
   // Command Code / Zero are Claude Code forks: same chrome.
   commandcode: {
     busy: [/·\s*↑?\s*[\d.]+k?\s*tokens/, /\(\d+s\s*·/],
     prompt: [/^\s*❯?\s*\d\.\s+yes\b/m, /\byes, and don't ask again\b/],
-    ready: [/\? for shortcuts/, /shift\+tab to cycle/],
+    ready: [/\? for shortcuts/],
   },
   zero: {
     busy: [/·\s*↑?\s*[\d.]+k?\s*tokens/, /\(\d+s\s*·/],
     prompt: [/^\s*❯?\s*\d\.\s+yes\b/m, /\byes, and don't ask again\b/],
-    ready: [/\? for shortcuts/, /shift\+tab to cycle/],
+    ready: [/\? for shortcuts/],
   },
 
   // ── OpenAI Codex CLI ──────────────────────────────────────────────────
@@ -289,8 +289,54 @@ export function getUniversalReadySignals(): RegExp[] {
  * and does not depend on getting the provider right.
  */
 export const BUSY_COUNTER_PATTERNS: RegExp[] = [
-  /↑\s*[\d.]+k?\s*tokens/,
+  /[↑↓]\s*[\d.]+k?\s*tokens/,
   /[\d.]+k?\s*tokens\b/,
-  /\(\d+s\s*[·)]/,
-  /\b\d+s\s*·/,
+  // Elapsed timer. Must tolerate "1m 12s" as well as "29s" — anchoring on
+  // \d+s alone stopped matching once a turn passed the one-minute mark,
+  // which silently dropped long runs out of "working".
+  /\((?:\d+h\s*)?(?:\d+m\s*)?\d+s\s*[·)]/,
+  /\b(?:\d+m\s*)?\d+s\s*·/,
 ];
+
+/**
+ * Persistent chrome that must be ignored when matching signals.
+ *
+ * The Claude-family footer carries a permission-mode indicator and, while a
+ * turn runs, an "esc to interrupt" hint. Both are footer furniture rather
+ * than state: matching busy or ready text inside them produces a status
+ * that never changes. These lines are dropped from the tail before any
+ * pattern runs.
+ */
+const CLAUDE_FOOTER_NOISE: RegExp[] = [
+  /^\s*[⏵>]{1,2}\s*(auto mode|bypassing permissions|accept edits|plan mode)/,
+  /shift\+tab to cycle/,
+  /←\s*for agents/,
+];
+
+const FOOTER_NOISE: Partial<Record<ProviderId, RegExp[]>> = {
+  claude: CLAUDE_FOOTER_NOISE,
+  "claude-a": CLAUDE_FOOTER_NOISE,
+  "claude-b": CLAUDE_FOOTER_NOISE,
+  "claude-c": CLAUDE_FOOTER_NOISE,
+  commandcode: CLAUDE_FOOTER_NOISE,
+  zero: CLAUDE_FOOTER_NOISE,
+};
+
+export function getFooterNoise(providerId: ProviderId | null): RegExp[] {
+  return (providerId && FOOTER_NOISE[providerId]) || [];
+}
+
+/**
+ * Spinner glyphs. Braille (U+2800–U+28FF) covers most TUIs; the Claude
+ * family cycles star dingbats (✢ ✳ ✶ ✻ ✽, U+2720–U+273F) instead, which the
+ * braille-only check missed entirely.
+ */
+export function hasSpinnerGlyph(text: string): boolean {
+  for (const ch of text) {
+    const c = ch.codePointAt(0);
+    if (c === undefined) continue;
+    if (c >= 0x2800 && c <= 0x28ff) return true;
+    if (c >= 0x2720 && c <= 0x273f) return true;
+  }
+  return false;
+}

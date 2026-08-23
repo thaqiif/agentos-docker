@@ -218,7 +218,7 @@ export function FileEditor({
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 p-8">
         <FileCode className="text-foreground-subtle h-4 w-4" />
-        <p className="tech-label">//binary</p>
+        <p className="tech-label">binary</p>
         <p className="tech-meta">no preview available</p>
       </div>
     );

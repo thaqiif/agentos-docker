@@ -7,10 +7,8 @@ import { DesktopSidebar } from "./DesktopSidebar";
 import { Button } from "@/components/ui/button";
 import {
   PanelLeftClose,
-  PanelLeft,
+  PanelLeftOpen,
   Plus,
-  Copy,
-  Check,
   Command,
 } from "lucide-react";
 import { PaneLayout } from "@/components/PaneLayout";
@@ -30,8 +28,6 @@ export function DesktopView({
   sessionStatuses,
   activeSession,
   focusedActiveTab,
-  copiedSessionId,
-  setCopiedSessionId,
   showNewSessionDialog,
   setShowNewSessionDialog,
   newSessionProjectId,
@@ -94,7 +90,7 @@ export function DesktopView({
                   {isPinned ? (
                     <PanelLeftClose className="h-4 w-4" />
                   ) : (
-                    <PanelLeft className="h-4 w-4" />
+                    <PanelLeftOpen className="h-4 w-4" />
                   )}
                 </Button>
               </TooltipTrigger>
@@ -105,62 +101,9 @@ export function DesktopView({
 
             {activeSession && (
               <div className="flex min-w-0 items-center gap-2.5 border-l border-border pl-3">
-                <span className="tech-label hidden shrink-0 md:inline">
-                  //session
-                </span>
                 <span className="truncate text-sm font-medium">
                   {activeSession.name}
                 </span>
-                {activeSession.tmux_name && (
-                  <span className="tech-meta hidden shrink-0 lg:inline">
-                    tmux {activeSession.tmux_name}
-                  </span>
-                )}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      className="tech-meta border-border hover:border-border-strong hover:text-foreground flex shrink-0 items-center gap-1 border px-1.5 py-0.5 transition-colors"
-                      onClick={async () => {
-                        try {
-                          if (navigator.clipboard) {
-                            await navigator.clipboard.writeText(
-                              activeSession.id
-                            );
-                          } else {
-                            // Fallback for non-HTTPS contexts
-                            const textarea = document.createElement("textarea");
-                            textarea.value = activeSession.id;
-                            textarea.style.position = "fixed";
-                            textarea.style.opacity = "0";
-                            document.body.appendChild(textarea);
-                            textarea.select();
-                            document.execCommand("copy");
-                            document.body.removeChild(textarea);
-                          }
-                          setCopiedSessionId(true);
-                          setTimeout(() => setCopiedSessionId(false), 2000);
-                        } catch {
-                          console.error("Failed to copy to clipboard");
-                        }
-                      }}
-                    >
-                      {copiedSessionId ? (
-                        <Check className="text-status-running h-3 w-3" />
-                      ) : (
-                        <Copy className="h-3 w-3" />
-                      )}
-                      <span className="hidden xl:inline">
-                        id {activeSession.id.slice(0, 8)}
-                      </span>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Copy session ID for orchestration</p>
-                    <p className="text-muted-foreground font-mono text-xs">
-                      {activeSession.id.slice(0, 8)}...
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
               </div>
             )}
           </div>

@@ -156,7 +156,7 @@ export function ConductorPanel({
   if (workers.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2">
-        <p className="tech-label">//workers 000</p>
+        <p className="tech-label">workers 000</p>
         <p className="text-sm text-muted-foreground">No workers spawned.</p>
         <p className="tech-meta max-w-md text-center">
           Use the MCP tools or API to spawn parallel worker sessions.
@@ -170,7 +170,7 @@ export function ConductorPanel({
       {/* Command header */}
       <div className="border-border flex h-10 shrink-0 items-center justify-between border-b pr-1 pl-3">
         <div className="flex min-w-0 items-center gap-3 overflow-hidden">
-          <span className="tech-label">//workers</span>
+          <span className="tech-label">workers</span>
           <span className="font-mono text-xs text-foreground">
             {String(summary?.total || workers.length).padStart(2, "0")}
           </span>

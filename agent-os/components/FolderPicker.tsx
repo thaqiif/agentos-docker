@@ -70,7 +70,7 @@ export function FolderPicker({
         >
           <X className="h-3 w-3" />
         </button>
-        <span className="tech-label">//folder.select</span>
+        <span className="tech-label">folder.select</span>
         <span className="tech-meta ml-auto min-w-0 truncate">
           {currentPath}
         </span>
@@ -134,7 +134,7 @@ export function FolderPicker({
           </div>
         ) : error ? (
           <div className="flex h-32 flex-col items-center justify-center gap-2 p-4">
-            <span className="text-destructive tech-label">//error</span>
+            <span className="text-destructive tech-label">error</span>
             <p className="tech-meta text-center">{error}</p>
             <Button
               variant="outline"
@@ -147,7 +147,7 @@ export function FolderPicker({
           </div>
         ) : filteredFiles.length === 0 ? (
           <div className="flex h-32 flex-col items-center justify-center gap-2">
-            <p className="tech-label">//empty</p>
+            <p className="tech-label">empty</p>
             <p className="tech-meta">
               {search ? "no matching folders" : "no subfolders"}
             </p>

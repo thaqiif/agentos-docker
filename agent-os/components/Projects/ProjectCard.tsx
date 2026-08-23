@@ -256,9 +256,10 @@ export function ProjectCard({
         </Tooltip>
       )}
 
-      {/* Session count — swapped for the actions menu on hover so the row
-          has no reserved-but-empty box sitting after it. */}
-      <span className="flex-shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground md:group-hover:hidden">
+      {/* Session count keeps its box and fades; the menu overlays it on
+          desktop rather than joining the flow, so hovering does not shift
+          the row. */}
+      <span className="flex-shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground transition-opacity md:group-hover:opacity-0">
         {String(sessionCount).padStart(2, "0")}
       </span>
 
@@ -269,7 +270,7 @@ export function ProjectCard({
             <Button
               variant="ghost"
               size="icon-sm"
-              className="inline-flex h-7 w-7 flex-shrink-0 md:hidden md:h-6 md:w-6 md:group-hover:inline-flex"
+              className="inline-flex h-7 w-7 flex-shrink-0 transition-opacity md:absolute md:top-1/2 md:right-1 md:h-6 md:w-6 md:-translate-y-1/2 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
             >
               <MoreHorizontal className="h-4 w-4" />
             </Button>

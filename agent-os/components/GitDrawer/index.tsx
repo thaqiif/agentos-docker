@@ -257,7 +257,7 @@ export function GitDrawer({
         <div className="bg-surface border-border flex h-8 shrink-0 items-stretch justify-between border-b">
           <div className="flex min-w-0 flex-1 items-center gap-2.5 px-3">
             <GitBranch className="text-primary h-3 w-3 shrink-0" />
-            <span className="tech-label">//git</span>
+            <span className="tech-label">git</span>
             <span className="tech-meta min-w-0 truncate">
               {status?.branch || "…"}
             </span>
@@ -333,7 +333,7 @@ export function GitDrawer({
             </div>
           ) : stagedFiles.length === 0 && unstagedFiles.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-8 text-center">
-              <p className="tech-label">//GIT CLEAN_</p>
+              <p className="tech-label">GIT CLEAN</p>
               <p className="tech-meta">working tree has no changes</p>
               {!isOnMainBranch && !existingPR && (
                 <Button

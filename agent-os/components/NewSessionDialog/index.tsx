@@ -62,7 +62,7 @@ export function NewSessionDialog({
             />
           )}
           <DialogHeader className="border-b border-border px-6 py-4">
-            <span className="tech-label">//session.new</span>
+            <span className="tech-label">session.new</span>
             <DialogTitle className="font-mono text-sm font-medium tracking-[0.16em] uppercase">
               New Session
             </DialogTitle>

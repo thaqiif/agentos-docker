@@ -6,7 +6,7 @@ import { FolderOpen, GitBranch } from "lucide-react";
 export function TerminalSkeleton() {
   return (
     <div className="bg-background workbench-grid flex h-full w-full flex-col items-center justify-center gap-3">
-      <span className="tech-label">//terminal</span>
+      <span className="tech-label">terminal</span>
       <div className="flex items-center gap-2">
         <div className="bg-primary animate-status-pulse h-1.5 w-1.5" />
         <span className="text-muted-foreground font-mono text-xs tracking-[0.08em]">

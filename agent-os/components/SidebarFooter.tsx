@@ -9,7 +9,7 @@ export function SidebarFooter() {
   return (
     <div className="border-sidebar-border mt-auto border-t px-3 pt-2 pb-3">
       <div className="flex items-center justify-between">
-        <span className="tech-label">//theme</span>
+        <span className="tech-label">theme</span>
         <ThemeToggle />
       </div>
       <div className="text-foreground-subtle mt-2 text-center font-mono text-[10px]">

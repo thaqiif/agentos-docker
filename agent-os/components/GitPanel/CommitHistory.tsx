@@ -51,7 +51,7 @@ export function CommitHistory({ workingDirectory }: CommitHistoryProps) {
   if (error) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-2 p-4">
-        <p className="tech-label">//history.error</p>
+        <p className="tech-label">history.error</p>
         <p className="tech-meta">failed to load commit history</p>
       </div>
     );
@@ -60,7 +60,7 @@ export function CommitHistory({ workingDirectory }: CommitHistoryProps) {
   if (!commits?.length) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-2 p-4">
-        <p className="tech-label">//history.empty</p>
+        <p className="tech-label">history.empty</p>
         <p className="tech-meta">
           committed revisions will be listed here
         </p>
@@ -164,7 +164,7 @@ export function CommitHistory({ workingDirectory }: CommitHistoryProps) {
           </>
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-2">
-            <p className="tech-label">//diff.idle_</p>
+            <p className="tech-label">diff.idle</p>
             <p className="tech-meta">select a commit file to view diff</p>
           </div>
         )}
