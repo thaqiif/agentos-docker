@@ -19,10 +19,39 @@ import { statusDetector, type SessionStatus } from "@/lib/status-detector";
 import { type ProviderId } from "@/lib/providers/registry";
 import { listTerminals } from "@/lib/terminals";
 import { readHookState } from "@/lib/status-hooks";
+import { getAllProjects } from "@/lib/projects";
+import { resolveProjectForPath } from "@/lib/terminal-projects";
+import { getDb, queries } from "@/lib/db";
+import { sendTelegramMessage } from "@/lib/telegram";
 
 const FAST_TICK_MS = 700; // something is running or blocked
 const SLOW_TICK_MS = 1500; // everything quiet
-const IDLE_SHUTDOWN_MS = 30000; // no subscribers for this long -> stop
+const IDLE_SHUTDOWN_MS = 30000; // no subscribers for this long -> stop, unless keepAlive is on
+
+/** Reads the always-on toggle fresh each time — it's a checkbox, not a hot path. */
+function keepAliveEnabled(): boolean {
+  try {
+    const db = getDb();
+    const row = queries.getSetting(db).get("notifyKeepServerAlive") as
+      | { value: string }
+      | undefined;
+    return row?.value === "true";
+  } catch {
+    return false;
+  }
+}
+
+function getSetting(key: string): string | null {
+  try {
+    const db = getDb();
+    const row = queries.getSetting(db).get(key) as
+      | { value: string }
+      | undefined;
+    return row?.value ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export interface SessionStatusEntry {
   sessionName: string;
@@ -42,6 +71,10 @@ class StatusStream {
   private serialized = "";
   private lastSubscriberAt = Date.now();
   private ticking = false;
+  /** Previous status per session, to detect a fresh transition into "done". */
+  private previousStatus = new Map<string, SessionStatus>();
+  /** One Telegram ping per "done" episode, mirroring the client-side rule. */
+  private lastNotified = new Map<string, SessionStatus>();
 
   subscribe(fn: Subscriber): () => void {
     this.subscribers.add(fn);
@@ -69,7 +102,8 @@ class StatusStream {
     await this.tick();
   }
 
-  private ensureRunning(): void {
+  /** Public so a settings change can (re)start polling without a subscriber. */
+  ensureRunning(): void {
     if (this.timer) return;
     void this.tick();
     this.schedule();
@@ -85,10 +119,13 @@ class StatusStream {
 
     this.timer = setTimeout(() => {
       void this.tick().finally(() => {
-        // Stop the ticker once nobody has listened for a while.
+        // Stop the ticker once nobody has listened for a while — unless the
+        // user opted into always-on polling so Telegram alerts keep firing
+        // with every browser tab closed.
         if (
           this.subscribers.size === 0 &&
-          Date.now() - this.lastSubscriberAt > IDLE_SHUTDOWN_MS
+          Date.now() - this.lastSubscriberAt > IDLE_SHUTDOWN_MS &&
+          !keepAliveEnabled()
         ) {
           if (this.timer) clearTimeout(this.timer);
           this.timer = null;
@@ -139,6 +176,8 @@ class StatusStream {
         })
       );
 
+      const pathByName = new Map(terminals.map((t) => [t.name, t.path]));
+      this.checkTelegramNotifications(next, pathByName);
       statusDetector.cleanup();
 
       const serialized = JSON.stringify(next);
@@ -157,6 +196,59 @@ class StatusStream {
       }
     } finally {
       this.ticking = false;
+    }
+  }
+
+  /**
+   * Fires a Telegram message the moment a session's status becomes "done",
+   * from the server ticker rather than a subscribed browser tab. tmux keeps
+   * running long after every tab closes, so this is the only place a
+   * completion alert can be relied on to fire.
+   */
+  private checkTelegramNotifications(
+    next: StatusSnapshot,
+    pathByName: Map<string, string>
+  ): void {
+    const notifyEnabled = getSetting("notifyTerminalCompletion") === "true";
+    const botToken = getSetting("telegramBotToken");
+    const chatId = getSetting("telegramChatId");
+    const wired = notifyEnabled && botToken && chatId;
+
+    let projects: ReturnType<typeof getAllProjects> | null = null;
+
+    for (const [name, entry] of Object.entries(next)) {
+      const prev = this.previousStatus.get(name);
+      this.previousStatus.set(name, entry.status);
+
+      if (entry.status === "running") {
+        this.lastNotified.delete(name);
+        continue;
+      }
+      if (entry.status !== "done") continue;
+      if (prev === undefined) continue; // first sample after boot: not a transition
+      if (this.lastNotified.get(name) === "done") continue; // already announced
+
+      this.lastNotified.set(name, "done");
+      if (!wired) continue;
+
+      // Terminals have no stored project link; resolve it the same way the
+      // sidebar does, by longest working-directory prefix match.
+      projects ??= getAllProjects();
+      const path = pathByName.get(name);
+      const projectName = path
+        ? projects.find((p) => p.id === resolveProjectForPath(path, projects!))
+            ?.name
+        : undefined;
+
+      void sendTelegramMessage(
+        botToken!,
+        chatId!,
+        `✅ *Terminal completed*\n\n*${name}*${
+          projectName && projectName !== "Uncategorized"
+            ? `\n_Project: ${projectName}_`
+            : ""
+        }`
+      ).catch(() => {});
     }
   }
 }

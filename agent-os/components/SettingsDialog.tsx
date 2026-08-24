@@ -76,6 +76,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [fontScale, setFontScale] = useState(DEFAULT_FONT_SCALE);
   const [fontFamily, setFontFamily] = useState("default");
   const [notifyEnabled, setNotifyEnabled] = useState(false);
+  const [keepServerAlive, setKeepServerAlive] = useState(false);
   const [botToken, setBotToken] = useState("");
   const [chatId, setChatId] = useState("");
   const [loaded, setLoaded] = useState(false);
@@ -90,6 +91,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         setFontScale(scale);
         setFontFamily(family);
         setNotifyEnabled(settings.notifyTerminalCompletion === "true");
+        setKeepServerAlive(settings.notifyKeepServerAlive === "true");
         setBotToken(settings.telegramBotToken || "");
         setChatId(settings.telegramChatId || "");
         applyFontScale(parseFloat(scale));
@@ -219,9 +221,33 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 </p>
                 <p className="ui-meta mt-2 rounded-lg bg-[var(--fill-5)] px-2.5 py-2 text-[0.7rem]">
                   <strong>Note:</strong> Plain shell terminals (cmd, bash, zsh)
-                  won't trigger notifications. Only AI agent terminals (Claude,
-                  Command Code, etc.) report completion status.
+                  won&apos;t trigger notifications. Only AI agent terminals
+                  (Claude, Command Code, etc.) report completion status.
                 </p>
+
+                <label className="flex items-start gap-2.5 pt-1 text-[0.8125rem]">
+                  <input
+                    type="checkbox"
+                    checked={keepServerAlive}
+                    onChange={(e) => {
+                      const value = e.target.checked;
+                      setKeepServerAlive(value);
+                      saveSetting("notifyKeepServerAlive", String(value));
+                    }}
+                    className="mt-0.5 h-4 w-4 accent-[var(--primary)]"
+                  />
+                  <span>
+                    <span className="font-medium">
+                      Keep watching with no browser open
+                    </span>
+                    <p className="ui-meta mt-0.5">
+                      Notifications normally stop 30s after you close every
+                      tab. Enable this to have the server keep polling tmux
+                      in the background so alerts still fire — small
+                      constant cost, but works with the app fully closed.
+                    </p>
+                  </span>
+                </label>
               </div>
             )}
           </section>

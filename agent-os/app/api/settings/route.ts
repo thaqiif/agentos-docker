@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, queries } from "@/lib/db";
+import { statusStream } from "@/lib/status-stream";
 
 export async function GET() {
   try {
@@ -36,6 +37,12 @@ export async function POST(request: NextRequest) {
 
     const db = getDb();
     queries.setSetting(db).run(key, String(value));
+
+    // Turning on "keep watching with no browser open" needs the ticker
+    // running right away, not whenever the next tab happens to subscribe.
+    if (key === "notifyKeepServerAlive" && String(value) === "true") {
+      statusStream.ensureRunning();
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
