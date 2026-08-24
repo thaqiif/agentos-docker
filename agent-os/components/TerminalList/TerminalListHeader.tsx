@@ -43,13 +43,13 @@ export function TerminalListHeader({
   const [showThemeDialog, setShowThemeDialog] = useState(false);
 
   return (
-    <div className="border-sidebar-border border-b px-3.5 pt-3 pb-2.5">
+    <div className="px-3 pt-3 pb-2">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
-            className="text-primary h-4 w-4"
+            className="text-primary h-[1.125rem] w-[1.125rem]"
             stroke="currentColor"
             strokeWidth="2"
             strokeLinecap="round"
@@ -63,7 +63,9 @@ export function TerminalListHeader({
             <path d="M15 13v2" />
             <path d="M9 13v2" />
           </svg>
-          <h2 className="text-sm font-semibold tracking-tight">AgentOS</h2>
+          <h2 className="text-[0.9375rem] font-semibold tracking-[-0.014em]">
+            AgentOS
+          </h2>
         </div>
         <div className="flex items-center gap-0.5">
           <ADropdownMenu
@@ -84,7 +86,7 @@ export function TerminalListHeader({
             items={[
               ...(onQuickSwitch
                 ? [
-                    menuItem("Quick Switch  ⌘K", onQuickSwitch, {
+                    menuItem("Quick switch  ⌘K", onQuickSwitch, {
                       icon: Command,
                     }),
                   ]

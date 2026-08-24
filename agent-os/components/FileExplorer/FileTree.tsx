@@ -81,7 +81,7 @@ export function FileTree({
   );
 
   return (
-    <div className={cn("w-full", depth > 0 && "border-border ml-3 border-l")}>
+    <div className={cn("w-full", depth > 0 && "border-[var(--fill-2)] ml-3 border-l")}>
       {nodes.map((node) => {
         const isExpanded = expanded.has(node.path);
         const isDirectory = node.type === "directory";
@@ -100,8 +100,8 @@ export function FileTree({
                 }
               }}
               className={cn(
-                "group relative flex h-10 w-full items-center gap-1.5 pr-2 pl-2 text-left transition-colors hover:bg-accent/50 md:h-7",
-                isActive && "bg-accent"
+                "group relative flex h-10 w-full items-center gap-1.5 pr-2 pl-2 text-left transition-colors hover:bg-[var(--fill-4)] md:h-7",
+                isActive && "bg-[var(--fill-3)]"
               )}
             >
               {isActive && (
@@ -144,7 +144,7 @@ export function FileTree({
               </span>
 
               {!isDirectory && node.size !== undefined && (
-                <span className="tech-meta hidden flex-shrink-0 text-[10px] md:block">
+                <span className="ui-meta hidden flex-shrink-0 text-[10px] md:block">
                   {formatFileSize(node.size)}
                 </span>
               )}

@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
   ChevronRight,
-  ChevronDown,
   MoreHorizontal,
   Settings,
   Plus,
@@ -121,19 +120,19 @@ export function ProjectCard({
       <>
         {onEdit && (
           <MenuItem onClick={() => onEdit()}>
-            <Settings className="mr-2 h-3 w-3" />
+            <Settings className="h-4 w-4" />
             Project settings
           </MenuItem>
         )}
         {onRename && (
           <MenuItem onClick={() => setIsEditing(true)}>
-            <Pencil className="mr-2 h-3 w-3" />
+            <Pencil className="h-4 w-4" />
             Rename
           </MenuItem>
         )}
         {onOpenInEditor && (
           <MenuItem onClick={() => onOpenInEditor()}>
-            <FolderOpen className="mr-2 h-3 w-3" />
+            <FolderOpen className="h-4 w-4" />
             Open in editor
           </MenuItem>
         )}
@@ -141,7 +140,7 @@ export function ProjectCard({
           <>
             <MenuSeparator />
             <MenuItem onClick={() => onStartDevServer()}>
-              <Server className="mr-2 h-3 w-3" />
+              <Server className="h-4 w-4" />
               Start dev server
             </MenuItem>
           </>
@@ -153,7 +152,7 @@ export function ProjectCard({
               onClick={() => onDelete()}
               className="text-destructive focus:text-destructive"
             >
-              <Trash2 className="mr-2 h-3 w-3" />
+              <Trash2 className="h-4 w-4" />
               Delete project
             </MenuItem>
           </>
@@ -166,22 +165,22 @@ export function ProjectCard({
     <div
       onClick={handleClick}
       className={cn(
-        "group relative flex cursor-pointer items-center gap-2.5 overflow-hidden rounded-lg px-2.5 py-2",
-        "min-h-[40px] md:min-h-[34px]",
-        "hover:bg-accent/50"
+        "group press-sm relative flex cursor-pointer items-center gap-2 overflow-hidden rounded-lg px-2 py-2",
+        "min-h-[44px] md:min-h-[34px]",
+        "transition-colors duration-200 hover:bg-[var(--fill-4)]"
       )}
     >
       {/* Expand/collapse toggle */}
       <button
         aria-hidden
         tabIndex={-1}
-        className="flex-shrink-0 text-muted-foreground transition-transform duration-150"
-      >
-        {project.expanded ? (
-          <ChevronDown className="h-3.5 w-3.5" />
-        ) : (
-          <ChevronRight className="h-3.5 w-3.5" />
+        className={cn(
+          "text-muted-foreground flex-shrink-0",
+          "transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]",
+          project.expanded && "rotate-90"
         )}
+      >
+        <ChevronRight className="h-3.5 w-3.5" />
       </button>
 
       {/* Project name + path */}
@@ -205,19 +204,19 @@ export function ProjectCard({
           }}
           onClick={(e) => e.stopPropagation()}
           onDoubleClick={(e) => e.stopPropagation()}
-          className="min-w-0 flex-1 border-b border-primary bg-transparent text-sm font-medium outline-none"
+          className="ring-primary/50 min-w-0 flex-1 rounded-md bg-[var(--fill-3)] px-1.5 py-0.5 text-[0.8125rem] font-medium outline-none ring-2"
         />
       ) : (
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="min-w-0 flex-1 truncate text-sm font-medium leading-tight">
+            <span className="min-w-0 flex-1 truncate text-[0.8125rem] font-medium tracking-[-0.006em]">
               {project.name}
             </span>
           </TooltipTrigger>
           {/* The path is still worth having, just not on screen at all
               times: it is the same prefix on most rows. */}
           <TooltipContent side="right">
-            <p className="font-mono text-xs">{project.working_directory}</p>
+            <p className="ui-meta">{project.working_directory}</p>
           </TooltipContent>
         </Tooltip>
       )}
@@ -226,10 +225,10 @@ export function ProjectCard({
       {hasRunningServers && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex flex-shrink-0 items-center gap-1 font-mono text-[9px] uppercase tracking-[0.12em] text-status-running">
-              <span className="h-1.5 w-1.5 rounded-full bg-current" />
-              server
-            </div>
+            <span
+              aria-label="Dev server running"
+              className="bg-status-running/70 h-1.5 w-1.5 flex-shrink-0 rounded-full"
+            />
           </TooltipTrigger>
           <TooltipContent>
             <p>
@@ -243,14 +242,15 @@ export function ProjectCard({
       {/* Row actions. Both buttons sit in the flow, side by side: the menu
           used to be absolutely positioned against the row's right edge,
           which parked it on top of the new-terminal button. */}
-      <div className="flex flex-shrink-0 items-center gap-0.5 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100">
+      <div className="flex flex-shrink-0 items-center gap-0.5 transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100">
         {onNewTerminal && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon-sm"
-                className="h-7 w-7 md:h-6 md:w-6"
+                aria-label="New terminal"
+                className="h-8 w-8 rounded-full md:h-7 md:w-7"
                 onClick={(e) => {
                   e.stopPropagation();
                   onNewTerminal();
@@ -271,7 +271,8 @@ export function ProjectCard({
               <Button
                 variant="ghost"
                 size="icon-sm"
-                className="h-7 w-7 md:h-6 md:w-6"
+                aria-label="Project actions"
+                className="h-8 w-8 rounded-full md:h-7 md:w-7"
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>

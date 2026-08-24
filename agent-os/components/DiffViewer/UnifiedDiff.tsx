@@ -30,12 +30,12 @@ export function UnifiedDiff({
   };
 
   return (
-    <div className="border-border overflow-hidden border">
+    <div className="border-[var(--fill-2)] overflow-hidden border">
       {/* File header */}
       <button
         onClick={handleToggle}
         className={cn(
-          "bg-surface hover:bg-accent/50 flex w-full items-center gap-2 px-3 py-2 text-left transition-colors",
+          "bg-surface hover:bg-[var(--fill-4)] flex w-full items-center gap-2 px-3 py-2 text-left transition-colors",
           "min-h-[44px]"
         )}
       >
@@ -45,10 +45,10 @@ export function UnifiedDiff({
           <ChevronRight className="text-muted-foreground h-3.5 w-3.5 flex-shrink-0" />
         )}
 
-        <span className="tech-meta min-w-0 flex-1 truncate">{fileName}</span>
+        <span className="ui-meta min-w-0 flex-1 truncate">{fileName}</span>
 
         {/* Stats */}
-        <span className="flex flex-shrink-0 items-center gap-2 font-mono text-[11px] tabular-nums">
+        <span className="flex flex-shrink-0 items-center gap-2 font-mono text-[0.6875rem] tabular-nums">
           {diff.additions > 0 && (
             <span className="flex items-center gap-0.5 text-status-running">
               <Plus className="h-3 w-3" />
@@ -69,13 +69,13 @@ export function UnifiedDiff({
         <div className="scrollbar-thin overflow-x-auto">
           {diff.isBinary ? (
             <div className="px-4 py-6 text-center">
-              <p className="tech-label">binary</p>
-              <p className="tech-meta">binary file not shown</p>
+              <p className="ui-label">Binary file</p>
+              <p className="ui-meta">binary file not shown</p>
             </div>
           ) : diff.hunks.length === 0 ? (
             <div className="px-4 py-6 text-center">
-              <p className="tech-label">diff.clean</p>
-              <p className="tech-meta">no changes</p>
+              <p className="ui-label">No changes</p>
+              <p className="ui-meta">no changes</p>
             </div>
           ) : (
             <div className="scrollbar-thin font-mono text-xs">
@@ -98,7 +98,7 @@ function Hunk({ hunk }: HunkProps) {
   return (
     <div>
       {/* Hunk header */}
-      <div className="border-border bg-status-info/10 text-status-info border-y px-3 py-1 text-[11px]">
+      <div className="border-[var(--fill-2)] bg-status-info/10 text-status-info border-y px-3 py-1 text-[11px]">
         {hunk.header}
       </div>
 
@@ -128,14 +128,14 @@ function DiffLineRow({ line }: DiffLineRowProps) {
   }
 
   return (
-    <tr className={cn("hover:bg-accent/30", bgColor)}>
+    <tr className={cn("hover:bg-[var(--fill-4)]", bgColor)}>
       {/* Old line number */}
-      <td className="text-foreground-subtle border-border/60 w-12 border-r px-2 py-0.5 text-right tabular-nums select-none">
+      <td className="text-muted-foreground/70 border-[var(--fill-3)] w-12 border-r px-2 py-0.5 text-right tabular-nums select-none">
         {line.oldLineNumber || ""}
       </td>
 
       {/* New line number */}
-      <td className="text-foreground-subtle border-border/60 w-12 border-r px-2 py-0.5 text-right tabular-nums select-none">
+      <td className="text-muted-foreground/70 border-[var(--fill-3)] w-12 border-r px-2 py-0.5 text-right tabular-nums select-none">
         {line.newLineNumber || ""}
       </td>
 

@@ -66,7 +66,7 @@ export function WorkbenchTitle({ name, onRename }: WorkbenchTitleProps) {
             cancel();
           }
         }}
-        className="border-primary min-w-0 max-w-56 flex-1 border-b bg-transparent text-sm font-medium outline-none"
+        className="ring-primary/50 min-w-0 max-w-56 flex-1 rounded-md bg-[var(--fill-3)] px-2 py-0.5 text-[0.8125rem] font-medium outline-none ring-2"
       />
     );
   }
@@ -75,7 +75,7 @@ export function WorkbenchTitle({ name, onRename }: WorkbenchTitleProps) {
     <span
       onDoubleClick={() => setIsEditing(true)}
       title="Double-click to rename"
-      className="cursor-text truncate text-sm font-medium"
+      className="cursor-text truncate text-[0.8125rem] font-medium tracking-[-0.006em]"
     >
       {name}
     </span>

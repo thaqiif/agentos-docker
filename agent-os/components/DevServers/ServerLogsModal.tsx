@@ -62,43 +62,41 @@ export function ServerLogsModal({
   }, [serverId]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+    <div className="overlay-in fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[3px]">
       <div
         className={cn(
-          "flex h-[80vh] w-full max-w-3xl flex-col",
-          "bg-background border-border border"
+          "flex h-[80vh] w-full max-w-3xl flex-col overflow-hidden",
+          "bg-background lift-in rounded-2xl shadow-[var(--elev-4)]"
         )}
       >
         {/* Header */}
-        <div className="border-border flex h-11 shrink-0 items-stretch justify-between border-b">
-          <div className="flex min-w-0 items-center gap-2.5 px-4">
-            <span className="tech-label">logs</span>
-            <h2 className="truncate font-mono text-sm font-medium tracking-[0.08em] uppercase">
-              {serverName}
-            </h2>
+        <div className="glass glass-edge-bottom relative z-10 flex shrink-0 items-center gap-2 px-4 py-3">
+          <div className="min-w-0 flex-1">
+            <h2 className="type-headline truncate">{serverName}</h2>
+            <p className="ui-label">Logs</p>
           </div>
-          <div className="flex items-stretch">
-            <button
-              onClick={() => fetchLogs(true)}
-              disabled={refreshing}
-              title="Refresh"
-              className={cn(
-                "text-muted-foreground hover:bg-accent hover:text-foreground flex w-8 items-center justify-center border-l border-border transition-colors",
-                "disabled:pointer-events-none disabled:opacity-30"
-              )}
-            >
-              <RefreshCw
-                className={cn("h-3.5 w-3.5", refreshing && "animate-spin")}
-              />
-            </button>
-            <button
-              onClick={onClose}
-              title="Close"
-              className="text-muted-foreground hover:bg-accent hover:text-foreground flex w-8 items-center justify-center border-l border-border transition-colors"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
+          <button
+            onClick={() => fetchLogs(true)}
+            disabled={refreshing}
+            title="Refresh"
+            aria-label="Refresh logs"
+            className={cn(
+              "press-sm focus-ring text-muted-foreground hover:text-foreground flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--fill-3)] transition-colors",
+              "disabled:pointer-events-none disabled:opacity-30"
+            )}
+          >
+            <RefreshCw
+              className={cn("h-3.5 w-3.5", refreshing && "animate-spin")}
+            />
+          </button>
+          <button
+            onClick={onClose}
+            title="Close"
+            aria-label="Close"
+            className="press-sm focus-ring text-muted-foreground hover:text-foreground flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--fill-3)] transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
         {/* Log terminal */}
@@ -110,13 +108,15 @@ export function ServerLogsModal({
           )}
         >
           {loading ? (
-            <div className="flex h-full items-center justify-center">
+            <div className="flex h-full items-center justify-center gap-2">
               <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
-              <span className="tech-meta ml-2">Loading logs...</span>
+              <span className="type-subhead text-muted-foreground">
+                Loading logs
+              </span>
             </div>
           ) : logs.length === 0 ? (
-            <div className="tech-label flex h-full items-center justify-center">
-              no output
+            <div className="type-subhead text-muted-foreground flex h-full items-center justify-center">
+              No output
             </div>
           ) : (
             <div className="space-y-0.5">
@@ -140,8 +140,8 @@ export function ServerLogsModal({
         </div>
 
         {/* Footer */}
-        <div className="border-border text-muted-foreground flex shrink-0 items-center justify-between border-t px-4 py-1.5">
-          <span className="tech-meta">auto-refresh 3s</span>
+        <div className="edge-fade-top text-muted-foreground flex shrink-0 items-center justify-between px-5 py-3">
+          <span className="ui-meta">Auto-refresh every 3 seconds</span>
           {refreshing && (
             <RefreshCw className="text-muted-foreground inline h-3 w-3 animate-spin" />
           )}

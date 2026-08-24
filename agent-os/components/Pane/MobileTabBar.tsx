@@ -25,6 +25,9 @@ import type { LucideIcon } from "lucide-react";
 
 import type { ViewMode } from "@/lib/panes";
 
+/** Segment order, so the sliding selection knows where to sit. */
+const VIEW_MODE_ORDER: ViewMode[] = ["terminal", "files", "git"];
+
 interface ViewModeButtonProps {
   mode: ViewMode;
   currentMode: ViewMode;
@@ -46,19 +49,16 @@ function ViewModeButton({
         e.stopPropagation();
         onClick(mode);
       }}
+      aria-pressed={currentMode === mode}
       className={cn(
-        "relative border-l border-border p-1.5 transition-colors first:border-l-0",
-        badge && "flex items-center gap-0.5",
-        currentMode === mode
-          ? "bg-accent text-foreground"
-          : "text-muted-foreground"
+        "press-sm focus-ring relative z-10 flex h-8 min-w-11 items-center justify-center rounded-full",
+        "transition-colors duration-200",
+        badge && "gap-1 px-2.5",
+        currentMode === mode ? "text-foreground" : "text-muted-foreground"
       )}
     >
       <Icon className="h-4 w-4" />
-      {badge && <span className="font-mono text-[9px]">{badge}</span>}
-      {currentMode === mode && (
-        <span className="bg-primary absolute inset-x-0 bottom-0 h-px" />
-      )}
+      {badge && <span className="text-[0.625rem] tabular-nums">{badge}</span>}
     </button>
   );
 }
@@ -132,7 +132,7 @@ export function MobileTabBar({
 
   return (
     <div
-      className="bg-muted flex items-center gap-2 px-2 pb-1.5 pt-[calc(0.375rem+env(safe-area-inset-top))]"
+      className="glass glass-edge-bottom relative z-10 flex items-center gap-1.5 px-2 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))]"
       onClick={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
       onTouchEnd={(e) => e.stopPropagation()}
@@ -141,14 +141,15 @@ export function MobileTabBar({
       {onMenuClick && (
         <Button
           variant="ghost"
-          size="icon-sm"
+          size="icon"
           onClick={(e) => {
             e.stopPropagation();
             onMenuClick();
           }}
-          className="h-8 w-8 shrink-0"
+          aria-label="Open sidebar"
+          className="h-9 w-9 shrink-0 rounded-full"
         >
-          <Menu className="h-4 w-4" />
+          <Menu className="h-[1.125rem] w-[1.125rem]" />
         </Button>
       )}
 
@@ -159,7 +160,8 @@ export function MobileTabBar({
           onClick={handlePrev}
           onTouchEnd={(e) => e.stopPropagation()}
           disabled={!hasPrev || isNavigating}
-          className="hover:bg-accent flex h-8 w-8 shrink-0 items-center justify-center rounded-md disabled:pointer-events-none disabled:opacity-50"
+          aria-label="Previous terminal"
+          className="press focus-ring text-muted-foreground flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-[var(--fill-4)] disabled:pointer-events-none disabled:opacity-30"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -169,14 +171,14 @@ export function MobileTabBar({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="hover:bg-accent active:bg-accent flex min-w-0 flex-1 items-center justify-center gap-1 rounded-md px-2 py-1"
+              className="press focus-ring flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full px-3 transition-colors hover:bg-[var(--fill-4)]"
             >
-              <span className="truncate text-sm font-medium">
+              <span className="truncate text-[0.8125rem] font-medium tracking-[-0.006em]">
                 {session?.name || "No terminal"}
                 {projectName && projectName !== "Uncategorized" && (
                   <span className="text-muted-foreground font-normal">
-                    {" "}
-                    [{projectName}]
+                    {" · "}
+                    {projectName}
                   </span>
                 )}
               </span>
@@ -200,7 +202,7 @@ export function MobileTabBar({
                     onSelect={() => onSelectSession?.(s.id)}
                     className={cn(
                       "flex items-center gap-2",
-                      isActive && "bg-accent"
+                      isActive && "bg-[var(--fill-3)]"
                     )}
                   >
                     <Circle
@@ -214,8 +216,8 @@ export function MobileTabBar({
                     <span className="flex-1 truncate">{s.name}</span>
                     {sessionProject &&
                       sessionProject.name !== "Uncategorized" && (
-                        <span className="text-muted-foreground text-xs">
-                          [{sessionProject.name}]
+                        <span className="text-muted-foreground text-[0.6875rem]">
+                          {sessionProject.name}
                         </span>
                       )}
                   </DropdownMenuItem>
@@ -229,7 +231,8 @@ export function MobileTabBar({
           onClick={handleNext}
           onTouchEnd={(e) => e.stopPropagation()}
           disabled={!hasNext || isNavigating}
-          className="hover:bg-accent flex h-8 w-8 shrink-0 items-center justify-center rounded-md disabled:pointer-events-none disabled:opacity-50"
+          aria-label="Next terminal"
+          className="press focus-ring text-muted-foreground flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-[var(--fill-4)] disabled:pointer-events-none disabled:opacity-30"
         >
           <ChevronRight className="h-4 w-4" />
         </button>
@@ -237,7 +240,19 @@ export function MobileTabBar({
 
       {/* View mode toggle */}
       {session?.working_directory && (
-        <div className="bg-accent/50 flex shrink-0 items-center rounded-md p-0.5">
+        <div
+          role="tablist"
+          className="relative flex shrink-0 items-center rounded-full bg-[var(--fill-4)] p-0.5"
+        >
+          {/* The selection is one pill that travels, not three states that
+              blink — same object, new place. */}
+          <span
+            aria-hidden="true"
+            className="absolute top-0.5 bottom-0.5 left-0.5 w-11 rounded-full bg-[var(--fill-1)] shadow-[var(--elev-1)] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
+            style={{
+              transform: `translateX(${VIEW_MODE_ORDER.indexOf(viewMode) * 100}%)`,
+            }}
+          />
           <ViewModeButton
             mode="terminal"
             currentMode={viewMode}

@@ -16,14 +16,14 @@ const TABS: { id: GitTab; label: string }[] = [
 
 export function GitPanelTabs({ activeTab, onTabChange }: GitPanelTabsProps) {
   return (
-    <div className="bg-surface border-border flex shrink-0 items-stretch border-b">
+    <div className="glass glass-edge-bottom relative z-10 flex shrink-0 items-stretch">
       {TABS.map((tab, index) => (
         <button
           key={tab.id}
           onClick={() => onTabChange(tab.id)}
           className={cn(
-            "relative flex h-9 flex-1 items-center justify-center px-3 font-mono text-[10px] tracking-[0.14em] uppercase transition-colors sm:flex-none",
-            index > 0 && "border-l border-border",
+            "relative flex h-9 flex-1 items-center justify-center px-3 text-[0.75rem] font-medium transition-colors sm:flex-none",
+            index > 0 && "border-l border-[var(--fill-2)]",
             activeTab === tab.id
               ? "bg-background text-foreground"
               : "text-muted-foreground hover:text-foreground"

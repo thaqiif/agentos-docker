@@ -27,14 +27,14 @@ export function CreatingOverlay({ step, steps, hint }: CreatingOverlayProps) {
   const currentIndex = steps.findIndex((s) => s.id === step);
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-6 bg-background/95 backdrop-blur-sm">
+    <div className="bg-background/80 fixed inset-0 z-[60] flex flex-col items-center justify-center gap-6 backdrop-blur-lg">
       <div className="flex flex-col items-center gap-1">
-        <span className="tech-label">project.create</span>
-        <p className="text-primary animate-caret-blink font-mono text-sm tracking-[0.12em]">
-          INITIALIZING_
+        <p className="type-title-3">Setting up your project</p>
+        <p className="text-muted-foreground text-[0.8125rem]">
+          Hang tight — this only happens once.
         </p>
       </div>
-      <div className="w-full max-w-xs space-y-0 divide-y divide-border border-y border-border">
+      <div className="glass-thick glass-float lift-in w-full max-w-xs rounded-2xl p-2">
         {steps.map((s, index) => {
           const isComplete = index < currentIndex;
           const isCurrent = index === currentIndex;
@@ -43,30 +43,26 @@ export function CreatingOverlay({ step, steps, hint }: CreatingOverlayProps) {
             <div
               key={s.id}
               className={cn(
-                "flex items-center gap-3 px-1 py-2 font-mono text-xs transition-colors",
+                "flex items-center gap-3 rounded-lg px-2.5 py-2 text-[0.8125rem]",
+                "transition-colors duration-200",
                 isComplete && "text-muted-foreground",
-                isCurrent && "text-foreground",
-                !isComplete && !isCurrent && "text-foreground-subtle/50"
+                isCurrent && "text-foreground bg-[var(--fill-4)] font-medium",
+                !isComplete && !isCurrent && "text-muted-foreground/50"
               )}
             >
-              <span className="tech-label w-6 shrink-0">
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              <span className="flex-1 uppercase tracking-[0.08em]">
-                {s.label}
-              </span>
+              <span className="flex-1">{s.label}</span>
               {isComplete ? (
-                <Check className="h-3 w-3 shrink-0 text-status-running" />
+                <Check className="text-status-running h-4 w-4 shrink-0" />
               ) : isCurrent ? (
-                <span className="h-2 w-2 shrink-0 animate-status-pulse bg-primary" />
+                <span className="animate-status-pulse bg-primary h-2 w-2 shrink-0 rounded-full" />
               ) : (
-                <span className="size-2 shrink-0 border border-border-strong" />
+                <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--fill-1)]" />
               )}
             </div>
           );
         })}
       </div>
-      <p className="tech-meta">
+      <p className="text-muted-foreground text-[0.75rem]">
         {hint ?? "This may take a minute for large codebases"}
       </p>
     </div>

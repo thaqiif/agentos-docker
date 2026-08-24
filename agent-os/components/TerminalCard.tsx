@@ -192,7 +192,7 @@ export function TerminalCard({
       <>
         {onRename && (
           <MenuItem onClick={() => setIsEditing(true)}>
-            <Pencil className="mr-2 h-3 w-3" />
+            <Pencil className="h-4 w-4" />
             Rename
           </MenuItem>
         )}
@@ -203,7 +203,7 @@ export function TerminalCard({
               onClick={() => onDelete()}
               className="text-destructive focus:text-destructive"
             >
-              <Trash2 className="mr-2 h-3 w-3" />
+              <Trash2 className="h-4 w-4" />
               Delete session
             </MenuItem>
           </>
@@ -219,24 +219,26 @@ export function TerminalCard({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className={cn(
-        "group relative flex w-full cursor-pointer items-center gap-2 overflow-hidden rounded-lg px-2.5 py-2 text-left transition-colors",
-        "min-h-[36px] md:min-h-0",
+        "group press-sm relative flex w-full cursor-pointer items-center gap-2 overflow-hidden rounded-lg px-2.5 py-2 text-left",
+        "min-h-[44px] md:min-h-[32px]",
+        "transition-colors duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]",
         isSelected
-          ? "bg-primary/15"
+          ? "bg-primary/16 text-foreground"
           : isActive
-            ? "bg-accent"
-            : "hover:bg-accent/50",
+            ? "bg-primary/12 text-foreground"
+            : "hover:bg-[var(--fill-4)]",
         status === "waiting" &&
           !isActive &&
           !isSelected &&
-          "bg-status-waiting/5"
+          "bg-status-waiting/8"
       )}
     >
       {/* Selection checkbox - visible when in select mode */}
       {isInSelectMode && onToggleSelect && (
         <button
           onClick={handleCheckboxClick}
-          className="text-primary hover:text-primary/80 flex-shrink-0"
+          aria-label={isSelected ? "Deselect terminal" : "Select terminal"}
+          className="text-primary press hover:text-primary/80 flex-shrink-0"
         >
           {isSelected ? (
             <CheckSquare className="h-4 w-4" />
@@ -263,7 +265,7 @@ export function TerminalCard({
                 }
               }}
               onClick={(e) => e.stopPropagation()}
-              className="min-w-0 flex-1 border-b border-primary bg-transparent font-mono text-xs outline-none"
+              className="ring-primary/50 min-w-0 flex-1 rounded-md bg-[var(--fill-3)] px-1.5 py-0.5 text-[0.8125rem] outline-none ring-2"
             />
           ) : (
             <span
@@ -274,7 +276,7 @@ export function TerminalCard({
                 setEditName(session.name);
                 setIsEditing(true);
               }}
-              className="min-w-0 flex-1 truncate text-sm leading-4"
+              className="min-w-0 flex-1 truncate text-[0.8125rem] leading-tight tracking-[-0.006em]"
             >
               {session.name}
             </span>
@@ -283,7 +285,7 @@ export function TerminalCard({
           {/* Split indicator: a terminal tmux has split into panes. */}
           {session.panes > 1 && (
             <span
-              className="text-muted-foreground flex-shrink-0 border border-border px-1 font-mono text-[9px]"
+              className="text-muted-foreground flex-shrink-0 rounded-full bg-[var(--fill-2)] px-1.5 text-[0.625rem] leading-4 tabular-nums"
               title={session.panes + " tmux panes"}
             >
               {session.panes}
@@ -294,7 +296,7 @@ export function TerminalCard({
               the menu button is lifted out of flow on desktop and overlays
               it. Toggling the button's display instead made the whole row
               reflow on hover; reserving a box for it left a dead gap. */}
-          <span className="hidden flex-shrink-0 font-mono text-[10px] text-muted-foreground transition-opacity sm:block md:group-hover:opacity-0">
+          <span className="text-muted-foreground hidden flex-shrink-0 text-[0.6875rem] transition-opacity duration-200 sm:block md:group-hover:opacity-0">
             {timeAgo}
           </span>
 
@@ -305,9 +307,10 @@ export function TerminalCard({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="inline-flex h-6 w-6 flex-shrink-0 transition-opacity md:absolute md:top-1/2 md:right-1 md:h-5 md:w-5 md:-translate-y-1/2 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
+                  aria-label="Terminal actions"
+                  className="inline-flex h-8 w-8 flex-shrink-0 rounded-full transition-opacity duration-200 md:absolute md:top-1/2 md:right-1 md:h-7 md:w-7 md:-translate-y-1/2 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
                 >
-                  <MoreHorizontal className="h-3 w-3" />
+                  <MoreHorizontal className="h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" onCloseAutoFocus={(e) => e.preventDefault()} onClick={(e) => e.stopPropagation()}>

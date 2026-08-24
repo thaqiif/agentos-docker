@@ -217,18 +217,18 @@ export function FileEditor({
   if (isBinary) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 p-8">
-        <FileCode className="text-foreground-subtle h-4 w-4" />
-        <p className="tech-label">binary</p>
-        <p className="tech-meta">no preview available</p>
+        <FileCode className="text-muted-foreground/70 h-4 w-4" />
+        <p className="ui-label">Binary file</p>
+        <p className="ui-meta">no preview available</p>
       </div>
     );
   }
 
   return (
     <div className="bg-background flex h-full w-full flex-col overflow-hidden">
-      <div className="border-border bg-surface flex h-8 shrink-0 items-stretch justify-between border-b">
+      <div className="glass glass-edge-bottom relative z-10 flex h-8 shrink-0 items-stretch justify-between">
         <div className="flex items-center px-2.5">
-          <span className="tech-label">//{language || "plaintext"}</span>
+          <span className="ui-label">//{language || "plaintext"}</span>
         </div>
         <div className="flex items-stretch">
           {hasPreview && (
@@ -237,7 +237,7 @@ export function FileEditor({
                 onClick={() => setPreviewMode(false)}
                 title={previewMode ? "Show source" : "Source"}
                 className={cn(
-                  "relative flex items-center gap-1 px-2.5 font-mono text-[10px] tracking-[0.12em] uppercase transition-colors",
+                  "relative flex items-center gap-1 px-2.5 text-[0.75rem] font-medium transition-colors",
                   previewMode
                     ? "text-muted-foreground hover:text-foreground"
                     : "bg-background text-foreground"
@@ -253,7 +253,7 @@ export function FileEditor({
                 onClick={() => setPreviewMode(true)}
                 title={previewMode ? "Preview" : "Show preview"}
                 className={cn(
-                  "relative flex items-center gap-1 px-2.5 font-mono text-[10px] tracking-[0.12em] uppercase transition-colors",
+                  "relative flex items-center gap-1 px-2.5 text-[0.75rem] font-medium transition-colors",
                   previewMode
                     ? "bg-background text-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -269,10 +269,10 @@ export function FileEditor({
           )}
           {onSave && (
             <>
-              <div className="border-border flex items-center gap-1.5 border-l px-2.5">
+              <div className="border-[var(--fill-2)] flex items-center gap-1.5 border-l px-2.5">
                 <span
                   className={cn(
-                    "font-mono text-[10px] tracking-[0.12em] uppercase",
+                    "",
                     dirty ? "text-status-waiting" : "text-status-running"
                   )}
                 >
@@ -284,10 +284,10 @@ export function FileEditor({
                 disabled={saving}
                 title="Save (Mod-s)"
                 className={cn(
-                  "border-border flex items-center gap-1 border-l px-2.5 font-mono text-[10px] tracking-[0.12em] uppercase transition-colors",
+                  "border-[var(--fill-2)] flex items-center gap-1 border-l px-2.5 text-[0.75rem] font-medium transition-colors",
                   saving
                     ? "text-muted-foreground opacity-50"
-                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+                    : "text-muted-foreground hover:bg-[var(--fill-4)] hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
                 )}
               >
                 save ❯

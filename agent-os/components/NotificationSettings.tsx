@@ -53,7 +53,7 @@ export function NotificationSettings({
             )}
           />
           {waitingCount > 0 && (
-            <span className="bg-status-waiting absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full font-mono text-[10px] font-bold text-background">
+            <span className="bg-status-waiting absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[0.6875rem] font-bold text-background">
               {waitingCount}
             </span>
           )}
@@ -63,11 +63,11 @@ export function NotificationSettings({
         {/* Waiting sessions section */}
         {waitingCount > 0 && (
           <>
-            <DropdownMenuLabel className="tech-label flex items-center gap-2 text-status-waiting">
+            <DropdownMenuLabel className="ui-label flex items-center gap-2 text-status-waiting">
               <AlertCircle className="h-3 w-3" />
               Waiting for input
             </DropdownMenuLabel>
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-[var(--fill-3)]">
               {waitingSessions.map((session) => (
                 <DropdownMenuItem
                   key={session.id}

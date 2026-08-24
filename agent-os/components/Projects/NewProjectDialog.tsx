@@ -54,22 +54,17 @@ export function NewProjectDialog({
             hint="This may take a moment depending on the repository size"
           />
         )}
-        <DialogHeader className="border-b border-border px-6 py-4">
-          <span className="tech-label">
-            {form.isCloneMode ? "project.clone" : "project.new"}
-          </span>
-          <DialogTitle className="font-mono text-sm font-medium tracking-[0.16em] uppercase">
-            {form.isCloneMode ? "Clone from GitHub" : "New Project"}
+        <DialogHeader className="border-b border-[var(--fill-2)] px-6 py-4">
+          <DialogTitle className="type-title-3">
+            {form.isCloneMode ? "Clone from GitHub" : "New project"}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit}>
-          <div className="divide-y divide-border px-6">
+          <div className="divide-y divide-[var(--fill-3)] px-6">
             {form.isCloneMode && (
               <div className="space-y-2 py-4">
-                <div className="flex items-baseline gap-2">
-                  <span className="tech-label">01</span>
-                  <label htmlFor="new-project-github-url" className="tech-label">
+                <div className="flex items-baseline gap-2"><label htmlFor="new-project-github-url" className="text-[0.8125rem] font-medium text-foreground">
                     Repository URL
                   </label>
                 </div>
@@ -89,14 +84,14 @@ export function NewProjectDialog({
 
             <div className="space-y-2 py-4">
               <div className="flex items-baseline gap-2">
-                <span className="tech-label">
+                <span className="ui-label">
                   {form.isCloneMode ? "02" : "01"}
                 </span>
-                <label htmlFor="new-project-name" className="tech-label">
+                <label htmlFor="new-project-name" className="text-[0.8125rem] font-medium text-foreground">
                   Project Name
                 </label>
                 {form.isCloneMode && (
-                  <span className="tech-label">(optional, derived from URL)</span>
+                  <span className="ui-label">(optional, derived from URL)</span>
                 )}
               </div>
               <Input
@@ -126,10 +121,10 @@ export function NewProjectDialog({
 
             <div className="space-y-2 py-4">
               <div className="flex items-center gap-2">
-                <span className="tech-label">
+                <span className="ui-label">
                   {form.isCloneMode ? "03" : "02"}
                 </span>
-                <label htmlFor="new-project-agent" className="tech-label">
+                <label htmlFor="new-project-agent" className="text-[0.8125rem] font-medium text-foreground">
                   Default Agent
                 </label>
               </div>
@@ -152,10 +147,10 @@ export function NewProjectDialog({
 
             <div className="space-y-2 py-4">
               <div className="flex items-center gap-2">
-                <span className="tech-label">
+                <span className="ui-label">
                   {form.isCloneMode ? "04" : "03"}
                 </span>
-                <label htmlFor="new-project-model" className="tech-label">
+                <label htmlFor="new-project-model" className="text-[0.8125rem] font-medium text-foreground">
                   Default Model
                 </label>
               </div>
@@ -199,19 +194,19 @@ export function NewProjectDialog({
             )}
           </div>
 
-          <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-4">
+          <div className="flex items-center justify-end gap-2 border-t border-[var(--fill-2)] px-6 py-4">
             <Button
               type="button"
               variant="outline"
               onClick={form.handleClose}
-              className="font-mono text-[10px] tracking-[0.12em] uppercase"
+              className=""
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={form.isPending || form.isCloning}
-              className="font-mono text-[10px] tracking-[0.12em] uppercase"
+              className=""
             >
               {form.isCloning
                 ? "Cloning..."

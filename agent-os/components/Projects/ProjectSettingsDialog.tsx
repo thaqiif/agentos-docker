@@ -459,20 +459,15 @@ export function ProjectSettingsDialog({
         onOpenChange={(o) => !o && handleClose()}
       >
         <DialogContent className="scrollbar-thin max-h-[90vh] max-w-lg gap-0 overflow-y-auto p-0">
-          <DialogHeader className="border-b border-border px-6 py-4">
-            <span className="tech-label">project.settings</span>
-            <DialogTitle className="font-mono text-sm font-medium tracking-[0.16em] uppercase">
-              Project Settings
-            </DialogTitle>
+          <DialogHeader className="border-b border-[var(--fill-2)] px-6 py-4">
+            <DialogTitle className="type-title-3">Project settings</DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleSubmit}>
-            <div className="divide-y divide-border px-6">
+            <div className="divide-y divide-[var(--fill-3)] px-6">
               {/* Project Name */}
               <div className="space-y-2 py-4">
-                <div className="flex items-center gap-2">
-                  <span className="tech-label">01</span>
-                  <label htmlFor="project-settings-name" className="tech-label">
+                <div className="flex items-center gap-2"><label htmlFor="project-settings-name" className="text-[0.8125rem] font-medium text-foreground">
                     Project Name
                   </label>
                 </div>
@@ -487,11 +482,9 @@ export function ProjectSettingsDialog({
 
               {/* Working Directory */}
               <div className="space-y-2 py-4">
-                <div className="flex items-center gap-2">
-                  <span className="tech-label">02</span>
-                  <label
+                <div className="flex items-center gap-2"><label
                     htmlFor="project-settings-working-directory"
-                    className="tech-label"
+                    className="text-[0.8125rem] font-medium text-foreground"
                   >
                     Working Directory
                   </label>
@@ -507,11 +500,9 @@ export function ProjectSettingsDialog({
 
               {/* Agent Type */}
               <div className="space-y-2 py-4">
-                <div className="flex items-center gap-2">
-                  <span className="tech-label">03</span>
-                  <label
+                <div className="flex items-center gap-2"><label
                     htmlFor="project-settings-agent"
-                    className="tech-label"
+                    className="text-[0.8125rem] font-medium text-foreground"
                   >
                     Default Agent
                   </label>
@@ -538,11 +529,9 @@ export function ProjectSettingsDialog({
 
               {/* Default Model */}
               <div className="space-y-2 py-4">
-                <div className="flex items-center gap-2">
-                  <span className="tech-label">04</span>
-                  <label
+                <div className="flex items-center gap-2"><label
                     htmlFor="project-settings-model"
-                    className="tech-label"
+                    className="text-[0.8125rem] font-medium text-foreground"
                   >
                     Default Model
                   </label>
@@ -570,11 +559,9 @@ export function ProjectSettingsDialog({
 
               {/* Initial Prompt */}
               <div className="space-y-2 py-4">
-                <div className="flex items-center gap-2">
-                  <span className="tech-label">05</span>
-                  <label
+                <div className="flex items-center gap-2"><label
                     htmlFor="project-settings-initial-prompt"
-                    className="tech-label"
+                    className="text-[0.8125rem] font-medium text-foreground"
                   >
                     Initial Prompt
                   </label>
@@ -596,9 +583,7 @@ export function ProjectSettingsDialog({
             {/* Dev Servers */}
             <div className="space-y-3 py-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="tech-label">06</span>
-                  <label className="tech-label flex items-center gap-2">
+                <div className="flex items-center gap-2"><label className="ui-label flex items-center gap-2">
                     <Server className="h-3.5 w-3.5" />
                     Dev Servers
                   </label>
@@ -610,7 +595,7 @@ export function ProjectSettingsDialog({
                     size="sm"
                     onClick={detectDevServers}
                     disabled={isDetecting || !workingDirectory}
-                    className="font-mono text-[10px] tracking-[0.12em] uppercase"
+                    className=""
                   >
                     {isDetecting ? (
                       <Loader2 className="h-3 w-3 animate-spin" />
@@ -624,7 +609,7 @@ export function ProjectSettingsDialog({
                     variant="outline"
                     size="sm"
                     onClick={addDevServer}
-                    className="font-mono text-[10px] tracking-[0.12em] uppercase"
+                    className=""
                   >
                     <Plus className="h-3 w-3" />
                     Add
@@ -633,11 +618,11 @@ export function ProjectSettingsDialog({
               </div>
 
               {visibleDevServers.length === 0 ? (
-                <p className="tech-meta py-2">
+                <p className="ui-meta py-2">
                   No dev servers configured.
                 </p>
               ) : (
-                <div className="divide-y divide-border border-y border-border">
+                <div className="divide-y divide-[var(--fill-3)] border-y border-[var(--fill-2)]">
                   {visibleDevServers.map((ds) => (
                     <div key={ds.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
                       <div className="flex items-center gap-2">
@@ -720,9 +705,7 @@ export function ProjectSettingsDialog({
             {/* Repositories */}
             <div className="space-y-3 py-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="tech-label">07</span>
-                  <label className="tech-label flex items-center gap-2">
+                <div className="flex items-center gap-2"><label className="ui-label flex items-center gap-2">
                     <GitBranch className="h-3.5 w-3.5" />
                     Git Repositories
                   </label>
@@ -734,7 +717,7 @@ export function ProjectSettingsDialog({
                     size="sm"
                     onClick={detectRepositories}
                     disabled={isDetectingRepos || !workingDirectory}
-                    className="font-mono text-[10px] tracking-[0.12em] uppercase"
+                    className=""
                   >
                     {isDetectingRepos ? (
                       <Loader2 className="h-3 w-3 animate-spin" />
@@ -748,7 +731,7 @@ export function ProjectSettingsDialog({
                     variant="outline"
                     size="sm"
                     onClick={addRepository}
-                    className="font-mono text-[10px] tracking-[0.12em] uppercase"
+                    className=""
                   >
                     <Plus className="h-3 w-3" />
                     Add
@@ -757,12 +740,12 @@ export function ProjectSettingsDialog({
               </div>
 
               {visibleRepositories.length === 0 ? (
-                <p className="tech-meta py-2">
+                <p className="ui-meta py-2">
                   No repositories configured. Git changes will use the working
                   directory.
                 </p>
               ) : (
-                <div className="divide-y divide-border border-y border-border">
+                <div className="divide-y divide-[var(--fill-3)] border-y border-[var(--fill-2)]">
                   {visibleRepositories.map((repo) => (
                     <div key={repo.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
                       <div className="flex items-center gap-2">
@@ -843,19 +826,19 @@ export function ProjectSettingsDialog({
             )}
             </div>
 
-            <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-4">
+            <div className="flex items-center justify-end gap-2 border-t border-[var(--fill-2)] px-6 py-4">
             <Button
               type="button"
               variant="outline"
               onClick={handleClose}
-              className="font-mono text-[10px] tracking-[0.12em] uppercase"
+              className=""
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isLoading}
-              className="font-mono text-[10px] tracking-[0.12em] uppercase"
+              className=""
             >
               {isLoading ? "Saving..." : "Save Changes"}
               {!isLoading && (

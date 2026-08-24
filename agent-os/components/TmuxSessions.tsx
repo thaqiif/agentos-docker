@@ -75,7 +75,7 @@ export function TmuxSessions({ onAttach }: TmuxSessionsProps) {
   }
 
   return (
-    <div className="border-border border-b">
+    <div className="border-b border-[var(--fill-2)]">
       <div className="flex items-center justify-between px-4 py-2">
         <div className="flex items-center gap-2">
           <Terminal className="text-muted-foreground h-4 w-4" />

@@ -49,21 +49,23 @@ export interface ABadgeProps {
 }
 
 const SIZE_CLASSES: Record<ABadgeSize, string> = {
-  sm: "h-4 px-1.5 py-0 text-[10px] leading-none",
-  md: "h-5 px-2 py-0 text-xs leading-none",
+  sm: "h-[1.125rem] px-1.5 py-0 text-[0.625rem] leading-none",
+  md: "h-5 px-2 py-0 text-[0.6875rem] leading-none",
 };
 
+/* Status colour lives in the fill and the label, never in a ring around
+   them — an outlined chip reads as a control the user can press. */
 const VARIANT_CLASSES: Record<ABadgeVariant, string> = {
   default: "",
   secondary: "",
   destructive: "",
   outline: "",
-  new: "border-status-running/40 bg-status-running/10 text-status-running",
-  beta: "border-status-waiting/40 bg-status-waiting/10 text-status-waiting",
-  pro: "border-primary/50 bg-primary/10 text-primary",
-  waiting: "border-status-waiting/40 bg-status-waiting/10 text-status-waiting",
-  running: "border-status-running/40 bg-status-running/10 text-status-running",
-  idle: "border-border bg-secondary text-muted-foreground",
+  new: "bg-status-running/14 text-status-running",
+  beta: "bg-status-waiting/14 text-status-waiting",
+  pro: "bg-primary/14 text-primary",
+  waiting: "bg-status-waiting/14 text-status-waiting",
+  running: "bg-status-running/14 text-status-running",
+  idle: "bg-[var(--fill-2)] text-muted-foreground",
 };
 
 const BASE_VARIANT_MAP: Record<

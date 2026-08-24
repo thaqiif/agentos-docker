@@ -308,7 +308,7 @@ export const Pane = memo(function Pane({
 
               {shellDrawerOpen && session?.working_directory && (
                 <>
-                  <ResizablePanelHandle className="bg-border/30 hover:bg-primary/30 active:bg-primary/50 h-px cursor-row-resize transition-colors" />
+                  <ResizablePanelHandle className="relative h-px cursor-row-resize bg-[var(--fill-2)] transition-colors duration-200 after:absolute after:inset-x-0 after:-top-1 after:h-3 after:content-[''] hover:bg-primary/40 active:bg-primary/60" />
                   <ResizablePanel defaultSize={30} minSize={10}>
                     <ShellDrawer
                       open={true}
@@ -323,7 +323,7 @@ export const Pane = memo(function Pane({
 
           {gitDrawerOpen && session?.working_directory && (
             <>
-              <ResizablePanelHandle className="bg-border/30 hover:bg-primary/30 active:bg-primary/50 w-px cursor-col-resize transition-colors" />
+              <ResizablePanelHandle className="relative w-px cursor-col-resize bg-[var(--fill-2)] transition-colors duration-200 after:absolute after:inset-y-0 after:-left-1 after:w-3 after:content-[''] hover:bg-primary/40 active:bg-primary/60" />
               <ResizablePanel defaultSize={30} minSize={10}>
                 <GitDrawer
                   open={true}

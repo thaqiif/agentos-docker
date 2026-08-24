@@ -113,15 +113,15 @@ function filterVisibleItems(
 function ToggleItem({ item }: { item: ToggleItemConfig }) {
   const Icon = item.icon;
   return (
-    <div className="flex min-h-[32px] items-center justify-between px-2 py-1.5">
-      <div className="flex items-center gap-2">
+    <div className="flex min-h-9 items-center justify-between gap-3 rounded-md px-2.5 py-1.5">
+      <div className="flex items-center gap-2.5">
         {Icon && <Icon className="text-muted-foreground h-4 w-4" />}
-        <span className="text-sm">{item.label}</span>
+        <span className="text-[0.8125rem]">{item.label}</span>
       </div>
       <Switch
         checked={item.checked}
         onCheckedChange={item.onChange}
-        className="scale-75"
+        className="scale-90"
         disabled={item.disabled}
       />
     </div>
@@ -139,7 +139,7 @@ function MenuItem({ item }: { item: MenuItemConfig }) {
           "text-destructive focus:text-destructive"
       )}
     >
-      {Icon && <Icon className="mr-2 h-4 w-4" />}
+      {Icon && <Icon className="h-4 w-4" />}
       {item.label}
     </DropdownMenuItem>
   );
@@ -154,7 +154,7 @@ function SubmenuItem({ item }: { item: SubmenuItemConfig }) {
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger disabled={item.disabled}>
-        {Icon && <Icon className="mr-2 h-4 w-4" />}
+        {Icon && <Icon className="h-4 w-4" />}
         {item.label}
       </DropdownMenuSubTrigger>
       <DropdownMenuPortal>
@@ -195,7 +195,7 @@ export function ADropdownMenu({
   icon: Icon,
   items,
   align = "end",
-  minWidth = "180px",
+  minWidth = "200px",
   className,
   tooltip,
 }: ADropdownMenuProps) {

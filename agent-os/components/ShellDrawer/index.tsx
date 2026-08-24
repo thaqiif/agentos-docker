@@ -57,18 +57,18 @@ export function ShellDrawer({
   return (
     <div
       className={cn(
-        "bg-background flex h-full flex-col border-t border-border-strong transition-all duration-200 ease-out",
+        "bg-background flex h-full flex-col border-t border-[var(--fill-1)] transition-all duration-200 ease-out",
         isAnimatingIn ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
       )}
     >
       {/* Deck header */}
-      <div className="bg-surface flex h-8 shrink-0 items-stretch justify-between border-b border-border">
+      <div className="glass glass-edge-bottom relative z-10 flex h-10 shrink-0 items-center justify-between gap-1 px-1.5">
         <div className="flex min-w-0 flex-1 items-center gap-2.5 px-3">
           <span className="text-primary font-mono text-xs leading-none">
             {">_"}
           </span>
-          <span className="tech-label">shell</span>
-          <span className="tech-meta min-w-0 truncate">{workingDirectory}</span>
+          <span className="ui-label">Shell</span>
+          <span className="ui-meta min-w-0 truncate">{workingDirectory}</span>
           <button
             onClick={() => copy(workingDirectory)}
             className="text-muted-foreground hover:text-foreground flex h-5 w-5 shrink-0 items-center justify-center transition-colors"
@@ -83,7 +83,7 @@ export function ShellDrawer({
         </div>
         <button
           onClick={() => onOpenChange(false)}
-          className="text-muted-foreground hover:bg-accent hover:text-foreground flex w-7 shrink-0 items-center justify-center border-l border-border transition-colors"
+          className="press focus-ring text-muted-foreground hover:text-foreground flex size-8 shrink-0 items-center justify-center rounded-full transition-colors duration-200 hover:bg-[var(--fill-3)]"
           title="Close shell"
         >
           <X className="h-3 w-3" />

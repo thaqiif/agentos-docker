@@ -60,16 +60,18 @@ export function DesktopSidebar({
   };
 
   // Drag handle sitting on the sidebar's right edge. It is wider than it
-  // looks so it is actually grabbable, but only the 1px line is painted.
+  // looks so it is actually grabbable, but nothing is painted until it is
+  // hovered — a permanent line would compete with the material's own edge.
   const resizeHandle = (
     <div
       onMouseDown={startResize}
       role="separator"
       aria-orientation="vertical"
       className={cn(
-        "absolute top-0 right-0 z-50 h-full w-1 cursor-col-resize transition-colors",
+        "absolute top-0 right-0 z-50 h-full w-1 cursor-col-resize",
+        "transition-colors duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]",
         "after:absolute after:inset-y-0 after:-left-1 after:w-3 after:content-['']",
-        isResizing ? "bg-primary/50" : "hover:bg-primary/30"
+        isResizing ? "bg-primary/60" : "hover:bg-primary/35"
       )}
     />
   );
@@ -93,13 +95,16 @@ export function DesktopSidebar({
   );
 
   if (isPinned) {
+    // Pinned, the sidebar is part of the shell rather than something hovering
+    // over it, so it is edge-lit down its inner edge rather than rimmed.
     return (
       <div
         style={{ width }}
         className={cn(
-          "bg-sidebar-background border-sidebar-border relative flex-shrink-0 overflow-hidden border-r",
+          "glass glass-edge-right relative z-20 flex-shrink-0 overflow-hidden",
           // No width transition while dragging, or the panel lags the cursor.
-          !isResizing && "transition-[width] duration-200"
+          !isResizing &&
+            "transition-[width] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]"
         )}
       >
         {content}
@@ -115,12 +120,15 @@ export function DesktopSidebar({
         className="fixed top-0 left-0 z-30 h-full w-2"
         onMouseEnter={revealNow}
       />
+      {/* Unpinned it genuinely floats above the workbench, so it takes the
+          thicker material and a depth shadow, and slides on the iOS curve. */}
       <div
         onMouseEnter={revealNow}
         onMouseLeave={scheduleCollapse}
         style={{ width }}
         className={cn(
-          "bg-sidebar-background border-sidebar-border fixed top-0 left-0 z-40 h-full overflow-hidden border-r transition-transform duration-200 ease-out",
+          "glass-thick glass-float fixed top-0 left-0 z-40 h-full overflow-hidden",
+          "transition-transform duration-[400ms] ease-[cubic-bezier(0.32,0.72,0,1)]",
           revealed ? "translate-x-0" : "-translate-x-full"
         )}
       >

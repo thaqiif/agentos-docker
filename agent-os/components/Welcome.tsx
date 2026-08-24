@@ -20,6 +20,10 @@ const RECENT_LIMIT = 6;
  * bare shell that looked like a tmux session but was not one, so anything
  * typed into it vanished on refresh. Showing nothing at all is more honest,
  * and gives closing a terminal somewhere to land.
+ *
+ * This is the one screen in the app with no content to get out of the way
+ * of, so it is where the material is allowed to be the point: a single card
+ * of glass floating on the ambient canvas, with the refraction filter on it.
  */
 export function Welcome({
   terminals,
@@ -33,62 +37,60 @@ export function Welcome({
     .slice(0, RECENT_LIMIT);
 
   return (
-    <div className="bg-background workbench-grid flex h-full w-full items-center justify-center overflow-auto p-8">
-      <div className="w-full max-w-md">
-        <div className="flex items-baseline gap-2">
-          <h1 className="text-lg font-semibold tracking-tight">AgentOS</h1>
-          <span className="tech-label">workbench</span>
-        </div>
-        <p className="text-muted-foreground mt-1 font-mono text-xs">
+    <div className="ambient-canvas flex h-full w-full items-center justify-center overflow-auto p-6">
+      <div className="glass-thick glass-float glass-refract lift-in w-full max-w-sm rounded-2xl p-6">
+        <h1 className="type-title-2">AgentOS</h1>
+        <p className="text-muted-foreground mt-1 text-[0.8125rem]">
           No terminal attached.
         </p>
 
-        <div className="border-border mt-6 border-t pt-4">
-          <span className="tech-label">start</span>
-          <div className="mt-2 flex flex-col items-start gap-1">
+        <div className="mt-5 flex flex-col gap-1">
+          <button
+            onClick={onNewTerminal}
+            className="press focus-ring flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[0.8125rem] font-medium transition-colors hover:bg-[var(--fill-3)]"
+          >
+            <Plus className="text-primary h-4 w-4 shrink-0" />
+            New terminal
+          </button>
+          {onQuickSwitch && (
             <button
-              onClick={onNewTerminal}
-              className="text-primary hover:text-primary/80 flex items-center gap-2 py-1 text-sm transition-colors"
+              onClick={onQuickSwitch}
+              className="press focus-ring flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[0.8125rem] font-medium transition-colors hover:bg-[var(--fill-3)]"
             >
-              <Plus className="h-3.5 w-3.5" />
-              New terminal
+              <Command className="text-primary h-4 w-4 shrink-0" />
+              Quick switch
+              <kbd className="text-muted-foreground ml-auto rounded bg-[var(--fill-2)] px-1.5 py-0.5 text-[0.625rem] font-medium">
+                ⌘K
+              </kbd>
             </button>
-            {onQuickSwitch && (
-              <button
-                onClick={onQuickSwitch}
-                className="text-primary hover:text-primary/80 flex items-center gap-2 py-1 text-sm transition-colors"
-              >
-                <Command className="h-3.5 w-3.5" />
-                Quick switch
-                <span className="text-foreground-subtle font-mono text-[10px]">
-                  ⌘K
-                </span>
-              </button>
-            )}
-          </div>
+          )}
         </div>
 
         {recent.length > 0 && (
-          <div className="border-border mt-5 border-t pt-4">
-            <span className="tech-label">terminals</span>
-            <div className="mt-2 flex flex-col items-stretch">
+          <div className="mt-5">
+            <span className="ui-label px-2.5">Recent</span>
+            <div className="mt-1.5 flex flex-col">
               {recent.map((terminal) => (
                 <button
                   key={terminal.id}
                   onClick={() => onSelectTerminal(terminal.tmux_name)}
-                  className="hover:bg-accent/50 group flex items-center gap-2 px-1 py-1.5 text-left transition-colors"
+                  className="press focus-ring group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-[var(--fill-3)]"
                 >
                   <TerminalIcon
                     className={cn(
-                      "h-3 w-3 shrink-0",
+                      "h-3.5 w-3.5 shrink-0",
                       terminal.alive
                         ? "text-muted-foreground"
-                        : "text-foreground-subtle"
+                        : "text-muted-foreground/45"
                     )}
                   />
-                  <span className="truncate text-sm">{terminal.name}</span>
-                  <span className="text-foreground-subtle ml-auto shrink-0 font-mono text-[10px] tracking-[0.1em] uppercase">
-                    {terminal.alive ? terminal.agent_type || "shell" : "stopped"}
+                  <span className="truncate text-[0.8125rem]">
+                    {terminal.name}
+                  </span>
+                  <span className="text-muted-foreground ml-auto shrink-0 text-[0.6875rem]">
+                    {terminal.alive
+                      ? terminal.agent_type || "shell"
+                      : "stopped"}
                   </span>
                 </button>
               ))}

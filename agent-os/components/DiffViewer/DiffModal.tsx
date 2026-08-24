@@ -29,18 +29,18 @@ export function DiffModal({
   return (
     <div className="bg-background fixed inset-0 z-50 flex flex-col">
       {/* Header */}
-      <div className="bg-surface border-border flex h-10 shrink-0 items-stretch justify-between border-b">
+      <div className="glass glass-edge-bottom relative z-10 flex h-10 shrink-0 items-stretch justify-between">
         <button
           onClick={onClose}
-          className="text-muted-foreground hover:bg-accent hover:text-foreground flex w-8 shrink-0 items-center justify-center border-r border-border transition-colors"
+          className="text-muted-foreground hover:bg-[var(--fill-3)] hover:text-foreground flex w-8 shrink-0 items-center justify-center border-r border-[var(--fill-2)] transition-colors"
           title="Back"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
 
         <div className="flex min-w-0 flex-1 flex-col justify-center px-3">
-          <p className="tech-meta truncate text-foreground">{displayName}</p>
-          <span className="tech-label">{summary}</span>
+          <p className="ui-meta truncate text-foreground">{displayName}</p>
+          <span className="ui-label">{summary}</span>
         </div>
 
         {/* Stage/Unstage button */}
@@ -50,7 +50,7 @@ export function DiffModal({
               variant={isStaged ? "outline" : "default"}
               size="sm"
               onClick={isStaged ? onUnstage : onStage}
-              className="font-mono text-[10px] tracking-[0.12em] uppercase"
+              className=""
             >
               {isStaged ? (
                 <>
@@ -69,7 +69,7 @@ export function DiffModal({
 
         <button
           onClick={onClose}
-          className="text-muted-foreground hover:bg-accent hover:text-foreground flex w-8 shrink-0 items-center justify-center border-l border-border transition-colors md:hidden"
+          className="text-muted-foreground hover:bg-[var(--fill-3)] hover:text-foreground flex w-8 shrink-0 items-center justify-center border-l border-[var(--fill-2)] transition-colors md:hidden"
           title="Close"
         >
           <X className="h-4 w-4" />
@@ -86,14 +86,14 @@ export function DiffModal({
           />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2">
-            <p className="tech-label">diff.empty</p>
-            <p className="tech-meta">no changes to display</p>
+            <p className="ui-label">Nothing to show</p>
+            <p className="ui-meta">no changes to display</p>
           </div>
         )}
       </div>
 
       {/* Mobile action bar */}
-      <div className="bg-surface border-border safe-area-bottom flex items-center justify-between border-t p-3 md:hidden">
+      <div className="bg-surface border-[var(--fill-2)] safe-area-bottom flex items-center justify-between border-t p-3 md:hidden">
         <div className="flex items-center gap-4 font-mono text-xs tabular-nums">
           {parsedDiff.additions > 0 && (
             <span className="text-status-running flex items-center gap-1">
@@ -114,7 +114,7 @@ export function DiffModal({
             variant={isStaged ? "outline" : "default"}
             size="default"
             onClick={isStaged ? onUnstage : onStage}
-            className="min-h-[44px] font-mono text-[10px] tracking-[0.12em] uppercase"
+            className="min-h-[44px]"
           >
             {isStaged ? "Unstage" : "Stage"}
           </Button>
@@ -140,8 +140,8 @@ export function DiffView({ diff, fileName }: DiffViewProps) {
   if (!diff) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 p-4">
-        <p className="tech-label">diff.empty</p>
-        <p className="tech-meta">no changes to display</p>
+        <p className="ui-label">Nothing to show</p>
+        <p className="ui-meta">no changes to display</p>
       </div>
     );
   }

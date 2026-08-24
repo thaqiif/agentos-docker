@@ -41,7 +41,7 @@ export function FileTabs({
   return (
     <div
       ref={scrollRef}
-      className="scrollbar-none bg-surface border-border flex h-9 items-stretch overflow-x-auto border-b"
+      className="scrollbar-none glass glass-edge-bottom relative z-10 flex h-9 items-stretch overflow-x-auto"
     >
       {files.map((file, index) => {
         const isActive = file.path === activeFilePath;
@@ -63,19 +63,19 @@ export function FileTabs({
               }
             }}
             className={cn(
-              "group relative flex cursor-pointer items-center gap-2 whitespace-nowrap border-r border-border px-2.5 text-xs transition-colors",
+              "group relative flex cursor-pointer items-center gap-2 whitespace-nowrap border-r border-[var(--fill-2)] px-2.5 text-xs transition-colors",
               isActive
                 ? "bg-background text-foreground"
-                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                : "text-muted-foreground hover:bg-[var(--fill-4)] hover:text-foreground"
             )}
           >
             <span
               className={cn(
-                "font-mono text-[9px] tracking-wider",
-                isActive ? "text-primary" : "text-foreground-subtle"
+                "text-[0.625rem] tracking-[0.02em]",
+                isActive ? "text-primary" : "text-muted-foreground/70"
               )}
             >
-              {String(index + 1).padStart(2, "0")}
+              {index + 1}
             </span>
             <FileIcon extension={ext} />
             <span className="max-w-[140px] truncate font-mono">{fileName}</span>

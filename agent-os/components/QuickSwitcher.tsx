@@ -9,10 +9,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { Terminal, GitBranch, Check } from "lucide-react";
+import { Terminal, GitBranch, Check, Search } from "lucide-react";
 import type { TerminalRecord } from "@/lib/terminals";
 import { CodeSearchResults } from "@/components/CodeSearch/CodeSearchResults";
 import { useRipgrepAvailable } from "@/data/code-search";
+import { AEmptyState } from "@/components/a/AEmptyState";
 
 export interface QuickSwitcherProps {
   terminals: TerminalRecord[];
@@ -36,15 +37,17 @@ function ModeCell({
   return (
     <button
       onClick={onClick}
+      role="tab"
+      aria-selected={active}
       className={cn(
-        "relative flex h-full items-center border-l border-border px-3 font-mono text-[10px] tracking-[0.14em] uppercase transition-colors",
+        "press-sm focus-ring flex h-7 items-center rounded-full px-3 text-[0.75rem] font-medium",
+        "transition-colors duration-200",
         active
-          ? "text-foreground"
+          ? "bg-[var(--fill-1)] text-foreground shadow-[var(--elev-1)]"
           : "text-muted-foreground hover:text-foreground"
       )}
     >
       {label}
-      {active && <span className="bg-primary absolute inset-x-0 bottom-0 h-px" />}
     </button>
   );
 }
@@ -160,17 +163,20 @@ export function QuickSwitcher({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="gap-0 overflow-hidden border-border-strong bg-popover p-0 shadow-md sm:max-w-md"
+        className="gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-lg"
       >
         <DialogHeader className="sr-only">
           <DialogTitle>Switch Session / Search Code</DialogTitle>
         </DialogHeader>
 
         {/* Header strip */}
-        <div className="border-border flex h-9 shrink-0 items-center justify-between border-b pl-4">
-          <span className="tech-label">quick switch</span>
+        <div className="flex shrink-0 items-center justify-between gap-3 px-4 pt-3">
+          <span className="ui-label">Quick switch</span>
           {ripgrepAvailable === true && (
-            <div className="flex h-full items-stretch">
+            <div
+              role="tablist"
+              className="flex items-center gap-0.5 rounded-full bg-[var(--fill-4)] p-0.5"
+            >
               <ModeCell
                 label="Sessions"
                 active={mode === "sessions"}
@@ -186,30 +192,34 @@ export function QuickSwitcher({
         </div>
 
         {/* Search Input */}
-        <div className="border-border flex items-center gap-2.5 border-b px-4">
-          <span className="text-primary font-mono text-sm select-none">❯</span>
-          <Input
-            ref={inputRef}
-            placeholder={
-              mode === "sessions" || !ripgrepAvailable
-                ? "search terminals"
-                : "search code (min 3 chars)"
-            }
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={mode === "sessions" ? handleKeyDown : undefined}
-            className="h-11 border-0 bg-transparent px-0 font-mono text-sm shadow-none focus-visible:ring-0 md:text-sm"
-          />
+        <div className="px-4 pt-2.5 pb-2">
+          <div className="relative">
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+            <Input
+              ref={inputRef}
+              placeholder={
+                mode === "sessions" || !ripgrepAvailable
+                  ? "Search terminals"
+                  : "Search code (min 3 characters)"
+              }
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={mode === "sessions" ? handleKeyDown : undefined}
+              className="h-10 rounded-xl pl-9 text-[0.875rem] md:text-[0.875rem]"
+            />
+          </div>
         </div>
 
         {/* Content */}
-        <div className="scrollbar-thin max-h-[300px] overflow-y-auto">
+        <div className="scrollbar-thin max-h-[340px] overflow-y-auto px-2 pb-2">
           {mode === "sessions" ? (
             filteredSessions.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
-                <span className="tech-label">terminals 000</span>
-                <span className="tech-meta">No terminals found</span>
-              </div>
+              <AEmptyState
+                size="compact"
+                icon={Terminal}
+                title="No terminals found"
+                description="Nothing matches that search."
+              />
             ) : (
               filteredSessions.map((session, index) => {
                 const isSelected = index === selectedIndex;
@@ -226,38 +236,38 @@ export function QuickSwitcher({
                       onOpenChange(false);
                     }}
                     className={cn(
-                      "relative flex w-full items-center gap-3 py-2 pr-4 pl-3 text-left transition-colors",
-                      isSelected ? "bg-accent" : "hover:bg-accent/50"
+                      "press-sm relative flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left",
+                      "transition-colors duration-200",
+                      isSelected
+                        ? "bg-primary/14 text-foreground"
+                        : "hover:bg-[var(--fill-4)]"
                     )}
                   >
-                    {isSelected && (
-                      <span className="bg-primary absolute inset-y-0 left-0 w-0.5" />
-                    )}
-
-                    <span className="w-5 shrink-0 font-mono text-[9px] text-foreground-subtle">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-
-                    <Terminal className="text-muted-foreground h-3 w-3 shrink-0" />
+                    <Terminal
+                      className={cn(
+                        "h-4 w-4 shrink-0",
+                        isSelected ? "text-primary" : "text-muted-foreground"
+                      )}
+                    />
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <span className="truncate text-sm leading-tight">
+                        <span className="truncate text-[0.875rem] leading-tight tracking-[-0.006em]">
                           {session.name || "Unnamed Session"}
                         </span>
                         {isCurrent && (
-                          <Check className="text-primary h-3 w-3 shrink-0" />
+                          <Check className="text-primary h-3.5 w-3.5 shrink-0" />
                         )}
                       </div>
-                      <div className="tech-meta mt-1 flex items-center gap-1.5 truncate">
+                      <div className="text-muted-foreground mt-0.5 flex items-center gap-1.5 truncate text-[0.75rem]">
                         <span>{session.agent_type || "claude"}</span>
-                        <span className="text-foreground-subtle">·</span>
+                        <span className="text-muted-foreground/70">·</span>
                         <span className="truncate">
                           {session.working_directory?.split("/").pop() || "~"}
                         </span>
                         {time && (
                           <>
-                            <span className="text-foreground-subtle">·</span>
+                            <span className="text-muted-foreground/70">·</span>
                             <span className="shrink-0">{time}</span>
                           </>
                         )}
@@ -277,13 +287,19 @@ export function QuickSwitcher({
         </div>
 
         {/* Footer Hint */}
-        <div className="border-border flex items-center justify-between border-t px-4 py-2">
-          <span className="font-mono text-[10px] tracking-[0.12em] text-foreground-subtle uppercase">
-            ↑↓ navigate ↵ open esc close
+        <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+          <span className="text-muted-foreground/80 flex items-center gap-2 text-[0.6875rem]">
+            <kbd className="rounded bg-[var(--fill-2)] px-1.5 py-0.5">↑↓</kbd>
+            navigate
+            <kbd className="rounded bg-[var(--fill-2)] px-1.5 py-0.5">↵</kbd>
+            open
+            <kbd className="rounded bg-[var(--fill-2)] px-1.5 py-0.5">esc</kbd>
+            close
           </span>
           {mode === "sessions" && (
-            <span className="tech-label">
-              {String(filteredSessions.length).padStart(2, "0")} terminals
+            <span className="text-muted-foreground/80 text-[0.6875rem] tabular-nums">
+              {filteredSessions.length}
+              {filteredSessions.length === 1 ? " terminal" : " terminals"}
             </span>
           )}
         </div>

@@ -253,7 +253,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
         {!isMobile && showImageButton && (
           <button
             onClick={() => setShowFilePicker(true)}
-            className="bg-secondary hover:bg-accent border-border-strong absolute top-3 right-3 z-40 flex h-9 w-9 items-center justify-center rounded-lg border transition-colors"
+            className="bg-secondary hover:bg-[var(--fill-3)] border-[var(--fill-1)] absolute top-3 right-3 z-40 flex h-9 w-9 items-center justify-center rounded-lg border transition-colors"
             title="Attach file"
           >
             <Paperclip className="h-4 w-4" />
@@ -288,15 +288,14 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
         {connectionState === "connecting" && (
           <div className="bg-background absolute inset-0 z-20 flex flex-col items-center justify-center gap-3">
             <div className="bg-primary h-1.5 w-1.5 animate-status-pulse rounded-full" />
-            <span className="text-muted-foreground font-mono text-xs tracking-[0.14em] uppercase">
-              Connecting
-              <span className="animate-caret-blink">_</span>
+            <span className="type-subhead text-muted-foreground">
+              Connecting<span className="animate-caret-blink">_</span>
             </span>
           </div>
         )}
 
         {connectionState === "reconnecting" && (
-          <div className="bg-background/80 absolute top-4 left-4 flex items-center gap-2 border px-2 py-1 font-mono text-[10px] tracking-[0.14em] uppercase text-status-waiting">
+          <div className="bg-background/80 absolute top-4 left-4 flex items-center gap-2 rounded-full border border-[var(--fill-2)] px-3 py-1.5 text-[0.75rem] font-medium text-status-waiting">
             <div className="bg-status-waiting h-1.5 w-1.5 animate-pulse" />
             Reconnecting
           </div>
@@ -312,7 +311,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(
             <span className="text-foreground text-sm font-medium">
               Connection lost
             </span>
-            <span className="bg-primary text-primary-foreground rounded-lg px-4 py-2 font-mono text-[10px] tracking-[0.14em] uppercase">
+            <span className="bg-primary text-primary-foreground rounded-lg px-4 py-2">
               Tap to reconnect
             </span>
           </button>

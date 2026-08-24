@@ -13,7 +13,8 @@ import { KillAllConfirm } from "./KillAllConfirm";
 import { useTerminalListMutations } from "./hooks/useTerminalListMutations";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ProjectSectionSkeleton } from "@/components/ui/skeleton";
-import { Loader2 } from "lucide-react";
+import { FolderPlus, TriangleAlert } from "lucide-react";
+import { AEmptyState } from "@/components/a/AEmptyState";
 import type { TerminalRecord } from "@/lib/terminals";
 import type { ProjectWithRepositories } from "@/lib/projects";
 import { useViewport } from "@/hooks/useViewport";
@@ -163,21 +164,14 @@ export function TerminalList({
 
           {/* Error state */}
           {hasError && !isInitialLoading && (
-            <div className="flex flex-col items-start justify-center px-4 py-12">
-              <span className="tech-label">error</span>
-              <p className="mt-2 font-mono text-xs text-status-error">
-                failed to load terminals
-              </p>
-              <p className="mb-3 font-mono text-[11px] text-muted-foreground">
-                {terminalsError?.message || "Unknown error"}
-              </p>
-              <button
-                onClick={mutations.handleRefresh}
-                className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:text-foreground"
-              >
-                ❯ retry
-              </button>
-            </div>
+            <AEmptyState
+              size="compact"
+              tone="error"
+              icon={TriangleAlert}
+              title="Couldn't load terminals"
+              description={terminalsError?.message || "Unknown error"}
+              action={{ label: "Try again", onClick: mutations.handleRefresh }}
+            />
           )}
 
           {/* Empty state */}
@@ -185,18 +179,17 @@ export function TerminalList({
             !hasError &&
             sessions.length === 0 &&
             projects.length <= 1 && (
-              <div className="flex flex-col items-start justify-center px-4 py-12">
-                <span className="tech-label">sessions 000</span>
-                <p className="mt-2 mb-3 text-xs text-muted-foreground">
-                  Create a project to organize your sessions
-                </p>
-                <button
-                  onClick={() => setShowNewProjectDialog(true)}
-                  className="font-mono text-[10px] uppercase tracking-[0.12em] text-primary transition-colors hover:text-primary/80"
-                >
-                  ❯ new project
-                </button>
-              </div>
+              <AEmptyState
+                size="compact"
+                icon={FolderPlus}
+                title="No terminals yet"
+                description="Create a project to group the sessions you run in it."
+                action={{
+                  label: "New project",
+                  icon: FolderPlus,
+                  onClick: () => setShowNewProjectDialog(true),
+                }}
+              />
             )}
 
           {/* Content - Projects view */}

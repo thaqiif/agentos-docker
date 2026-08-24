@@ -34,11 +34,11 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
     return (
       <div
         className={cn(
-          "border-border bg-popover flex items-center gap-1 border-b px-3",
-          "focus-within:ring-primary focus-within:ring-1 focus-within:ring-inset"
+          "glass glass-edge-bottom relative z-20 flex items-center gap-1.5 px-3 py-1.5",
+          "focus-within:ring-primary/40 focus-within:ring-2 focus-within:ring-inset"
         )}
       >
-        <Search className="h-3.5 w-3.5 shrink-0 text-foreground-subtle" />
+        <Search className="text-muted-foreground/70 h-4 w-4 shrink-0" />
         <input
           ref={ref}
           type="text"
@@ -46,33 +46,33 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder="Search in terminal..."
           className={cn(
-            "placeholder:text-foreground-subtle min-w-0 flex-1 bg-transparent py-2 font-mono text-xs text-foreground",
+            "placeholder:text-muted-foreground/70 text-foreground min-w-0 flex-1 bg-transparent py-1.5 text-[0.8125rem]",
             "focus:outline-none"
           )}
         />
         {matchTotal !== undefined && (
-          <span className="shrink-0 font-mono text-[10px] tracking-[0.08em] text-muted-foreground">
+          <span className="text-muted-foreground shrink-0 text-[0.6875rem] tabular-nums">
             {matchCount ?? 0}/{matchTotal}
           </span>
         )}
-        <div className="flex items-stretch">
+        <div className="flex items-center gap-0.5">
           <button
             onClick={onFindPrevious}
-            className="text-muted-foreground hover:bg-accent/50 hover:text-foreground p-2 transition-colors"
+            className="press focus-ring text-muted-foreground hover:text-foreground flex size-7 items-center justify-center rounded-full transition-colors hover:bg-[var(--fill-3)]"
             title="Previous (Shift+Enter)"
           >
             <ChevronUp className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={onFindNext}
-            className="text-muted-foreground hover:bg-accent/50 hover:text-foreground p-2 transition-colors"
+            className="press focus-ring text-muted-foreground hover:text-foreground flex size-7 items-center justify-center rounded-full transition-colors hover:bg-[var(--fill-3)]"
             title="Next (Enter)"
           >
             <ChevronDown className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={onClose}
-            className="text-muted-foreground hover:bg-accent/50 hover:text-foreground p-2 transition-colors"
+            className="press focus-ring text-muted-foreground hover:text-foreground flex size-7 items-center justify-center rounded-full transition-colors hover:bg-[var(--fill-3)]"
             title="Close (Esc)"
           >
             <X className="h-3.5 w-3.5" />

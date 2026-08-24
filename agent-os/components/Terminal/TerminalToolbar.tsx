@@ -151,26 +151,28 @@ function SnippetsModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
+      className="animate-in fade-in-0 fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-[3px] duration-200"
       onClick={onClose}
     >
       <div
-        className="bg-popover border-border-strong flex max-h-[70vh] w-full flex-col border"
+        className="glass-thick glass-float animate-in slide-in-from-bottom flex max-h-[70vh] w-full flex-col rounded-t-2xl duration-[400ms] ease-[cubic-bezier(0.32,0.72,0,1)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="border-border flex items-center justify-between border-b px-4 py-2.5">
-          <span className="tech-label">snippets</span>
+        <div className="flex items-center justify-between px-4 pt-3 pb-2">
+          <h2 className="text-[0.9375rem] font-semibold tracking-[-0.014em]">
+            Snippets
+          </h2>
           <div className="flex items-center">
             <button
               onClick={() => setIsAdding(!isAdding)}
-              className="text-muted-foreground hover:bg-accent/50 hover:text-foreground p-1.5 transition-colors"
+              className="press focus-ring text-muted-foreground hover:text-foreground flex size-8 items-center justify-center rounded-full transition-colors hover:bg-[var(--fill-3)]"
             >
               <Plus className="h-4 w-4" />
             </button>
             <button
               onClick={onClose}
-              className="text-muted-foreground hover:bg-accent/50 hover:text-foreground p-1.5 transition-colors"
+              className="press focus-ring text-muted-foreground hover:text-foreground flex size-8 items-center justify-center rounded-full transition-colors hover:bg-[var(--fill-3)]"
             >
               <X className="h-4 w-4" />
             </button>
@@ -179,24 +181,24 @@ function SnippetsModal({
 
         {/* Add new snippet form */}
         {isAdding && (
-          <div className="border-border bg-surface border-b px-4 py-3">
+          <div className="px-4 pb-3">
             <input
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Snippet name..."
-              className="border-border bg-background placeholder:text-foreground-subtle focus:border-primary focus:ring-primary mb-2 w-full border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
+              className="placeholder:text-muted-foreground/70 focus-visible:border-ring/70 focus-visible:ring-ring/25 mb-2 w-full rounded-lg border border-[var(--fill-2)] bg-[var(--fill-4)] px-3 py-2 text-[0.875rem] outline-none focus-visible:ring-[3px]"
             />
             <textarea
               value={newContent}
               onChange={(e) => setNewContent(e.target.value)}
               placeholder="Command or text..."
-              className="border-border bg-background placeholder:text-foreground-subtle focus:border-primary focus:ring-primary h-20 w-full resize-none border px-3 py-2 font-mono text-xs focus:ring-1 focus:outline-none"
+              className="placeholder:text-muted-foreground/70 focus-visible:border-ring/70 focus-visible:ring-ring/25 h-20 w-full resize-none rounded-lg border border-[var(--fill-2)] bg-[var(--fill-4)] px-3 py-2 font-mono text-[0.75rem] outline-none focus-visible:ring-[3px]"
             />
             <button
               onClick={handleAdd}
               disabled={!newName.trim() || !newContent.trim()}
-              className="border-primary/60 bg-primary/10 text-primary hover:bg-primary/20 mt-2 w-full border py-2 font-mono text-[10px] tracking-[0.12em] uppercase transition-colors disabled:pointer-events-none disabled:opacity-40"
+              className="press focus-ring bg-primary text-primary-foreground hover:bg-primary/90 mt-2 w-full rounded-lg py-2.5 text-[0.8125rem] font-medium transition-colors disabled:pointer-events-none disabled:opacity-40"
             >
               Save Snippet
             </button>
@@ -204,31 +206,31 @@ function SnippetsModal({
         )}
 
         {/* Snippets list */}
-        <div className="scrollbar-thin flex-1 overflow-y-auto">
+        <div className="scrollbar-thin flex-1 overflow-y-auto px-1.5 pb-[env(safe-area-inset-bottom)]">
           {snippets.length === 0 ? (
-            <div className="text-muted-foreground px-4 py-8 text-center font-mono text-xs">
+            <div className="text-muted-foreground px-4 py-10 text-center text-[0.8125rem]">
               No snippets yet. Tap + to add one.
             </div>
           ) : (
             snippets.map((snippet) => (
               <div
                 key={snippet.id}
-                className="border-border active:bg-accent/50 flex items-center gap-2 border-b px-4 py-3"
+                className="flex items-center gap-2 rounded-lg px-3 py-2.5 transition-colors active:bg-[var(--fill-3)]"
               >
                 <button
                   onClick={() => handleInsert(snippet.content)}
                   className="min-w-0 flex-1 text-left"
                 >
-                  <div className="text-foreground truncate text-xs font-medium">
+                  <div className="text-foreground truncate text-[0.8125rem] font-medium">
                     {snippet.name}
                   </div>
-                  <div className="text-muted-foreground truncate font-mono text-xs">
+                  <div className="text-muted-foreground truncate font-mono text-[0.75rem]">
                     {snippet.content}
                   </div>
                 </button>
                 <button
                   onClick={() => handleDelete(snippet.id)}
-                  className="text-muted-foreground hover:bg-destructive/20 hover:text-destructive p-2 transition-colors"
+                  className="press focus-ring text-muted-foreground hover:text-destructive hover:bg-destructive/16 flex size-8 items-center justify-center rounded-full transition-colors"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -265,18 +267,20 @@ function PasteModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      className="animate-in fade-in-0 fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[3px] duration-200"
       onClick={onClose}
     >
       <div
-        className="bg-popover border-border-strong w-[90%] max-w-md border p-4"
+        className="glass-thick glass-float lift-in w-[90%] max-w-md rounded-2xl p-5"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
-          <span className="tech-label">paste</span>
+          <h2 className="text-[0.9375rem] font-semibold tracking-[-0.014em]">
+            Paste
+          </h2>
           <button
             onClick={onClose}
-            className="text-muted-foreground hover:bg-accent/50 hover:text-foreground p-1 transition-colors"
+            className="press focus-ring text-muted-foreground hover:text-foreground flex size-8 items-center justify-center rounded-full transition-colors hover:bg-[var(--fill-3)]"
           >
             <X className="h-4 w-4" />
           </button>
@@ -293,12 +297,12 @@ function PasteModal({
           }}
           placeholder="Tap here, then long-press to paste..."
           autoFocus
-          className="border-border bg-background placeholder:text-foreground-subtle focus:border-primary focus:ring-primary h-24 w-full resize-none border px-3 py-2 font-mono text-xs focus:ring-1 focus:outline-none"
+          className="placeholder:text-muted-foreground/70 focus-visible:border-ring/70 focus-visible:ring-ring/25 h-24 w-full resize-none rounded-lg border border-[var(--fill-2)] bg-[var(--fill-4)] px-3 py-2 font-mono text-[0.75rem] outline-none focus-visible:ring-[3px]"
         />
         <button
           onClick={handleSend}
           disabled={!text}
-          className="border-primary/60 bg-primary/10 text-primary hover:bg-primary/20 mt-3 flex w-full items-center justify-center gap-2 border py-2.5 font-mono text-[10px] tracking-[0.12em] uppercase transition-colors disabled:pointer-events-none disabled:opacity-40"
+          className="press focus-ring bg-primary text-primary-foreground hover:bg-primary/90 mt-3 flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-[0.8125rem] font-medium transition-colors disabled:pointer-events-none disabled:opacity-40"
         >
           <Send className="h-3.5 w-3.5" />
           Send to Terminal
@@ -412,7 +416,9 @@ export function TerminalToolbar({
   // 10px cancels before any key is sent so horizontal scrolling is safe.
   const KEY_REPEAT_MOVE_THRESHOLD = 10;
   const keyRepeatTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const keyRepeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const keyRepeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null
+  );
   const keyRepeatPointerRef = useRef<{
     pointerId: number;
     startX: number;
@@ -443,7 +449,11 @@ export function TerminalToolbar({
     ) => {
       cleanupKeyRepeat();
       suppressKeyRepeatClickRef.current = false;
-      keyRepeatPointerRef.current = { pointerId, startX: clientX, startY: clientY };
+      keyRepeatPointerRef.current = {
+        pointerId,
+        startX: clientX,
+        startY: clientY,
+      };
       keyRepeatStartActionRef.current = onRepeatStart ?? null;
       keyRepeatTimerRef.current = setTimeout(() => {
         keyRepeatTimerRef.current = null;
@@ -515,7 +525,7 @@ export function TerminalToolbar({
         onInsert={sendText}
       />
       <div
-        className="bg-surface border-border scrollbar-none flex items-stretch overflow-x-auto border-t"
+        className="glass glass-edge-top scrollbar-none relative z-10 flex items-stretch gap-1 overflow-x-auto px-1.5 py-1.5"
         onTouchEnd={(e) => e.stopPropagation()}
       >
         {/* Mic button */}
@@ -529,19 +539,16 @@ export function TerminalToolbar({
               toggleMic();
             }}
             className={cn(
-              "relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 transition-colors",
+              "press focus-ring relative flex h-11 min-w-[3.25rem] shrink-0 items-center justify-center rounded-lg px-2 transition-colors duration-200",
               isListening
-                ? "animate-pulse text-destructive"
-                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                ? "bg-destructive/16 text-destructive"
+                : "text-muted-foreground hover:text-foreground hover:bg-[var(--fill-3)]"
             )}
           >
             {isListening ? (
-              <MicOff className="h-4 w-4" />
+              <MicOff className="h-4 w-4 animate-pulse" />
             ) : (
               <Mic className="h-4 w-4" />
-            )}
-            {isListening && (
-              <span className="bg-destructive absolute inset-x-0 bottom-0 h-px" />
             )}
           </button>
         )}
@@ -554,7 +561,7 @@ export function TerminalToolbar({
             e.stopPropagation();
             handlePaste();
           }}
-          className="text-muted-foreground hover:bg-accent/50 hover:text-foreground relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 transition-colors"
+          className="press focus-ring text-muted-foreground hover:text-foreground relative flex h-11 min-w-[3.25rem] shrink-0 items-center justify-center rounded-lg px-2 transition-colors duration-200 hover:bg-[var(--fill-3)]"
         >
           <Clipboard className="h-4 w-4" />
         </button>
@@ -569,16 +576,13 @@ export function TerminalToolbar({
               onSelectModeChange(!selectMode);
             }}
             className={cn(
-              "relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 transition-colors",
+              "press focus-ring relative flex h-11 min-w-[3.25rem] shrink-0 items-center justify-center rounded-lg px-2 transition-colors duration-200",
               selectMode
-                ? "text-primary"
-                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                ? "bg-primary/16 text-primary"
+                : "text-muted-foreground hover:text-foreground hover:bg-[var(--fill-3)]"
             )}
           >
             <MousePointer2 className="h-4 w-4" />
-            {selectMode && (
-              <span className="bg-primary absolute inset-x-0 bottom-0 h-px" />
-            )}
           </button>
         )}
 
@@ -592,10 +596,10 @@ export function TerminalToolbar({
               handleCopy();
             }}
             className={cn(
-              "relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 transition-colors",
+              "press focus-ring relative flex h-11 min-w-[3.25rem] shrink-0 items-center justify-center rounded-lg px-2 transition-colors duration-200",
               copyFeedback
-                ? "text-status-running"
-                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                ? "bg-status-running/16 text-status-running"
+                : "text-muted-foreground hover:text-foreground hover:bg-[var(--fill-3)]"
             )}
           >
             <Copy className="h-4 w-4" />
@@ -611,7 +615,7 @@ export function TerminalToolbar({
               e.stopPropagation();
               onFilePicker();
             }}
-            className="text-muted-foreground hover:bg-accent/50 hover:text-foreground relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 transition-colors"
+            className="press focus-ring text-muted-foreground hover:text-foreground relative flex h-11 min-w-[3.25rem] shrink-0 items-center justify-center rounded-lg px-2 transition-colors duration-200 hover:bg-[var(--fill-3)]"
           >
             <Paperclip className="h-4 w-4" />
           </button>
@@ -625,7 +629,7 @@ export function TerminalToolbar({
             e.stopPropagation();
             setShowSnippetsModal(true);
           }}
-          className="text-muted-foreground hover:bg-accent/50 hover:text-foreground relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 transition-colors"
+          className="press focus-ring text-muted-foreground hover:text-foreground relative flex h-11 min-w-[3.25rem] shrink-0 items-center justify-center rounded-lg px-2 transition-colors duration-200 hover:bg-[var(--fill-3)]"
         >
           <FileText className="h-4 w-4" />
         </button>
@@ -639,16 +643,13 @@ export function TerminalToolbar({
             setShiftActive(!shiftActive);
           }}
           className={cn(
-            "relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 font-mono text-sm transition-colors",
+            "press focus-ring relative flex h-11 min-w-[3.25rem] shrink-0 items-center justify-center rounded-lg px-2 text-[0.9375rem] transition-colors duration-200",
             shiftActive
-              ? "text-primary"
-              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+              ? "bg-primary/16 text-primary"
+              : "text-muted-foreground hover:text-foreground hover:bg-[var(--fill-3)]"
           )}
         >
           ⇧
-          {shiftActive && (
-            <span className="bg-primary absolute inset-x-0 bottom-0 h-px" />
-          )}
         </button>
 
         {/* Ctrl modifier toggle - next physical key becomes a control char */}
@@ -660,16 +661,13 @@ export function TerminalToolbar({
             setCtrlActive((v) => !v);
           }}
           className={cn(
-            "relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 font-mono text-sm transition-colors",
+            "press focus-ring relative flex h-11 min-w-[3.25rem] shrink-0 items-center justify-center rounded-lg px-2 text-[0.9375rem] transition-colors duration-200",
             ctrlActive
-              ? "text-primary"
-              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+              ? "bg-primary/16 text-primary"
+              : "text-muted-foreground hover:text-foreground hover:bg-[var(--fill-3)]"
           )}
         >
           ⌃
-          {ctrlActive && (
-            <span className="bg-primary absolute inset-x-0 bottom-0 h-px" />
-          )}
         </button>
 
         {/* Alt modifier toggle - next physical key is sent ESC-prefixed (Meta) */}
@@ -681,16 +679,13 @@ export function TerminalToolbar({
             setAltActive((v) => !v);
           }}
           className={cn(
-            "relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 font-mono text-sm transition-colors",
+            "press focus-ring relative flex h-11 min-w-[3.25rem] shrink-0 items-center justify-center rounded-lg px-2 text-[0.9375rem] transition-colors duration-200",
             altActive
-              ? "text-primary"
-              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+              ? "bg-primary/16 text-primary"
+              : "text-muted-foreground hover:text-foreground hover:bg-[var(--fill-3)]"
           )}
         >
           ⌥
-          {altActive && (
-            <span className="bg-primary absolute inset-x-0 bottom-0 h-px" />
-          )}
         </button>
 
         {/* Enter key - sends \n if shift active, \r otherwise */}
@@ -699,12 +694,8 @@ export function TerminalToolbar({
           onPointerDown={(e) => {
             if (!e.isPrimary || e.button !== 0) return;
             const key = shiftActive ? "\n" : "\r";
-            startKeyRepeat(
-              key,
-              e.pointerId,
-              e.clientX,
-              e.clientY,
-              () => setShiftActive(false)
+            startKeyRepeat(key, e.pointerId, e.clientX, e.clientY, () =>
+              setShiftActive(false)
             );
           }}
           onPointerMove={(e) => {
@@ -726,7 +717,7 @@ export function TerminalToolbar({
             onKeyPress(shiftActive ? "\n" : "\r");
             setShiftActive(false);
           }}
-          className="text-muted-foreground hover:bg-accent/50 hover:text-foreground active:bg-accent active:text-foreground relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 font-mono text-sm transition-colors"
+          className="press focus-ring text-muted-foreground hover:text-foreground active:text-foreground relative flex h-11 min-w-[3.25rem] shrink-0 items-center justify-center rounded-lg px-2 text-[0.9375rem] transition-colors duration-200 hover:bg-[var(--fill-3)]"
         >
           ↵
         </button>
@@ -759,8 +750,8 @@ export function TerminalToolbar({
               onKeyPress(btn.key);
             }}
             className={cn(
-              "relative flex min-w-[3.25rem] shrink-0 items-center justify-center border-r border-border px-2 py-2.5 font-mono text-[10px] tracking-[0.12em] uppercase transition-colors",
-              "hover:bg-accent/50 active:bg-accent active:text-foreground",
+              "press focus-ring relative flex h-11 min-w-[3.25rem] shrink-0 items-center justify-center rounded-lg px-2 text-[0.75rem] font-medium transition-colors duration-200",
+              "active:text-foreground hover:bg-[var(--fill-3)]",
               btn.highlight
                 ? "text-destructive"
                 : "text-muted-foreground hover:text-foreground"

@@ -18,11 +18,11 @@ export function ScrollToBottomButton({
     <button
       onClick={onClick}
       className={cn(
-        "absolute right-6 bottom-6",
-        "flex h-8 w-8 items-center justify-center",
-        "border-border-strong bg-surface text-muted-foreground border",
-        "hover:bg-accent/50 hover:text-foreground",
-        "transition-colors animate-bounce"
+        "absolute right-6 bottom-6 z-20",
+        "flex h-9 w-9 items-center justify-center rounded-full",
+        "glass-thin glass-float text-muted-foreground",
+        "press focus-ring hover:text-foreground",
+        "lift-in transition-colors duration-200"
       )}
       title="Scroll to bottom"
     >

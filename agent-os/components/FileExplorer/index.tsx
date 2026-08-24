@@ -254,25 +254,25 @@ function DesktopFileExplorer({
         className="flex h-full min-w-0 shrink-0 flex-col"
         style={{ width: treeWidth }}
       >
-        <div className="bg-surface border-border flex h-9 shrink-0 items-center gap-2 border-b px-2.5">
-          <span className="tech-label">files</span>
-          <span className="tech-meta truncate">{workingDirectory}</span>
+        <div className="glass glass-edge-bottom relative z-10 flex h-9 shrink-0 items-center gap-2 px-2.5">
+          <span className="ui-label">Files</span>
+          <span className="ui-meta truncate">{workingDirectory}</span>
         </div>
         <div className="scrollbar-thin flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex h-32 items-center justify-center gap-2">
               <Loader2 className="text-muted-foreground h-3.5 w-3.5 animate-spin" />
-              <span className="tech-label">loading</span>
+              <span className="ui-label">Loading</span>
             </div>
           ) : error ? (
             <div className="flex h-32 flex-col items-center justify-center gap-2 p-4">
-              <span className="text-destructive tech-label">error</span>
-              <p className="tech-meta text-center">{error}</p>
+              <span className="text-destructive ui-label">Couldn't load</span>
+              <p className="ui-meta text-center">{error}</p>
             </div>
           ) : files.length === 0 ? (
             <div className="flex h-32 flex-col items-center justify-center gap-2">
-              <p className="tech-label">empty</p>
-              <p className="tech-meta">directory has no entries</p>
+              <p className="ui-label">Nothing here</p>
+              <p className="ui-meta">directory has no entries</p>
             </div>
           ) : (
             <div className="py-1">
@@ -313,7 +313,7 @@ function DesktopFileExplorer({
           {fileLoading ? (
             <div className="flex h-full items-center justify-center gap-2">
               <Loader2 className="text-muted-foreground h-3.5 w-3.5 animate-spin" />
-              <span className="tech-label">loading</span>
+              <span className="ui-label">Loading</span>
             </div>
           ) : activeFile ? (
             <FileEditor
@@ -327,9 +327,9 @@ function DesktopFileExplorer({
             />
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2">
-              <p className="tech-label">editor</p>
-              <p className="tech-meta">no file open</p>
-              <p className="tech-meta text-foreground-subtle">
+              <p className="ui-label">No file open</p>
+              <p className="ui-meta">no file open</p>
+              <p className="ui-meta text-muted-foreground/70">
                 ❯ select a file from the tree
               </p>
             </div>
@@ -383,7 +383,7 @@ function MobileFileExplorer({
     return (
       <div className="bg-background flex h-full w-full flex-col">
         {/* Header */}
-        <div className="border-border bg-surface flex h-10 shrink-0 items-center gap-1 border-b pr-1 pl-1">
+        <div className="glass glass-edge-bottom relative z-10 flex h-10 shrink-0 items-center gap-1 pr-1 pl-1">
           <Button
             variant="ghost"
             size="icon-sm"
@@ -407,7 +407,7 @@ function MobileFileExplorer({
               size="sm"
               onClick={onSave}
               disabled={saving}
-              className="font-mono text-[10px] tracking-[0.12em] uppercase"
+              className=""
             >
               <Save className="h-3 w-3" />
               save
@@ -420,7 +420,7 @@ function MobileFileExplorer({
           {fileLoading ? (
             <div className="flex h-full items-center justify-center gap-2">
               <Loader2 className="text-muted-foreground h-3.5 w-3.5 animate-spin" />
-              <span className="tech-label">loading</span>
+              <span className="ui-label">Loading</span>
             </div>
           ) : (
             <FileEditor
@@ -450,26 +450,26 @@ function MobileFileExplorer({
   // Show file tree
   return (
     <div className="bg-background flex h-full w-full flex-col">
-      <div className="bg-surface border-border flex h-12 shrink-0 flex-col justify-center gap-0.5 border-b px-3">
-        <span className="tech-label">files</span>
-        <span className="tech-meta truncate">{workingDirectory}</span>
+      <div className="glass glass-edge-bottom relative z-10 flex h-12 shrink-0 flex-col justify-center gap-0.5 px-3">
+        <span className="ui-label">Files</span>
+        <span className="ui-meta truncate">{workingDirectory}</span>
       </div>
 
       <div className="scrollbar-thin flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex h-32 items-center justify-center gap-2">
             <Loader2 className="text-muted-foreground h-3.5 w-3.5 animate-spin" />
-            <span className="tech-label">loading</span>
+            <span className="ui-label">Loading</span>
           </div>
         ) : error ? (
           <div className="flex h-32 flex-col items-center justify-center gap-2 p-4">
-            <span className="text-destructive tech-label">error</span>
-            <p className="tech-meta text-center">{error}</p>
+            <span className="text-destructive ui-label">Couldn't load</span>
+            <p className="ui-meta text-center">{error}</p>
           </div>
         ) : files.length === 0 ? (
           <div className="flex h-32 flex-col items-center justify-center gap-2">
-            <p className="tech-label">empty</p>
-            <p className="tech-meta">directory has no entries</p>
+            <p className="ui-label">Nothing here</p>
+            <p className="ui-meta">directory has no entries</p>
           </div>
         ) : (
           <div className="py-1">
@@ -515,8 +515,8 @@ function UnsavedChangesDialog({
     >
       <DialogContent showCloseButton={false}>
         <DialogHeader>
-          <span className="tech-label">file.unsaved</span>
-          <DialogTitle className="font-mono text-sm font-medium tracking-[0.16em] uppercase">
+          <span className="ui-label">Unsaved changes</span>
+          <DialogTitle className="type-title-3">
             Unsaved changes
           </DialogTitle>
           <DialogDescription>

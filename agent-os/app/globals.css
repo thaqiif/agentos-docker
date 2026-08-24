@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "../styles/themes.css";
+@import "../styles/liquid-glass.css";
 
 @plugin "@tailwindcss/typography";
 
@@ -47,8 +48,12 @@
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
-  --font-sans: var(--font-geist-sans);
-  --font-mono: "JetBrains Mono", var(--font-geist-mono);
+  /* SF Pro natively on Apple platforms — where the aesthetic is judged —
+     with Inter as the cross-platform fallback so the metrics stay close. */
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    var(--font-geist-sans), "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", var(--font-geist-mono), ui-monospace, monospace;
 
   --color-sidebar-ring: hsl(var(--sidebar-ring));
   --color-sidebar-border: hsl(var(--sidebar-border));
@@ -101,12 +106,14 @@
   --color-command-coral: #f5b6a6;
   --color-command-pink: #f3b5d2;
 
-  /* Softened edge language: 3 / 4 / 6 / 8 / 12px */
-  --radius-xs: 3px;
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
+  /* The iOS corner scale. The old 2-4px geometry read as an engineering
+     drawing; a material wants generous, continuous-feeling corners. */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 18px;
+  --radius-2xl: 24px;
 
   /* Motion temperament: quick, precise, no bounce */
   --animate-status-pulse: status-pulse 1.6s ease-in-out infinite;
@@ -164,36 +171,26 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   WORKBENCH UTILITIES — Command Code × AgentOS technical language
+   TEXT ROLES — the two voices the workbench needs beyond the type scale
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* Architectural background grid for shell/empty surfaces only.
-   Never place behind terminal or editor canvases. */
-@utility workbench-grid {
-  background-image: linear-gradient(
-      to right,
-      var(--grid-line) 1px,
-      transparent 1px
-    ),
-    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
-  background-size: 64px 64px;
-}
-
-/* Technical micro-label: //sections, indexes, metadata headers */
-@utility tech-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.16em;
+/* Section eyebrow. Apple sets these in the system face at caption size with
+   open tracking — not in mono, and not shouted. */
+@utility ui-label {
+  font-size: 0.6875rem;
+  font-weight: 590;
+  letter-spacing: 0.045em;
+  line-height: 1.2;
   text-transform: uppercase;
-  color: hsl(var(--foreground-subtle));
+  color: hsl(var(--muted-foreground));
 }
 
-/* Mono metadata text: paths, branches, ports, ids, timestamps */
-@utility tech-meta {
+/* Mono metadata. Reserved for things that are literally code: paths,
+   branches, ports, hashes, ids. Never a decorative voice. */
+@utility ui-meta {
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.02em;
+  font-size: 0.6875rem;
+  letter-spacing: 0;
   color: hsl(var(--muted-foreground));
 }
 
@@ -201,7 +198,7 @@
 .scrollbar-thin,
 .workbench-scroll {
   scrollbar-width: thin;
-  scrollbar-color: hsl(var(--border-strong)) transparent;
+  scrollbar-color: hsl(var(--foreground) / 0.22) transparent;
 }
 .scrollbar-thin::-webkit-scrollbar,
 .workbench-scroll::-webkit-scrollbar {
@@ -214,12 +211,15 @@
 }
 .scrollbar-thin::-webkit-scrollbar-thumb,
 .workbench-scroll::-webkit-scrollbar-thumb {
-  background: hsl(var(--border-strong));
-  border-radius: 4px;
+  background: hsl(var(--foreground) / 0.18);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb:hover,
 .workbench-scroll::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--foreground-subtle));
+  background: hsl(var(--foreground) / 0.32);
+  background-clip: padding-box;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -261,10 +261,9 @@ body {
     overscroll-behavior: contain;
   }
 
-  /* Touch-friendly active states */
+  /* Touch-friendly active states — feedback on contact, not on release. */
   .touch-active:active {
-    transform: scale(0.98);
-    opacity: 0.9;
+    transform: scale(0.97);
   }
 
   /* Mobile viewport height utilities */
@@ -326,7 +325,17 @@ body {
   }
 }
 
-/* Terminal background - inherits from theme */
+/* The terminal is content, never chrome: it stays fully opaque so nothing
+   blurs behind glyphs. */
 .terminal-container {
   background: hsl(var(--background));
+}
+
+/* Radix data-state transitions, on the token curves. Used by menus,
+   popovers, selects and dialogs so every overlay shares one temperament. */
+[data-state="open"].overlay-in {
+  animation: lg-lift var(--duration-base) var(--ease-out);
+}
+[data-state="closed"].overlay-in {
+  animation: lg-fade var(--duration-fast) var(--ease-out) reverse;
 }

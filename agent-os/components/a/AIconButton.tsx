@@ -73,17 +73,19 @@ export interface AIconButtonProps extends Omit<
   "aria-label"?: string;
 }
 
+/* Icon buttons are capsules — a circular target is what a finger expects,
+   and it keeps them from reading as tiny windows on a glass bar. */
 const SIZE_CLASSES: Record<AIconButtonSize, { button: string; icon: string }> =
   {
     sm: { button: "h-7 w-7", icon: "h-3.5 w-3.5" },
     md: { button: "h-8 w-8", icon: "h-4 w-4" },
-    lg: { button: "h-9 w-9", icon: "h-5 w-5" },
+    lg: { button: "h-9 w-9", icon: "h-[1.125rem] w-[1.125rem]" },
   };
 
 const VARIANT_CLASSES = {
-  ghost: "bg-transparent hover:bg-muted/60",
+  ghost: "bg-transparent hover:bg-[var(--fill-4)]",
   default: "bg-primary text-primary-foreground hover:bg-primary/90",
-  muted: "bg-muted/40 hover:bg-muted/60",
+  muted: "bg-[var(--fill-3)] hover:bg-[var(--fill-2)]",
 };
 
 const HIGHLIGHT_CLASSES: Record<AIconButtonHighlight, string> = {
@@ -134,11 +136,11 @@ export const AIconButton = forwardRef<HTMLButtonElement, AIconButtonProps>(
         disabled={disabled}
         aria-label={ariaLabel || tooltip}
         className={cn(
-          "relative p-0",
+          "relative rounded-full p-0",
           sizeClasses.button,
           active ? VARIANT_CLASSES.default : VARIANT_CLASSES[variant],
           highlight && !active && HIGHLIGHT_CLASSES[highlight],
-          disabled && "cursor-not-allowed opacity-50",
+          disabled && "cursor-not-allowed opacity-40",
           className
         )}
         {...props}
@@ -149,7 +151,7 @@ export const AIconButton = forwardRef<HTMLButtonElement, AIconButtonProps>(
         {badge !== undefined && badge > 0 && (
           <Badge
             variant="destructive"
-            className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px] font-medium"
+            className="bg-destructive text-destructive-foreground absolute -top-1 -right-1 h-4 min-w-4 justify-center px-1 text-[0.625rem] font-semibold tabular-nums"
           >
             {badge > 99 ? "99+" : badge}
           </Badge>

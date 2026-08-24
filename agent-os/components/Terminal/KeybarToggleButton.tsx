@@ -21,11 +21,11 @@ export function KeybarToggleButton({
       onClick={onToggle}
       className={cn(
         "absolute right-3 z-30",
-        "flex h-11 w-11 items-center justify-center",
-        "border-border-strong bg-surface border",
-        "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+        "flex h-11 w-11 items-center justify-center rounded-full",
+        "glass-thin glass-float",
+        "press focus-ring text-muted-foreground hover:text-foreground",
         isVisible && "text-primary",
-        "touch-manipulation transition-colors active:bg-accent",
+        "touch-manipulation transition-colors duration-200",
         // Position: moves up when keyboard is visible (accounts for safe-area + taller keys + recent commands bar)
         isVisible
           ? "bottom-[265px]"

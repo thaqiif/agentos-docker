@@ -247,22 +247,22 @@ export function GitDrawer({
     <>
       <div
         className={cn(
-          "bg-background border-border-strong flex h-full flex-col border-t transition-all duration-200 ease-out",
+          "bg-background border-[var(--fill-1)] flex h-full flex-col border-t transition-all duration-200 ease-out",
           isAnimatingIn
             ? "translate-x-0 opacity-100"
             : "translate-x-4 opacity-0"
         )}
       >
         {/* Deck header */}
-        <div className="bg-surface border-border flex h-8 shrink-0 items-stretch justify-between border-b">
+        <div className="glass glass-edge-bottom relative z-10 flex h-10 shrink-0 items-center justify-between gap-1 px-1.5">
           <div className="flex min-w-0 flex-1 items-center gap-2.5 px-3">
             <GitBranch className="text-primary h-3 w-3 shrink-0" />
-            <span className="tech-label">git</span>
-            <span className="tech-meta min-w-0 truncate">
+            <span className="ui-label">Git</span>
+            <span className="ui-meta min-w-0 truncate">
               {status?.branch || "…"}
             </span>
             {status && (status.ahead > 0 || status.behind > 0) && (
-              <span className="tech-meta hidden items-center gap-2 sm:flex">
+              <span className="ui-meta hidden items-center gap-2 sm:flex">
                 {status.ahead > 0 && (
                   <span className="flex items-center gap-0.5">
                     <ArrowUp className="h-3 w-3" />
@@ -280,7 +280,7 @@ export function GitDrawer({
             {existingPR && (
               <button
                 onClick={() => window.open(existingPR.url, "_blank")}
-                className="hover:bg-accent text-muted-foreground hover:text-foreground inline-flex shrink-0 items-center gap-1 border border-border px-1.5 py-0.5 font-mono text-[9px] tracking-[0.12em] uppercase transition-colors"
+                className="hover:bg-[var(--fill-3)] text-muted-foreground hover:text-foreground inline-flex shrink-0 items-center gap-1 rounded-full bg-[var(--fill-2)] px-2 py-0.5 text-[0.6875rem] font-medium transition-colors"
                 title={`${existingPR.title} (#${existingPR.number})`}
               >
                 <GitPullRequest className="h-3 w-3" />
@@ -293,7 +293,7 @@ export function GitDrawer({
             <button
               onClick={() => refetchStatus()}
               disabled={isRefetching || loading}
-              className="text-muted-foreground hover:bg-accent hover:text-foreground flex w-7 items-center justify-center border-l border-border transition-colors disabled:pointer-events-none disabled:opacity-30"
+              className="press focus-ring text-muted-foreground hover:text-foreground flex size-8 shrink-0 items-center justify-center rounded-full transition-colors duration-200 hover:bg-[var(--fill-3)] disabled:pointer-events-none disabled:opacity-30"
               title="Refresh"
             >
               <RefreshCw
@@ -302,7 +302,7 @@ export function GitDrawer({
             </button>
             <button
               onClick={() => onOpenChange(false)}
-              className="text-muted-foreground hover:bg-accent hover:text-foreground flex w-7 items-center justify-center border-l border-border transition-colors"
+              className="press focus-ring text-muted-foreground hover:text-foreground flex size-8 shrink-0 items-center justify-center rounded-full transition-colors duration-200 hover:bg-[var(--fill-3)]"
               title="Close git"
             >
               <X className="h-3 w-3" />
@@ -319,34 +319,34 @@ export function GitDrawer({
           ) : isError ? (
             <div className="flex flex-col items-center gap-2 py-8 text-center">
               <AlertCircle className="text-status-error h-5 w-5" />
-              <p className="tech-meta">
+              <p className="ui-meta">
                 {error?.message ?? "failed to load git status"}
               </p>
               {/* Name the directory that was checked. "Not a git repository"
                   on its own gives the user nothing to act on. */}
-              <p className="tech-meta text-foreground-subtle break-all">
+              <p className="ui-meta text-muted-foreground/70 break-all">
                 {workingDirectory}
               </p>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => refetchStatus()}
-                className="font-mono text-[10px] tracking-[0.12em] uppercase"
+                className=""
               >
                 Retry
               </Button>
             </div>
           ) : stagedFiles.length === 0 && unstagedFiles.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-8 text-center">
-              <p className="tech-label">GIT CLEAN</p>
-              <p className="tech-meta">working tree has no changes</p>
+              <p className="ui-label">Everything is committed</p>
+              <p className="ui-meta">working tree has no changes</p>
               {!isOnMainBranch && !existingPR && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => createPRMutation.mutate()}
                   disabled={createPRMutation.isPending}
-                  className="mt-2 gap-1.5 font-mono text-[10px] tracking-[0.12em] uppercase"
+                  className="mt-2 gap-1.5"
                 >
                   {createPRMutation.isPending ? (
                     <Loader2 className="h-3 w-3 animate-spin" />

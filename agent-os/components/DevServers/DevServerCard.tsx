@@ -40,7 +40,7 @@ const statusConfig: Record<
   },
   stopped: {
     glyph: "hollow",
-    color: "text-foreground-subtle",
+    color: "text-muted-foreground/70",
     label: "Stopped",
   },
   starting: {
@@ -113,14 +113,14 @@ export function DevServerCard({
       className={cn(
         "rounded-lg px-3 py-2 transition-colors",
         !isStopped && "bg-surface-raised/40",
-        "hover:bg-accent/20"
+        "hover:bg-[var(--fill-4)]"
       )}
     >
       {/* Service row */}
       <div className="flex items-center gap-2.5">
-        <span className="w-4 shrink-0 font-mono text-[9px] text-foreground-subtle">
+        <span className="w-4 shrink-0 text-[0.625rem] text-muted-foreground/70">
           {typeof index === "number"
-            ? String(index + 1).padStart(2, "0")
+            ? String(index + 1)
             : "--"}
         </span>
 
@@ -130,7 +130,7 @@ export function DevServerCard({
           {server.name}
         </span>
 
-        <span className="text-foreground-subtle flex shrink-0 items-center gap-1 font-mono text-[9px] tracking-[0.14em] uppercase">
+        <span className="text-muted-foreground/70 flex shrink-0 items-center gap-1 text-[0.625rem] font-medium tracking-[0.045em] uppercase">
           {server.type === "docker" ? (
             <Container className="h-3 w-3" />
           ) : (
@@ -142,19 +142,19 @@ export function DevServerCard({
 
       {/* Meta ledger */}
       <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-[26px]">
-        <span className="tech-meta min-w-0 truncate">$ {server.command}</span>
+        <span className="ui-meta min-w-0 truncate">$ {server.command}</span>
         {server.pid !== null && (
-          <span className="tech-meta text-foreground-subtle shrink-0">
+          <span className="ui-meta text-muted-foreground/70 shrink-0">
             pid {server.pid}
           </span>
         )}
         {server.pid === null && server.container_id && (
-          <span className="tech-meta text-foreground-subtle shrink-0">
+          <span className="ui-meta text-muted-foreground/70 shrink-0">
             ctr {server.container_id.slice(0, 12)}
           </span>
         )}
         {projectName && (
-          <span className="tech-meta text-foreground-subtle shrink-0 truncate">
+          <span className="ui-meta text-muted-foreground/70 shrink-0 truncate">
             {projectName}
           </span>
         )}
@@ -166,14 +166,14 @@ export function DevServerCard({
               target="_blank"
               rel="noopener noreferrer"
               title={`Open http://localhost:${primaryPort}`}
-              className="tech-meta text-primary hover:text-primary/80 flex shrink-0 items-center gap-1 transition-colors"
+              className="ui-meta text-primary hover:text-primary/80 flex shrink-0 items-center gap-1 transition-colors"
             >
               localhost:{primaryPort}
               <ExternalLink className="h-3 w-3" />
               open ↗
             </a>
           ) : (
-            <span className="tech-meta text-muted-foreground shrink-0">
+            <span className="ui-meta text-muted-foreground shrink-0">
               localhost:{primaryPort}
             </span>
           ))}
@@ -288,7 +288,7 @@ export function DevServerCard({
         )}
 
         {server.status === "starting" && (
-          <span className="tech-meta flex items-center gap-1.5">
+          <span className="ui-meta flex items-center gap-1.5">
             <RefreshCw className="h-3 w-3 animate-spin" />
             starting
           </span>
@@ -319,7 +319,7 @@ function ActionButton({
       disabled={disabled}
       title={label}
       className={cn(
-        "flex h-6 items-center gap-1.5 px-1.5 font-mono text-[10px] uppercase tracking-[0.12em] transition-colors",
+        "flex h-6 items-center gap-1.5 px-1.5 text-[0.75rem] font-medium transition-colors",
         "disabled:pointer-events-none disabled:opacity-50",
         variant === "primary" && "text-primary hover:text-primary/80",
         variant === "danger" &&

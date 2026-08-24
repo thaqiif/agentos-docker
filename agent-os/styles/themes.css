@@ -62,7 +62,6 @@
     --surface-raised: 0 0% 100%;
     --foreground-subtle: 0 0% 58%;
     --border-strong: 0 0% 80%;
-    --grid-line: rgb(0 0 0 / 0.045);
     --status-running: 168 60% 38%;
     --status-waiting: 28 85% 48%;
     --status-info: 217 80% 52%;
@@ -106,7 +105,6 @@
     --surface-raised: 35 25% 98%;
     --foreground-subtle: 30 15% 52%;
     --border-strong: 35 15% 76%;
-    --grid-line: hsl(30 20% 10% / 0.05);
     --status-running: 168 60% 38%;
     --status-waiting: 28 85% 48%;
     --status-info: 217 80% 52%;
@@ -146,7 +144,6 @@
     --surface-raised: 210 20% 99%;
     --foreground-subtle: 215 20% 55%;
     --border-strong: 210 16% 80%;
-    --grid-line: hsl(213 25% 15% / 0.05);
     --status-running: 168 60% 38%;
     --status-waiting: 28 85% 48%;
     --status-info: 217 80% 52%;
@@ -186,7 +183,6 @@
     --surface-raised: 210 17% 99%;
     --foreground-subtle: 210 8% 55%;
     --border-strong: 210 10% 80%;
-    --grid-line: hsl(210 20% 15% / 0.05);
     --status-running: 168 60% 38%;
     --status-waiting: 28 85% 48%;
     --status-info: 217 80% 52%;
@@ -226,7 +222,6 @@
     --surface-raised: 340 25% 98%;
     --foreground-subtle: 340 15% 55%;
     --border-strong: 340 18% 78%;
-    --grid-line: hsl(340 30% 15% / 0.05);
     --status-running: 168 60% 38%;
     --status-waiting: 28 85% 48%;
     --status-info: 217 80% 52%;
@@ -266,7 +261,6 @@
     --surface-raised: 260 30% 99%;
     --foreground-subtle: 260 12% 55%;
     --border-strong: 260 16% 79%;
-    --grid-line: hsl(260 25% 15% / 0.05);
     --status-running: 168 60% 38%;
     --status-waiting: 28 85% 48%;
     --status-info: 217 80% 52%;
@@ -306,7 +300,6 @@
     --surface-raised: 160 30% 97%;
     --foreground-subtle: 160 20% 52%;
     --border-strong: 160 18% 76%;
-    --grid-line: hsl(160 35% 12% / 0.05);
     --status-running: 168 60% 38%;
     --status-waiting: 28 85% 48%;
     --status-info: 217 80% 52%;
@@ -346,7 +339,6 @@
     --surface-raised: 20 35% 98%;
     --foreground-subtle: 20 15% 52%;
     --border-strong: 20 18% 76%;
-    --grid-line: hsl(20 30% 12% / 0.05);
     --status-running: 168 60% 38%;
     --status-waiting: 28 85% 48%;
     --status-info: 217 80% 52%;
@@ -397,7 +389,6 @@
     --surface-raised: 0 0% 6.7%;
     --foreground-subtle: 0 0% 38%;
     --border-strong: 0 0% 21%;
-    --grid-line: rgb(255 255 255 / 0.035);
     --status-running: 167 52% 79%;
     --status-waiting: 31 82% 82%;
     --status-info: 214 78% 83%;
@@ -441,7 +432,6 @@
     --surface-raised: 210 12% 14%;
     --foreground-subtle: 210 8% 42%;
     --border-strong: 210 12% 24%;
-    --grid-line: rgb(255 255 255 / 0.035);
     --status-running: 167 52% 79%;
     --status-waiting: 31 82% 82%;
     --status-info: 214 78% 83%;
@@ -481,7 +471,6 @@
     --surface-raised: 22 16% 12%;
     --foreground-subtle: 36 12% 42%;
     --border-strong: 22 12% 26%;
-    --grid-line: rgb(255 255 255 / 0.035);
     --status-running: 167 52% 79%;
     --status-waiting: 31 82% 82%;
     --status-info: 214 78% 83%;
@@ -521,7 +510,6 @@
     --surface-raised: 215 23% 13%;
     --foreground-subtle: 213 20% 42%;
     --border-strong: 215 18% 24%;
-    --grid-line: rgb(255 255 255 / 0.035);
     --status-running: 167 52% 79%;
     --status-waiting: 31 82% 82%;
     --status-info: 214 78% 83%;
@@ -561,7 +549,6 @@
     --surface-raised: 0 0% 12.55%;
     --foreground-subtle: 0 0% 42%;
     --border-strong: 0 0% 24%;
-    --grid-line: rgb(255 255 255 / 0.035);
     --status-running: 167 52% 79%;
     --status-waiting: 31 82% 82%;
     --status-info: 214 78% 83%;
@@ -601,7 +588,6 @@
     --surface-raised: 225 35% 11%;
     --foreground-subtle: 220 12% 45%;
     --border-strong: 220 16% 26%;
-    --grid-line: rgb(255 255 255 / 0.035);
     --status-running: 167 52% 79%;
     --status-waiting: 31 82% 82%;
     --status-info: 214 78% 83%;
@@ -641,7 +627,6 @@
     --surface-raised: 150 20% 11%;
     --foreground-subtle: 150 10% 42%;
     --border-strong: 150 15% 24%;
-    --grid-line: rgb(255 255 255 / 0.035);
     --status-running: 167 52% 79%;
     --status-waiting: 31 82% 82%;
     --status-info: 214 78% 83%;
@@ -681,7 +666,6 @@
     --surface-raised: 270 35% 12%;
     --foreground-subtle: 270 10% 45%;
     --border-strong: 270 25% 26%;
-    --grid-line: rgb(255 255 255 / 0.035);
     --status-running: 167 52% 79%;
     --status-waiting: 31 82% 82%;
     --status-info: 214 78% 83%;
@@ -721,7 +705,6 @@
     --surface-raised: 195 40% 12%;
     --foreground-subtle: 195 15% 42%;
     --border-strong: 195 28% 26%;
-    --grid-line: rgb(255 255 255 / 0.035);
     --status-running: 167 52% 79%;
     --status-waiting: 31 82% 82%;
     --status-info: 214 78% 83%;
@@ -761,7 +744,6 @@
     --surface-raised: 30 18% 14%;
     --foreground-subtle: 30 14% 42%;
     --border-strong: 30 16% 26%;
-    --grid-line: rgb(255 255 255 / 0.035);
     --status-running: 167 52% 79%;
     --status-waiting: 31 82% 82%;
     --status-info: 214 78% 83%;

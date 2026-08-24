@@ -109,14 +109,14 @@ export function ProjectsSection({
   };
 
   return (
-    <div className="divide-border divide-y">
+    <div className="flex flex-col gap-1">
       {projects.map((project) => {
         const projectSessions = sessionsByProject[project.id] || [];
         const runningServers = getProjectRunningServers(project.id);
         const projectDevServers = getProjectDevServers(project.id);
 
         return (
-          <div key={project.id} className="space-y-1 py-2 first:pt-1">
+          <div key={project.id} className="flex flex-col gap-0.5">
             {/* Project header */}
             <ProjectCard
               project={project}
@@ -151,10 +151,10 @@ export function ProjectsSection({
 
             {/* Project contents when expanded */}
             {project.expanded && (
-              <div className="ml-3 space-y-1 pb-1.5 pl-1">
+              <div className="ml-4 flex flex-col gap-0.5 border-l border-[var(--fill-3)] pb-1 pl-1.5">
                 {/* Dev servers for this project */}
                 {projectDevServers.length > 0 && (
-                  <div className="space-y-px pb-0.5">
+                  <div className="flex flex-col gap-0.5 pb-0.5">
                     {projectDevServers.map((server) => (
                       <DevServerCard
                         key={server.id}
@@ -180,7 +180,9 @@ export function ProjectsSection({
                 {/* Project sessions */}
                 {projectSessions.length === 0 &&
                 projectDevServers.length === 0 ? (
-                  <p className="tech-label px-2 py-2">terminals 000</p>
+                  <p className="text-muted-foreground px-2.5 py-1.5 text-[0.75rem]">
+                    No terminals yet
+                  </p>
                 ) : projectSessions.length === 0 ? null : (
                   projectSessions.map((session) => (
                     <div key={session.id} className="min-w-0">

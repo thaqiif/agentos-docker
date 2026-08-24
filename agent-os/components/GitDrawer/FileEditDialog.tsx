@@ -245,16 +245,14 @@ export function FileEditDialog({
       onClick={handleClose}
     >
       <div
-        className="bg-background border-border-strong m-auto flex h-[90vh] w-[95vw] max-w-7xl overflow-hidden rounded-xl border"
+        className="bg-background m-auto flex h-[90vh] w-[95vw] max-w-7xl overflow-hidden rounded-2xl shadow-[var(--elev-4)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Left sidebar - file list grouped by repo */}
-        <div className="border-border flex w-[280px] flex-shrink-0 flex-col border-r">
-          <div className="bg-surface border-border flex h-8 shrink-0 items-center gap-2 border-b px-3">
-            <span>01</span>
-            <span className="tech-label">
-              files.changed {String(allFiles.length).padStart(2, "0")}
-            </span>
+        <div className="border-[var(--fill-2)] flex w-[280px] flex-shrink-0 flex-col border-r">
+          <div className="glass glass-edge-bottom relative z-10 flex h-10 shrink-0 items-center gap-2 px-3">
+            <span className="ui-label">Changed files</span>
+            <span className="ui-meta ml-auto tabular-nums">{allFiles.length}</span>
           </div>
           <div className="scrollbar-thin flex-1 overflow-y-auto">
             {(() => {
@@ -270,7 +268,7 @@ export function FileEditDialog({
               return Array.from(grouped.entries()).map(([repoKey, files]) => (
                 <div key={repoKey || "default"}>
                   {(repoKey || repoName) && (
-                    <div className="bg-surface tech-meta border-border border-b px-3 py-1">
+                    <div className="bg-surface ui-meta border-b border-[var(--fill-2)] px-3 py-1">
                       {repoKey || repoName}
                     </div>
                   )}
@@ -284,8 +282,8 @@ export function FileEditDialog({
                         key={`${"repoPath" in f ? f.repoPath : ""}-${f.path}`}
                         onClick={() => onFileSelect(f)}
                         className={cn(
-                          "hover:bg-accent/50 relative flex w-full items-center gap-2 px-3 py-1.5 text-left transition-colors",
-                          isSelected && "bg-accent"
+                          "hover:bg-[var(--fill-4)] relative flex w-full items-center gap-2 px-3 py-1.5 text-left transition-colors",
+                          isSelected && "bg-[var(--fill-3)]"
                         )}
                       >
                         {isSelected && (
@@ -293,7 +291,7 @@ export function FileEditDialog({
                         )}
                         <span
                           className={cn(
-                            "flex h-4 w-4 shrink-0 items-center justify-center font-mono text-[10px] font-medium",
+                            "flex h-4 w-4 shrink-0 items-center justify-center text-[0.6875rem] font-medium",
                             getStatusColor(f.status)
                           )}
                         >
@@ -303,7 +301,7 @@ export function FileEditDialog({
                           <div className="truncate text-xs text-foreground">
                             {f.path.split("/").pop()}
                           </div>
-                          <div className="tech-meta truncate">
+                          <div className="ui-meta truncate">
                             {f.path.includes("/")
                               ? f.path.slice(0, f.path.lastIndexOf("/"))
                               : f.status}
@@ -321,13 +319,13 @@ export function FileEditDialog({
         {/* Right side - editor */}
         <div className="flex min-w-0 flex-1 flex-col">
           {/* Header */}
-          <div className="bg-surface border-border flex h-10 shrink-0 items-center justify-between gap-2 border-b px-3">
+          <div className="glass glass-edge-bottom relative z-10 flex h-10 shrink-0 items-center justify-between gap-2 px-3">
             <div className="flex min-w-0 items-center gap-2.5">
-              <span className="text-primary shrink-0 font-mono text-[9px]">
+              <span className="text-primary shrink-0 text-[0.625rem]">
                 02
               </span>
-              <span className="tech-label shrink-0">content</span>
-              <span className="tech-meta min-w-0 truncate">{fileName}</span>
+              <span className="ui-label shrink-0">Content</span>
+              <span className="ui-meta min-w-0 truncate">{fileName}</span>
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(file.path);
@@ -344,7 +342,7 @@ export function FileEditDialog({
                 )}
               </button>
               {hasChanges && (
-                <span className="bg-status-waiting/10 text-status-waiting shrink-0 px-1.5 py-0.5 font-mono text-[9px] tracking-[0.12em] uppercase">
+                <span className="bg-status-waiting/10 text-status-waiting shrink-0 px-1.5 py-0.5 text-[0.625rem] font-medium tracking-[0.045em] uppercase">
                   Unsaved
                 </span>
               )}
@@ -354,7 +352,7 @@ export function FileEditDialog({
                 variant="outline"
                 size="sm"
                 onClick={() => (file.staged ? onUnstage(file) : onStage(file))}
-                className="font-mono text-[10px] tracking-[0.12em] uppercase"
+                className=""
               >
                 {file.staged ? (
                   <>
@@ -372,7 +370,7 @@ export function FileEditDialog({
                 size="sm"
                 onClick={handleSave}
                 disabled={!hasChanges || saving}
-                className="font-mono text-[10px] tracking-[0.12em] uppercase"
+                className=""
               >
                 {saving ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -390,7 +388,7 @@ export function FileEditDialog({
           </div>
 
           {error && (
-            <div className="bg-status-error/10 text-status-error tech-meta border-status-error/20 border-b px-4 py-1.5">
+            <div className="bg-status-error/10 text-status-error ui-meta border-status-error/20 border-b px-4 py-1.5">
               {error}
             </div>
           )}

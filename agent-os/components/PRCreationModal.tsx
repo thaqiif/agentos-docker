@@ -119,14 +119,14 @@ export function PRCreationModal({
 
         <div className="flex flex-1 flex-col items-center justify-center gap-2 p-4">
           <GitPullRequest className="text-primary mb-2 h-6 w-6" />
-          <p className="tech-label">pr.exists</p>
-          <p className="tech-meta text-center">
+          <p className="text-[0.8125rem] font-medium text-foreground">Pull request open</p>
+          <p className="ui-meta text-center">
             #{prData.existingPR.number} — {prData.existingPR.title}
           </p>
           <Button
             variant="default"
             onClick={() => window.open(prData.existingPR!.url, "_blank")}
-            className="mt-3 min-h-[44px] font-mono text-[10px] tracking-[0.12em] uppercase"
+            className="mt-3 min-h-[44px]"
           >
             <ExternalLink className="mr-2 h-3.5 w-3.5" />
             View Pull Request
@@ -146,12 +146,12 @@ export function PRCreationModal({
         </div>
       ) : error && !prData ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 p-4">
-          <p className="tech-label text-status-error">pr.error</p>
-          <p className="text-status-error tech-meta">{error}</p>
+          <p className="text-[0.8125rem] font-medium text-status-error">Couldn't create the pull request</p>
+          <p className="text-status-error ui-meta">{error}</p>
           <Button
             variant="outline"
             onClick={onClose}
-            className="font-mono text-[10px] tracking-[0.12em] uppercase"
+            className=""
           >
             Close
           </Button>
@@ -165,9 +165,9 @@ export function PRCreationModal({
                 <span className="shrink-0">
                   01
                 </span>
-                <span className="tech-label">branch</span>
+                <span className="text-[0.8125rem] font-medium text-muted-foreground">Branch</span>
               </div>
-              <div className="tech-meta flex items-center gap-2">
+              <div className="ui-meta flex items-center gap-2">
                 <GitBranch className="h-3.5 w-3.5" />
                 <span>{prData?.branch}</span>
                 <ArrowRight className="h-3 w-3" />
@@ -181,7 +181,7 @@ export function PRCreationModal({
                 <span className="shrink-0">
                   02
                 </span>
-                <label className="tech-label">title</label>
+                <label className="text-[0.8125rem] font-medium text-foreground">title</label>
               </div>
               <input
                 type="text"
@@ -202,7 +202,7 @@ export function PRCreationModal({
                 <span className="shrink-0">
                   03
                 </span>
-                <label className="tech-label">description</label>
+                <label className="text-[0.8125rem] font-medium text-foreground">description</label>
               </div>
               <textarea
                 value={body}
@@ -224,14 +224,14 @@ export function PRCreationModal({
                   <span className="shrink-0">
                     04
                   </span>
-                  <span className="tech-label">
-                    commits {String(prData.commits.length).padStart(2, "0")}
+                  <span className="ui-label">
+                    Commits <span className="tabular-nums">{prData.commits.length}</span>
                   </span>
                 </div>
-                <div className="divide-border divide-y">
+                <div className="divide-y divide-[var(--fill-3)]">
                   {prData.commits.slice(0, 10).map((commit) => (
                     <div key={commit.hash} className="py-1.5 text-xs">
-                      <code className="text-primary/80 mr-2 font-mono text-[10px]">
+                      <code className="text-primary/80 mr-2 text-[0.6875rem]">
                         {commit.hash.slice(0, 7)}
                       </code>
                       <span className="text-muted-foreground">
@@ -240,7 +240,7 @@ export function PRCreationModal({
                     </div>
                   ))}
                   {prData.commits.length > 10 && (
-                    <div className="tech-meta py-1.5">
+                    <div className="ui-meta py-1.5">
                       +{prData.commits.length - 10} more commits
                     </div>
                   )}
@@ -250,17 +250,17 @@ export function PRCreationModal({
 
             {/* Error message */}
             {error && (
-              <p className="text-status-error tech-meta">{error}</p>
+              <p className="text-status-error ui-meta">{error}</p>
             )}
           </div>
 
           {/* Footer */}
-          <div className="bg-surface border-border safe-area-bottom border-t p-4">
+          <div className="bg-surface border-[var(--fill-2)] safe-area-bottom border-t p-4">
             <Button
               variant="default"
               onClick={handleCreate}
               disabled={creating || !title.trim()}
-              className="min-h-[44px] w-full font-mono text-[10px] tracking-[0.12em] uppercase"
+              className="min-h-[44px] w-full"
             >
               {creating ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -280,20 +280,20 @@ export function PRCreationModal({
 
 function Header({ onClose }: { onClose: () => void }) {
   return (
-    <div className="bg-surface border-border flex h-10 shrink-0 items-stretch justify-between border-b">
+    <div className="glass glass-edge-bottom relative z-10 flex h-10 shrink-0 items-stretch justify-between">
       <button
         onClick={onClose}
-        className="text-muted-foreground hover:bg-accent hover:text-foreground flex w-8 shrink-0 items-center justify-center border-r border-border transition-colors"
+        className="text-muted-foreground hover:bg-[var(--fill-3)] hover:text-foreground flex w-8 shrink-0 items-center justify-center border-r border-[var(--fill-2)] transition-colors"
         title="Back"
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
       <div className="flex min-w-0 flex-1 items-center px-3">
-        <span className="tech-label">pr.create</span>
+        <span className="type-headline">New pull request</span>
       </div>
       <button
         onClick={onClose}
-        className="text-muted-foreground hover:bg-accent hover:text-foreground flex w-8 shrink-0 items-center justify-center border-l border-border transition-colors md:hidden"
+        className="text-muted-foreground hover:bg-[var(--fill-3)] hover:text-foreground flex w-8 shrink-0 items-center justify-center border-l border-[var(--fill-2)] transition-colors md:hidden"
         title="Close"
       >
         <X className="h-4 w-4" />

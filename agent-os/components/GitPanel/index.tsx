@@ -278,12 +278,12 @@ export function GitPanel({
         />
         <div className="flex flex-1 flex-col items-center justify-center gap-2 p-4">
           <AlertCircle className="text-status-error h-5 w-5" />
-          <p className="tech-meta text-center">
+          <p className="ui-meta text-center">
             {error?.message ?? "failed to load git status"}
           </p>
           {/* Name the directory that was checked. "Not a git repository" on
               its own gives the user nothing to act on. */}
-          <p className="tech-meta text-foreground-subtle break-all text-center">
+          <p className="ui-meta text-muted-foreground/70 break-all text-center">
             {workingDirectory}
           </p>
         </div>
@@ -376,8 +376,8 @@ export function GitPanel({
           <div className="scrollbar-thin flex-1 overflow-y-auto">
             {!hasChanges ? (
               <div className="flex h-32 flex-col items-center justify-center gap-2">
-                <p className="tech-label">GIT CLEAN</p>
-                <p className="tech-meta">working tree has no changes</p>
+                <p className="ui-label">Everything is committed</p>
+                <p className="ui-meta">working tree has no changes</p>
                 {status.branch !== "main" &&
                   status.branch !== "master" &&
                   !existingPR && (
@@ -386,7 +386,7 @@ export function GitPanel({
                       size="sm"
                       onClick={() => createPRMutation.mutate()}
                       disabled={createPRMutation.isPending}
-                      className="mt-2 gap-1.5 font-mono text-[10px] tracking-[0.12em] uppercase"
+                      className="mt-2 gap-1.5"
                     >
                       {createPRMutation.isPending ? (
                         <Loader2 className="h-3 w-3 animate-spin" />
@@ -474,9 +474,9 @@ export function GitPanel({
           ) : selectedFile ? (
             <>
               {/* Diff header with stage/unstage */}
-              <div className="bg-surface border-border flex items-center gap-2 border-b px-3 py-2">
+              <div className="glass glass-edge-bottom relative z-10 flex items-center gap-2 px-3 py-2">
                 <FileCode className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
-                <span className="tech-meta min-w-0 flex-1 truncate">
+                <span className="ui-meta min-w-0 flex-1 truncate">
                   {selectedFile.file.path}
                 </span>
                 <Button
@@ -487,7 +487,7 @@ export function GitPanel({
                       ? handleUnstage(selectedFile.file)
                       : handleStage(selectedFile.file)
                   }
-                  className="font-mono text-[10px] tracking-[0.12em] uppercase"
+                  className=""
                 >
                   {selectedFile.file.staged ? (
                     <>
@@ -513,8 +513,8 @@ export function GitPanel({
             </>
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center gap-2">
-              <p className="tech-label">diff.idle</p>
-              <p className="tech-meta">select a file to view diff</p>
+              <p className="ui-label">Nothing selected</p>
+              <p className="ui-meta">select a file to view diff</p>
             </div>
           )}
         </div>
@@ -609,12 +609,12 @@ function MobileGitPanel({
     return (
       <div className="bg-background flex h-full w-full flex-col">
         {/* Header */}
-        <div className="bg-surface border-border flex items-center gap-2 border-b px-2 py-2">
+        <div className="glass glass-edge-bottom relative z-10 flex items-center gap-2 px-2 py-2">
           <Button variant="ghost" size="icon-sm" onClick={onBack}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="min-w-0 flex-1">
-            <p className="tech-meta truncate">{selectedFile.file.path}</p>
+            <p className="ui-meta truncate">{selectedFile.file.path}</p>
           </div>
           <Button
             variant={selectedFile.file.staged ? "outline" : "default"}
@@ -624,7 +624,7 @@ function MobileGitPanel({
                 ? onUnstage(selectedFile.file)
                 : onStage(selectedFile.file)
             }
-            className="font-mono text-[10px] tracking-[0.12em] uppercase"
+            className=""
           >
             {selectedFile.file.staged ? "Unstage" : "Stage"}
           </Button>
@@ -663,8 +663,8 @@ function MobileGitPanel({
       <div className="scrollbar-thin flex-1 overflow-y-auto">
         {!hasChanges ? (
           <div className="flex h-32 flex-col items-center justify-center gap-2">
-            <p className="tech-label">GIT CLEAN</p>
-            <p className="tech-meta">working tree has no changes</p>
+            <p className="ui-label">Everything is committed</p>
+            <p className="ui-meta">working tree has no changes</p>
             {status.branch !== "main" &&
               status.branch !== "master" &&
               !existingPR && (
@@ -673,7 +673,7 @@ function MobileGitPanel({
                   size="sm"
                   onClick={onCreatePR}
                   disabled={creatingPR}
-                  className="mt-2 gap-1.5 font-mono text-[10px] tracking-[0.12em] uppercase"
+                  className="mt-2 gap-1.5"
                 >
                   {creatingPR ? (
                     <Loader2 className="h-3 w-3 animate-spin" />
@@ -737,8 +737,8 @@ function MobileGitPanel({
 
       {/* Mobile hint */}
       {hasChanges && status.staged.length === 0 && (
-        <div className="border-border border-t px-3 py-2">
-          <p className="tech-meta text-center">
+        <div className="border-t border-[var(--fill-2)] px-3 py-2">
+          <p className="ui-meta text-center">
             swipe right to stage · left to unstage
           </p>
         </div>
@@ -777,15 +777,15 @@ function Header({
   existingPR,
 }: HeaderProps) {
   return (
-    <div className="bg-surface border-border flex h-8 shrink-0 items-stretch justify-between border-b">
+    <div className="glass glass-edge-bottom relative z-10 flex h-10 shrink-0 items-center justify-between gap-1 px-1.5">
       <div className="flex min-w-0 flex-1 items-center gap-2.5 px-3">
         <GitBranch className="text-primary h-3 w-3 shrink-0" />
-        <span className="tech-label">git</span>
-        <span className="tech-meta min-w-0 truncate">
+        <span className="ui-label">Git</span>
+        <span className="ui-meta min-w-0 truncate">
           {branch || "no branch"}
         </span>
         {(ahead > 0 || behind > 0) && (
-          <span className="tech-meta hidden items-center gap-2 sm:flex">
+          <span className="ui-meta hidden items-center gap-2 sm:flex">
             {ahead > 0 && (
               <span className="text-status-running flex items-center gap-0.5">
                 <ArrowUp className="h-3 w-3" />
@@ -803,7 +803,7 @@ function Header({
         {existingPR && (
           <button
             onClick={() => window.open(existingPR.url, "_blank")}
-            className="hover:bg-accent text-muted-foreground hover:text-foreground inline-flex shrink-0 items-center gap-1 border border-border px-1.5 py-0.5 font-mono text-[9px] tracking-[0.12em] uppercase transition-colors"
+            className="hover:bg-[var(--fill-3)] text-muted-foreground hover:text-foreground inline-flex shrink-0 items-center gap-1 rounded-full bg-[var(--fill-2)] px-2 py-0.5 text-[0.6875rem] font-medium transition-colors"
             title={`${existingPR.title} (#${existingPR.number})`}
           >
             <GitPullRequest className="h-3 w-3" />
@@ -815,7 +815,7 @@ function Header({
       <button
         onClick={onRefresh}
         disabled={refreshing}
-        className="text-muted-foreground hover:bg-accent hover:text-foreground flex w-7 shrink-0 items-center justify-center border-l border-border transition-colors disabled:pointer-events-none disabled:opacity-30"
+        className="press focus-ring text-muted-foreground hover:text-foreground flex size-8 shrink-0 items-center justify-center rounded-full transition-colors duration-200 hover:bg-[var(--fill-3)] disabled:pointer-events-none disabled:opacity-30"
         title="Refresh"
       >
         <RefreshCw className={cn("h-3 w-3", refreshing && "animate-spin")} />

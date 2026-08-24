@@ -16,7 +16,7 @@ export const ShimmeringLoader = forwardRef<
   return (
     <div
       ref={ref}
-      className={cn("bg-accent h-3 animate-pulse", className)}
+      className={cn("shimmer h-3 rounded-full", className)}
       style={{
         animationFillMode: "backwards",
         animationDelay: `${delayIndex * animationDelay}ms`,
@@ -48,9 +48,9 @@ interface TerminalCardSkeletonProps {
 
 export function TerminalCardSkeleton({ count = 3 }: TerminalCardSkeletonProps) {
   return (
-    <div className="divide-border divide-y">
+    <div className="flex flex-col gap-1 p-2">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 px-3 py-2.5">
+        <div key={i} className="flex items-center gap-3 px-2 py-2">
           <ShimmeringLoader className="h-2 w-2 rounded-full" delayIndex={i} />
           <div className="flex-1 space-y-1.5">
             <ShimmeringLoader className="h-3 w-32" delayIndex={i} />
@@ -90,14 +90,14 @@ interface DevServerSkeletonProps {
 
 export function DevServerSkeleton({ count = 2 }: DevServerSkeletonProps) {
   return (
-    <div className="divide-border divide-y">
+    <div className="flex flex-col gap-1 p-2">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex items-center justify-between px-3 py-2.5">
+        <div key={i} className="flex items-center justify-between px-2 py-2">
           <div className="flex items-center gap-3">
             <ShimmeringLoader className="h-2 w-2 rounded-full" delayIndex={i} />
             <ShimmeringLoader className="h-3 w-24" delayIndex={i} />
           </div>
-          <ShimmeringLoader className="h-5 w-16" delayIndex={i} />
+          <ShimmeringLoader className="h-5 w-16 rounded-full" delayIndex={i} />
         </div>
       ))}
     </div>

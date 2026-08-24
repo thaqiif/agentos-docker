@@ -114,13 +114,13 @@ export function CommitForm({
   }
 
   return (
-    <div className="bg-surface border-border space-y-2 border-t p-3">
+    <div className="glass glass-edge-top relative z-10 space-y-2 p-3">
       {/* Repo indicator (multi-repo mode) */}
       {repoName && (
-        <div className="tech-meta flex items-center gap-1.5">
+        <div className="ui-meta flex items-center gap-1.5">
           Committing to:
           <span className="text-foreground">{repoName}</span>
-          <span className="text-foreground-subtle">({branch})</span>
+          <span className="text-muted-foreground/70">({branch})</span>
         </div>
       )}
 
@@ -137,7 +137,7 @@ export function CommitForm({
 
       {/* Commit message input */}
       <div className="space-y-1.5">
-        <label className="tech-label flex items-center gap-2">
+        <label className="ui-label flex items-center gap-2">
           <span>01</span>
           commit.msg
         </label>
@@ -167,7 +167,7 @@ export function CommitForm({
           size="default"
           onClick={handleCommit}
           disabled={!canCommit || committing || pushing}
-          className="min-h-[44px] flex-1 font-mono text-[10px] tracking-[0.12em] uppercase"
+          className="min-h-[44px] flex-1"
         >
           {committing ? (
             <>
@@ -184,7 +184,7 @@ export function CommitForm({
           size="default"
           onClick={handleCommitAndPush}
           disabled={!canCommit || committing || pushing}
-          className="min-h-[44px] flex-1 font-mono text-[10px] tracking-[0.12em] uppercase"
+          className="min-h-[44px] flex-1"
         >
           {pushing ? (
             <>

@@ -46,7 +46,7 @@ export function DesktopView({
   const renameTerminal = useTerminalRename();
 
   return (
-    <div className="bg-background flex h-screen overflow-hidden">
+    <div className="ambient-canvas flex h-screen overflow-hidden">
       <DesktopSidebar
         isPinned={isPinned}
         activeSessionId={activeSession?.id}
@@ -83,15 +83,19 @@ export function DesktopView({
       {/* Main content */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Command strip. The left is identity — sidebar toggle and what is
-            attached — and the view controls own the right. */}
-        <header className="border-border flex h-12 items-center justify-between gap-3 border-b px-2">
+            attached — and the view controls own the right. It is glass, and
+            it is edge-lit rather than underlined: content dissolves beneath
+            the bar instead of stopping at a rule. */}
+        <header className="glass glass-edge-bottom relative z-10 flex h-13 shrink-0 items-center justify-between gap-3 px-3">
           <div className="flex min-w-0 items-center gap-1">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="h-8 w-8"
+                  aria-label="Toggle sidebar"
+                  aria-pressed={isPinned}
+                  className="h-8 w-8 rounded-full"
                   onClick={togglePin}
                 >
                   {isPinned ? (
@@ -107,7 +111,7 @@ export function DesktopView({
             </Tooltip>
 
             {activeSession && (
-              <div className="flex min-w-0 items-center gap-1 border-l border-border pl-3">
+              <div className="ml-1 flex min-w-0 items-center gap-1 rounded-full bg-[var(--fill-4)] py-1 pr-1 pl-3">
                 <WorkbenchTitle
                   name={activeSession.name}
                   onRename={renameTerminal}
@@ -119,7 +123,8 @@ export function DesktopView({
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      className="h-6 w-6 shrink-0"
+                      aria-label="Close terminal"
+                      className="h-6 w-6 shrink-0 rounded-full"
                       onClick={handleDetachTerminal}
                     >
                       <X className="h-3.5 w-3.5" />
@@ -127,7 +132,7 @@ export function DesktopView({
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Close terminal</p>
-                    <p className="text-muted-foreground text-xs">
+                    <p className="text-muted-foreground text-[0.6875rem]">
                       Keeps it running in tmux
                     </p>
                   </TooltipContent>
@@ -141,8 +146,11 @@ export function DesktopView({
           </div>
         </header>
 
-        {/* Single terminal surface - full height */}
-        <div className="min-h-0 flex-1">{renderPane()}</div>
+        {/* The terminal is content, not chrome: it stays opaque, and the
+            glass bar above it is what floats. */}
+        <div className="bg-background relative min-h-0 flex-1">
+          {renderPane()}
+        </div>
       </div>
 
       {/* Dialogs */}

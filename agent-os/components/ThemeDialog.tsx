@@ -27,16 +27,16 @@ interface ThemeDialogProps {
 function Swatch({ preview }: { preview: ThemeOption["preview"] }) {
   return (
     <span
-      className="border-border flex h-5 w-8 shrink-0 items-center justify-center gap-0.5 border"
+      className="flex h-5 w-8 shrink-0 items-center justify-center gap-0.5 rounded overflow-hidden border border-[var(--fill-2)]"
       style={{ background: preview.background }}
     >
       <span
-        className="h-2 w-2"
+        className="h-2 w-2 rounded-sm"
         style={{ background: preview.foreground }}
         aria-hidden
       />
       <span
-        className="h-2 w-2"
+        className="h-2 w-2 rounded-sm"
         style={{ background: preview.accent }}
         aria-hidden
       />
@@ -61,19 +61,23 @@ function ThemeRow({
     <button
       onClick={onClick}
       className={cn(
-        "relative flex w-full items-center gap-3 py-2 pr-4 pl-3 text-left transition-colors",
-        active ? "bg-accent" : "hover:bg-accent/50"
+        "press-sm focus-ring relative flex w-full items-center gap-3 py-2 pr-5 pl-4 text-left transition-colors",
+        active ? "bg-[var(--fill-3)]" : "hover:bg-[var(--fill-4)]"
       )}
     >
-      {active && <span className="bg-primary absolute inset-y-0 left-0 w-0.5" />}
+      {active && (
+        <span className="bg-primary absolute inset-y-0 left-0 w-[3px] rounded-r-full" />
+      )}
       {preview ? <Swatch preview={preview} /> : <span className="w-8" />}
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm leading-tight">{label}</span>
+        <span className="block truncate text-[0.8125rem] font-medium leading-tight">
+          {label}
+        </span>
         {description && (
-          <span className="tech-meta mt-0.5 block truncate">{description}</span>
+          <span className="ui-meta mt-0.5 block truncate">{description}</span>
         )}
       </span>
-      {active && <Check className="text-primary h-3 w-3 shrink-0" />}
+      {active && <Check className="text-primary h-3.5 w-3.5 shrink-0" />}
     </button>
   );
 }
@@ -98,17 +102,17 @@ export function ThemeDialog({ open, onOpenChange }: ThemeDialogProps) {
         // picking a theme is pointless if the thing it repaints is hidden
         // behind the picker and dimmed to near-black.
         overlayClassName="bg-transparent"
-        className="top-4 bottom-4 left-auto right-4 grid-rows-[auto_1fr_auto] translate-x-0 translate-y-0 gap-0 overflow-hidden border-border-strong bg-popover p-0 shadow-lg shadow-black/40 sm:max-w-xs"
+        className="glass-thick glass-float top-4 bottom-4 left-auto right-4 grid-rows-[auto_1fr_auto] translate-x-0 translate-y-0 gap-0 overflow-hidden border-0 shadow-[var(--elev-glass)] sm:max-w-xs"
       >
         <DialogHeader className="sr-only">
           <DialogTitle>Theme</DialogTitle>
         </DialogHeader>
 
-        <div className="border-border flex h-9 shrink-0 items-center border-b px-4">
-          <span className="tech-label">theme</span>
+        <div className="edge-fade-bottom flex h-10 shrink-0 items-center px-5 pt-4 pb-3">
+          <span className="type-headline">Theme</span>
         </div>
 
-        <div className="scrollbar-thin min-h-0 overflow-y-auto">
+        <div className="scrollbar-thin min-h-0 overflow-y-auto py-1">
           <ThemeRow
             label="System"
             description="Follow the operating system"
@@ -116,8 +120,8 @@ export function ThemeDialog({ open, onOpenChange }: ThemeDialogProps) {
             onClick={() => setTheme("system")}
           />
 
-          <div className="border-border border-t px-4 py-1.5">
-            <span className="tech-label">dark</span>
+          <div className="px-5 py-1.5">
+            <span className="ui-label">Dark</span>
           </div>
           {DARK_THEMES.map((t) => (
             <ThemeRow
@@ -132,8 +136,8 @@ export function ThemeDialog({ open, onOpenChange }: ThemeDialogProps) {
             />
           ))}
 
-          <div className="border-border border-t px-4 py-1.5">
-            <span className="tech-label">light</span>
+          <div className="px-5 py-1.5">
+            <span className="ui-label">Light</span>
           </div>
           {LIGHT_THEMES.map((t) => (
             <ThemeRow
@@ -149,10 +153,8 @@ export function ThemeDialog({ open, onOpenChange }: ThemeDialogProps) {
           ))}
         </div>
 
-        <div className="border-border flex items-center justify-between border-t px-4 py-2">
-          <span className="font-mono text-[10px] tracking-[0.12em] text-foreground-subtle uppercase">
-            esc or click outside to close
-          </span>
+        <div className="edge-fade-top flex items-center justify-between px-5 py-3">
+          <span className="ui-meta">Press Esc or click outside to close</span>
         </div>
       </DialogContent>
     </Dialog>

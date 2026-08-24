@@ -54,7 +54,7 @@ export function CodeSearchResults({
     return (
       <div className="flex items-center justify-center gap-2 p-8">
         <Loader2 className="text-muted-foreground h-3.5 w-3.5 animate-spin" />
-        <span className="tech-label">searching</span>
+        <span className="ui-label">Searching</span>
       </div>
     );
   }
@@ -70,8 +70,8 @@ export function CodeSearchResults({
   if (query.length < 3) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 p-8">
-        <Search className="text-foreground-subtle h-4 w-4" />
-        <p className="tech-meta">Type at least 3 characters to search</p>
+        <Search className="text-muted-foreground/70 h-4 w-4" />
+        <p className="ui-meta">Type at least 3 characters to search</p>
       </div>
     );
   }
@@ -79,14 +79,14 @@ export function CodeSearchResults({
   if (!data?.results.length) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 p-8">
-        <FileCode className="text-foreground-subtle h-4 w-4" />
-        <p className="tech-meta">No matches found for &quot;{query}&quot;</p>
+        <FileCode className="text-muted-foreground/70 h-4 w-4" />
+        <p className="ui-meta">No matches found for &quot;{query}&quot;</p>
       </div>
     );
   }
 
   return (
-    <div className="divide-border flex flex-col divide-y">
+    <div className="divide-[var(--fill-3)] flex flex-col divide-y">
       {data.results.map((result, index) => (
         <SearchResultItem
           key={`${result.file}:${result.line}`}
@@ -121,7 +121,7 @@ function SearchResultItem({
       onClick={onClick}
       className={cn(
         "relative flex min-h-[44px] flex-col justify-center gap-1.5 px-4 py-2.5 text-left transition-colors",
-        isSelected ? "bg-accent" : "hover:bg-accent/50"
+        isSelected ? "bg-[var(--fill-3)]" : "hover:bg-[var(--fill-4)]"
       )}
     >
       {isSelected && (
@@ -133,16 +133,16 @@ function SearchResultItem({
           {fileName}
         </span>
         {filePath && (
-          <span className="truncate font-mono text-[10px] text-muted-foreground">
+          <span className="truncate text-[0.6875rem] text-muted-foreground">
             {filePath}
           </span>
         )}
-        <span className="ml-auto shrink-0 font-mono text-[9px] text-foreground-subtle">
+        <span className="ml-auto shrink-0 text-[0.625rem] text-muted-foreground/70">
           :{result.line}
         </span>
       </div>
 
-      <div className="border-border overflow-hidden border-l pl-2">
+      <div className="border-[var(--fill-2)] overflow-hidden border-l pl-2">
         <SyntaxHighlighter
           language={language}
           style={vscDarkPlus}

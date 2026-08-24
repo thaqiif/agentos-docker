@@ -68,7 +68,7 @@ export function DevServersSection({
       ) : (
         <div className="space-y-2">
           {devServers.map((ds) => (
-            <div key={ds.id} className="bg-accent/30 space-y-2 rounded-lg p-3">
+            <div key={ds.id} className="bg-[var(--fill-4)] space-y-2 rounded-lg p-3">
               <div className="flex items-center gap-2">
                 <Input
                   value={ds.name}

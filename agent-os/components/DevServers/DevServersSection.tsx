@@ -36,37 +36,37 @@ export function DevServersSection({
   const projectMap = new Map(projects.map((p) => [p.id, p]));
 
   return (
-    <div className="border-border border-b">
+    <div className="border-b border-[var(--fill-2)]">
       {/* Header */}
       <button
         onClick={() => setExpanded(!expanded)}
         className={cn(
-          "hover:bg-accent/30 flex h-9 w-full items-center gap-2.5 px-3 text-left transition-colors"
+          "hover:bg-[var(--fill-4)] flex h-9 w-full items-center gap-2.5 px-3 text-left transition-colors"
         )}
       >
         <ChevronDown
           className={cn(
-            "text-foreground-subtle h-3 w-3 shrink-0 transition-transform",
+            "text-muted-foreground/70 h-3 w-3 shrink-0 transition-transform",
             !expanded && "-rotate-90"
           )}
         />
-        <span className="tech-label">dev servers</span>
+        <span className="ui-label">Dev servers</span>
         <span className="ml-auto flex items-center gap-2.5">
           {runningCount > 0 && (
-            <span className="text-status-running flex items-center gap-1 font-mono text-[9px] tracking-[0.14em] uppercase">
+            <span className="text-status-running flex items-center gap-1 text-[0.625rem] font-medium tracking-[0.045em] uppercase">
               <span className="h-1.5 w-1.5 rounded-full bg-current" />
               {runningCount} up
             </span>
           )}
           <span className="font-mono text-xs text-muted-foreground">
-            {String(servers.length).padStart(2, "0")}
+            {servers.length}
           </span>
         </span>
       </button>
 
       {/* Service ledger */}
       {expanded && (
-        <div className="divide-border border-border divide-y border-t">
+        <div className="divide-[var(--fill-3)] border-[var(--fill-2)] divide-y border-t">
           {servers.map((server, i) => (
             <DevServerCard
               key={server.id}

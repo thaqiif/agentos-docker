@@ -39,10 +39,10 @@ export function ThemeToggle() {
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 gap-2 px-2 font-mono"
+          className="h-8 gap-2 rounded-full px-2.5"
           aria-label="Change theme"
         >
-          <span className="text-muted-foreground font-mono text-[10px] tracking-[0.08em] uppercase">
+          <span className="text-muted-foreground text-[0.75rem] font-medium">
             <span suppressHydrationWarning>{currentValue}</span>
           </span>
           <span className="sr-only">Change theme</span>
@@ -59,7 +59,7 @@ export function ThemeToggle() {
             )}
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="scrollbar-thin max-h-[50vh] w-56 overflow-y-auto">
-            <DropdownMenuLabel className="tech-label">
+            <DropdownMenuLabel className="ui-label">
               //light themes
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -76,8 +76,8 @@ export function ThemeToggle() {
                   className="cursor-pointer"
                 >
                   <div className="flex flex-1 flex-col gap-0.5">
-                    <span className="text-sm">{lightTheme.label}</span>
-                    <span className="text-muted-foreground text-xs">
+                    <span className="text-[0.8125rem] font-medium">{lightTheme.label}</span>
+                    <span className="text-muted-foreground text-[0.75rem]">
                       {lightTheme.description}
                     </span>
                   </div>
@@ -100,7 +100,7 @@ export function ThemeToggle() {
             )}
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="scrollbar-thin max-h-[50vh] w-56 overflow-y-auto">
-            <DropdownMenuLabel className="tech-label">
+            <DropdownMenuLabel className="ui-label">
               //dark themes
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -117,8 +117,8 @@ export function ThemeToggle() {
                   className="cursor-pointer"
                 >
                   <div className="flex flex-1 flex-col gap-0.5">
-                    <span className="text-sm">{darkTheme.label}</span>
-                    <span className="text-muted-foreground text-xs">
+                    <span className="text-[0.8125rem] font-medium">{darkTheme.label}</span>
+                    <span className="text-muted-foreground text-[0.75rem]">
                       {darkTheme.description}
                     </span>
                   </div>

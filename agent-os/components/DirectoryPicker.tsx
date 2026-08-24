@@ -11,7 +11,6 @@ import {
 import { Button } from "./ui/button";
 import {
   ChevronRight,
-  ChevronDown,
   Folder,
   FolderOpen,
   Home,
@@ -21,6 +20,7 @@ import {
   HardDrive,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AEmptyState } from "@/components/a/AEmptyState";
 import type { FileNode } from "@/lib/file-utils";
 
 interface DirectoryPickerProps {
@@ -170,48 +170,50 @@ export function DirectoryPicker({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="flex max-h-[80vh] max-w-md flex-col">
         <DialogHeader>
-          <span className="tech-label">dir.select</span>
-          <DialogTitle className="font-mono text-sm font-medium tracking-[0.16em] uppercase">
-            Select Directory
-          </DialogTitle>
+          <DialogTitle>Choose a directory</DialogTitle>
         </DialogHeader>
 
         {/* Navigation bar */}
-        <div className="border-border scrollbar-none flex h-8 shrink-0 items-stretch overflow-x-auto border-y">
-          <button
+        <div className="flex shrink-0 items-center gap-1 rounded-full bg-[var(--fill-4)] py-1 pr-1 pl-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
             onClick={goRoot}
-            title="Root"
-            className="border-border text-muted-foreground hover:text-foreground hover:bg-accent/50 flex w-8 shrink-0 items-center justify-center transition-colors"
+            aria-label="Root"
+            className="rounded-full"
           >
-            <HardDrive className="h-3 w-3" />
-          </button>
-          <button
+            <HardDrive className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
             onClick={goHome}
-            title="Home"
-            className="border-border text-muted-foreground hover:text-foreground hover:bg-accent/50 flex w-8 shrink-0 items-center justify-center border-l transition-colors"
+            aria-label="Home"
+            className="rounded-full"
           >
-            <Home className="h-3 w-3" />
-          </button>
-          <button
+            <Home className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
             onClick={goUp}
             disabled={currentPath === "/"}
-            title="Go up"
-            className="border-border text-muted-foreground hover:text-foreground hover:bg-accent/50 flex w-8 shrink-0 items-center justify-center border-l transition-colors disabled:pointer-events-none disabled:opacity-30"
+            aria-label="Go up"
+            className="rounded-full"
           >
-            <ChevronUp className="h-3 w-3" />
-          </button>
-          <span className="tech-meta flex min-w-0 items-center truncate px-2">
+            <ChevronUp className="h-3.5 w-3.5" />
+          </Button>
+          <span className="ui-meta min-w-0 flex-1 truncate px-1">
             {currentPath}
           </span>
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={selectCurrentDirectory}
-            title="Select this directory"
-            className="ml-auto shrink-0 gap-1 self-center font-mono text-[10px] tracking-[0.12em] uppercase"
+            className="shrink-0 gap-1.5 rounded-full"
           >
-            <FolderInput className="h-3 w-3" />
-            use this ❯
+            <FolderInput className="h-3.5 w-3.5" />
+            Use this
           </Button>
         </div>
 
@@ -219,19 +221,25 @@ export function DirectoryPicker({
         <div className="scrollbar-thin max-h-[400px] min-h-[200px] flex-1 overflow-y-auto">
           {loading && directories.length === 0 ? (
             <div className="flex items-center justify-center gap-2 py-8">
-              <Loader2 className="text-muted-foreground h-3.5 w-3.5 animate-spin" />
-              <span className="tech-label">loading</span>
+              <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
+              <span className="text-muted-foreground text-[0.8125rem]">
+                Loading…
+              </span>
             </div>
           ) : error ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-8">
-              <span className="text-destructive tech-label">error</span>
-              <p className="tech-meta text-center">{error}</p>
-            </div>
+            <AEmptyState
+              size="compact"
+              tone="error"
+              title="Couldn't read that directory"
+              description={error}
+            />
           ) : directories.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-8">
-              <p className="tech-label">empty</p>
-              <p className="tech-meta">no subdirectories</p>
-            </div>
+            <AEmptyState
+              size="compact"
+              icon={Folder}
+              title="No subdirectories"
+              description="This directory has nothing inside it."
+            />
           ) : (
             <div className="py-1">
               <DirectoryTree
@@ -282,7 +290,9 @@ function DirectoryTree({
   depth = 0,
 }: DirectoryTreeProps) {
   return (
-    <div className={cn("w-full", depth > 0 && "border-border ml-3 border-l")}>
+    <div
+      className={cn("w-full", depth > 0 && "ml-3 border-l border-[var(--fill-3)]")}
+    >
       {nodes.map((node) => {
         const isExpanded = expanded.has(node.path);
         const isSelected = selectedPath === node.path;
@@ -301,27 +311,27 @@ function DirectoryTree({
                 }
               }}
               className={cn(
-                "relative flex h-7 w-full cursor-pointer items-center gap-1.5 pr-2 pl-2 text-left transition-colors",
-                isSelected ? "bg-accent" : "hover:bg-accent/50"
+                "press-sm relative flex h-8 w-full cursor-pointer items-center gap-1.5 rounded-lg pr-2 pl-2 text-left",
+                "transition-colors duration-200",
+                isSelected
+                  ? "bg-primary/14 text-foreground"
+                  : "hover:bg-[var(--fill-4)]"
               )}
             >
-              {isSelected && (
-                <span className="bg-primary absolute inset-y-0 left-0 w-0.5" />
-              )}
-
               {/* Expand/collapse */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggle(node);
                 }}
-                className="text-muted-foreground hover:text-foreground flex h-4 w-4 flex-shrink-0 items-center justify-center"
-              >
-                {isExpanded ? (
-                  <ChevronDown className="h-3 w-3" />
-                ) : (
-                  <ChevronRight className="h-3 w-3" />
+                aria-label={isExpanded ? "Collapse" : "Expand"}
+                className={cn(
+                  "text-muted-foreground hover:text-foreground flex h-4 w-4 flex-shrink-0 items-center justify-center",
+                  "transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]",
+                  isExpanded && "rotate-90"
                 )}
+              >
+                <ChevronRight className="h-3 w-3" />
               </button>
 
               {/* Icon */}
@@ -332,7 +342,7 @@ function DirectoryTree({
               )}
 
               {/* Name */}
-              <span className="flex-1 truncate font-mono text-xs text-foreground">
+              <span className="text-foreground flex-1 truncate text-[0.8125rem]">
                 {node.name}
               </span>
             </div>

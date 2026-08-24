@@ -92,8 +92,8 @@ export function FileChanges({
               expanded && "rotate-90"
             )}
           />
-          <span className="tech-label">
-            {sectionLabel} {String(files.length).padStart(2, "0")}
+          <span className="ui-label">
+            {sectionLabel} <span className="tabular-nums">{files.length}</span>
           </span>
         </button>
         {showAllButton && (
@@ -102,7 +102,7 @@ export function FileChanges({
               e.stopPropagation();
               isStaged ? onUnstageAll?.() : onStageAll?.();
             }}
-            className="text-muted-foreground hover:text-foreground ml-auto flex items-center gap-1 font-mono text-[10px] tracking-[0.12em] uppercase transition-colors"
+            className="text-muted-foreground hover:text-foreground ml-auto flex items-center gap-1 text-[0.75rem] font-medium transition-colors"
           >
             {isStaged ? (
               <Minus className="h-3 w-3" />
@@ -115,11 +115,11 @@ export function FileChanges({
       </div>
 
       {expanded && (
-        <div className="divide-border divide-y">
+        <div className="divide-y divide-[var(--fill-3)]">
           {groupedFiles.map(([repoName, repoFiles]) => (
             <div key={repoName || "default"}>
               {repoName && (
-                <div className="bg-surface tech-meta mx-2 mt-1 mb-1 border border-border px-2 py-1">
+                <div className="bg-surface ui-meta mx-2 mt-1 mb-1 border border-[var(--fill-2)] px-2 py-1">
                   {repoName}
                 </div>
               )}
@@ -277,7 +277,7 @@ function FileItem({
         className={cn(
           "relative flex min-h-8 w-full items-center gap-2 py-1.5 pl-3 pr-2",
           "transition-colors",
-          isSelected ? "bg-accent" : "bg-background hover:bg-accent/50"
+          isSelected ? "bg-[var(--fill-3)]" : "bg-background hover:bg-[var(--fill-4)]"
         )}
         style={{
           transform: `translateX(${swipeOffset}px)`,
@@ -297,7 +297,7 @@ function FileItem({
           {/* Status glyph */}
           <span
             className={cn(
-              "flex h-4 w-4 flex-shrink-0 items-center justify-center font-mono text-[10px] font-medium",
+              "flex h-4 w-4 flex-shrink-0 items-center justify-center text-[0.6875rem] font-medium",
               statusColor
             )}
           >
@@ -310,7 +310,7 @@ function FileItem({
               {fileName}
             </span>
             {filePath && (
-              <span className="tech-meta block truncate">{filePath}</span>
+              <span className="ui-meta block truncate">{filePath}</span>
             )}
           </div>
         </button>
@@ -325,7 +325,7 @@ function FileItem({
                     e.stopPropagation();
                     onUnstage();
                   }}
-                  className="text-status-waiting hover:bg-accent flex h-7 w-7 items-center justify-center transition-colors"
+                  className="text-status-waiting hover:bg-[var(--fill-3)] flex h-7 w-7 items-center justify-center transition-colors"
                   title="Unstage"
                 >
                   <Minus className="h-3.5 w-3.5" />
@@ -337,7 +337,7 @@ function FileItem({
                     e.stopPropagation();
                     onStage();
                   }}
-                  className="text-status-running hover:bg-accent flex h-7 w-7 items-center justify-center transition-colors"
+                  className="text-status-running hover:bg-[var(--fill-3)] flex h-7 w-7 items-center justify-center transition-colors"
                   title="Stage"
                 >
                   <Plus className="h-3.5 w-3.5" />
@@ -349,7 +349,7 @@ function FileItem({
             <DropdownMenuTrigger asChild>
               <button
                 onClick={(e) => e.stopPropagation()}
-                className="text-muted-foreground hover:text-foreground hover:bg-accent flex h-7 w-7 items-center justify-center transition-colors"
+                className="text-muted-foreground hover:text-foreground hover:bg-[var(--fill-3)] flex h-7 w-7 items-center justify-center transition-colors"
               >
                 <MoreVertical className="h-3.5 w-3.5" />
               </button>
