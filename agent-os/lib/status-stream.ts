@@ -28,6 +28,15 @@ const FAST_TICK_MS = 700; // something is running or blocked
 const SLOW_TICK_MS = 1500; // everything quiet
 const IDLE_SHUTDOWN_MS = 30000; // no subscribers for this long -> stop, unless keepAlive is on
 
+// A session must be observed "running" continuously for at least this long
+// before a notification re-arms. Hook-reported state is edge-triggered
+// (PreToolUse, Notification, etc.), so a task finishing can produce one
+// spurious "running" sample between two "done" samples with nothing new
+// actually having started. Without this, that single blip cleared the
+// "already notified" flag and the very next "done" sample fired again —
+// the same completion announced two or three times in a row.
+const RUNNING_DEBOUNCE_MS = 1500;
+
 /** Reads the always-on toggle fresh each time — it's a checkbox, not a hot path. */
 function keepAliveEnabled(): boolean {
   try {
@@ -75,6 +84,8 @@ class StatusStream {
   private previousStatus = new Map<string, SessionStatus>();
   /** One Telegram ping per "done" episode, mirroring the client-side rule. */
   private lastNotified = new Map<string, SessionStatus>();
+  /** When a session most recently switched into "running", to debounce blips. */
+  private runningSinceAt = new Map<string, number>();
 
   subscribe(fn: Subscriber): () => void {
     this.subscribers.add(fn);
@@ -215,15 +226,26 @@ class StatusStream {
     const wired = notifyEnabled && botToken && chatId;
 
     let projects: ReturnType<typeof getAllProjects> | null = null;
+    const now = Date.now();
 
     for (const [name, entry] of Object.entries(next)) {
       const prev = this.previousStatus.get(name);
       this.previousStatus.set(name, entry.status);
 
       if (entry.status === "running") {
-        this.lastNotified.delete(name);
+        // Track when this run started, but only treat it as a genuinely new
+        // episode — and clear the notified flag — once it has held "running"
+        // for the debounce window. A single-sample blip back to "running"
+        // between two "done" reads never crosses that and so never re-arms.
+        if (prev !== "running") this.runningSinceAt.set(name, now);
+        const startedAt = this.runningSinceAt.get(name) ?? now;
+        if (now - startedAt >= RUNNING_DEBOUNCE_MS) {
+          this.lastNotified.delete(name);
+        }
         continue;
       }
+
+      this.runningSinceAt.delete(name);
       if (entry.status !== "done") continue;
       if (prev === undefined) continue; // first sample after boot: not a transition
       if (this.lastNotified.get(name) === "done") continue; // already announced
