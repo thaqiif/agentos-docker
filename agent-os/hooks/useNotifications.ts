@@ -238,6 +238,8 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
             // Telegram notification for completed terminals. Bot token and
             // chat ID live in the settings store rather than in-memory
             // state, so this checks fresh every time rather than caching.
+            // Calls the server-side /api/telegram/notify endpoint since
+            // Telegram's API doesn't support direct browser CORS requests.
             if (currentStatus === "done" && settings.enabled) {
               void fetch("/api/settings")
                 .then((r) => r.json())
@@ -247,14 +249,15 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
                     appSettings.telegramBotToken &&
                     appSettings.telegramChatId
                   ) {
-                    const { sendTelegramMessage } = await import(
-                      "@/lib/telegram"
-                    );
-                    await sendTelegramMessage(
-                      appSettings.telegramBotToken,
-                      appSettings.telegramChatId,
-                      `✅ *Terminal completed*\n\n*${session.name}*`
-                    );
+                    await fetch("/api/telegram/notify", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        botToken: appSettings.telegramBotToken,
+                        chatId: appSettings.telegramChatId,
+                        message: `✅ *Terminal completed*\n\n*${session.name}*`,
+                      }),
+                    });
                   }
                 })
                 .catch(() => {});

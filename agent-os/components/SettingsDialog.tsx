@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Check } from "lucide-react";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -31,13 +33,22 @@ const FONT_FAMILIES = [
 
 const DEFAULT_FONT_SCALE = "1";
 
-/** Persist one setting to the backing store, ignoring transient failures. */
+/** Persist one setting to the backing store, showing brief feedback. */
 function saveSetting(key: string, value: string) {
   void fetch("/api/settings", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ key, value }),
-  }).catch(() => {});
+  })
+    .then(() => {
+      toast.success("Saved", {
+        icon: <Check className="h-4 w-4" />,
+        duration: 1500,
+      });
+    })
+    .catch(() => {
+      toast.error("Failed to save setting");
+    });
 }
 
 /** Apply font scale/family to the document root so it takes effect live. */
@@ -93,9 +104,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        showCloseButton={false}
         overlayClassName="bg-transparent"
-        className="glass-thick glass-float top-4 bottom-4 left-auto right-4 grid-rows-[auto_1fr_auto] translate-x-0 translate-y-0 gap-0 overflow-hidden border-0 shadow-[var(--elev-glass)] sm:max-w-sm"
+        className="glass-thick glass-float max-h-[90vh] grid-rows-[auto_1fr_auto] gap-0 overflow-hidden border-0 shadow-[var(--elev-glass)] sm:top-4 sm:bottom-4 sm:left-auto sm:right-4 sm:translate-x-0 sm:translate-y-0 sm:max-w-sm"
       >
         <DialogHeader className="edge-fade-bottom flex h-10 shrink-0 flex-row items-center px-5 pt-4 pb-3">
           <DialogTitle className="type-headline">Settings</DialogTitle>
@@ -206,6 +216,11 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 <p className="ui-meta">
                   Create a bot via @BotFather on Telegram, then get your chat
                   ID via @userinfobot.
+                </p>
+                <p className="ui-meta mt-2 rounded-lg bg-[var(--fill-5)] px-2.5 py-2 text-[0.7rem]">
+                  <strong>Note:</strong> Plain shell terminals (cmd, bash, zsh)
+                  won't trigger notifications. Only AI agent terminals (Claude,
+                  Command Code, etc.) report completion status.
                 </p>
               </div>
             )}
