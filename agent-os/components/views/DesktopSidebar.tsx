@@ -94,42 +94,36 @@ export function DesktopSidebar({
     </div>
   );
 
-  if (isPinned) {
-    // Pinned, the sidebar is part of the shell rather than something hovering
-    // over it, so it is edge-lit down its inner edge rather than rimmed.
-    return (
-      <div
-        style={{ width }}
-        className={cn(
-          "glass glass-edge-right relative z-20 flex-shrink-0 overflow-hidden",
-          // No width transition while dragging, or the panel lags the cursor.
-          !isResizing &&
-            "transition-[width] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]"
-        )}
-      >
-        {content}
-        {resizeHandle}
-      </div>
-    );
-  }
-
+  // A single div carries both states. Switching `isPinned` used to swap in
+  // a completely different element (pinned vs floating), which remounted
+  // the DOM and skipped the transition entirely. Keeping one element means
+  // both the pin-in and pin-out animate through the same `transition-*`
+  // classes instead of just snapping.
   return (
     <>
-      {/* Hover trigger strip on the left edge reveals the floating sidebar */}
+      {/* Hover trigger strip on the left edge reveals the floating sidebar.
+          Harmless while pinned since nothing floats to reveal. */}
+      {!isPinned && (
+        <div
+          className="fixed top-0 left-0 z-30 h-full w-2"
+          onMouseEnter={revealNow}
+        />
+      )}
       <div
-        className="fixed top-0 left-0 z-30 h-full w-2"
-        onMouseEnter={revealNow}
-      />
-      {/* Unpinned it genuinely floats above the workbench, so it takes the
-          thicker material and a depth shadow, and slides on the iOS curve. */}
-      <div
-        onMouseEnter={revealNow}
-        onMouseLeave={scheduleCollapse}
+        onMouseEnter={!isPinned ? revealNow : undefined}
+        onMouseLeave={!isPinned ? scheduleCollapse : undefined}
         style={{ width }}
         className={cn(
-          "glass-thick glass-float fixed top-0 left-0 z-40 h-full overflow-hidden",
-          "transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]",
-          revealed ? "translate-x-0" : "-translate-x-full"
+          "z-20 h-full overflow-hidden",
+          "transition-[width,transform] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]",
+          isPinned
+            ? [
+                "glass glass-edge-right relative flex-shrink-0 translate-x-0",
+              ]
+            : [
+                "glass-thick glass-float fixed top-0 left-0 z-40",
+                revealed ? "translate-x-0" : "-translate-x-full",
+              ]
         )}
       >
         {content}

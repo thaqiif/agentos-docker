@@ -240,12 +240,10 @@ export const Pane = memo(function Pane({
       {isMobile && (
         <MobileTabBar
           terminal={session}
-          terminals={terminals}
           projects={projects}
           viewMode={viewMode}
           onMenuClick={onMenuClick}
           onViewModeChange={setViewMode}
-          onSelectTerminal={onSelectTerminal}
         />
       )}
 

@@ -1,27 +1,18 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Menu,
-  ChevronLeft,
-  ChevronRight,
   Terminal as TerminalIcon,
   FolderOpen,
   GitBranch,
-  ChevronDown,
-  Circle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Project } from "@/lib/db";
 import type { TerminalRecord } from "@/lib/terminals";
 import type { LucideIcon } from "lucide-react";
+import { useTerminalRename } from "@/hooks/useTerminalRename";
 
 import type { ViewMode } from "@/lib/panes";
 
@@ -63,72 +54,121 @@ function ViewModeButton({
   );
 }
 
+interface MobileTerminalTitleProps {
+  name: string;
+  projectName?: string | null;
+  onRename: (name: string, newName: string) => void | Promise<void>;
+}
+
+/**
+ * The current terminal's name, renamable in place with a double-click.
+ *
+ * Styled like the dropdown trigger it replaced, so removing the tab
+ * switcher didn't leave a hole in the bar's rhythm.
+ */
+function MobileTerminalTitle({
+  name,
+  projectName,
+  onRename,
+}: MobileTerminalTitleProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(name);
+  const inputRef = useRef<HTMLInputElement>(null);
+  /** Guards against Enter and the follow-up blur both committing. */
+  const committedRef = useRef(false);
+
+  useEffect(() => {
+    if (!isEditing) return;
+    committedRef.current = false;
+    setDraft(name);
+
+    const frame = requestAnimationFrame(() => {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isEditing, name]);
+
+  const commit = () => {
+    if (committedRef.current) return;
+    committedRef.current = true;
+
+    const next = draft.trim();
+    if (next && next !== name) void onRename(name, next);
+    setIsEditing(false);
+  };
+
+  const cancel = () => {
+    committedRef.current = true;
+    setDraft(name);
+    setIsEditing(false);
+  };
+
+  if (isEditing) {
+    return (
+      <input
+        ref={inputRef}
+        type="text"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          e.stopPropagation();
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commit();
+          }
+          if (e.key === "Escape") {
+            e.preventDefault();
+            cancel();
+          }
+        }}
+        className="ring-primary/50 h-9 min-w-0 flex-1 rounded-full bg-[var(--fill-3)] px-3 text-[0.8125rem] font-medium outline-none ring-2"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onDoubleClick={() => setIsEditing(true)}
+      title="Double-click to rename"
+      className="press focus-ring flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full px-3 transition-colors hover:bg-[var(--fill-4)]"
+    >
+      <span className="truncate text-[0.8125rem] font-medium tracking-[-0.006em]">
+        {name}
+        {projectName && projectName !== "Uncategorized" && (
+          <span className="text-muted-foreground font-normal">
+            {" · "}
+            {projectName}
+          </span>
+        )}
+      </span>
+    </button>
+  );
+}
+
 interface MobileTabBarProps {
   terminal: TerminalRecord | null | undefined;
-  terminals: TerminalRecord[];
   projects: Project[];
   viewMode: ViewMode;
   onMenuClick?: () => void;
   onViewModeChange: (mode: ViewMode) => void;
-  onSelectTerminal?: (name: string) => void;
 }
 
 export function MobileTabBar({
   terminal: session,
-  terminals: sessions,
   projects,
   viewMode,
   onMenuClick,
   onViewModeChange,
-  onSelectTerminal: onSelectSession,
 }: MobileTabBarProps) {
-  // Find current session index and calculate prev/next
-  const currentIndex = session
-    ? sessions.findIndex((s) => s.id === session.id)
-    : -1;
+  const renameTerminal = useTerminalRename();
 
   // Get project name for current session
   const projectName = session?.project_id
     ? projects.find((p) => p.id === session.project_id)?.name
     : null;
-  const hasPrev = currentIndex > 0;
-  const hasNext = currentIndex >= 0 && currentIndex < sessions.length - 1;
-
-  // Debounce to prevent rapid clicking causing command interference
-  const [isNavigating, setIsNavigating] = useState(false);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
-
-  const handleNavigate = useCallback(
-    (sessionId: string) => {
-      if (isNavigating || !onSelectSession) return;
-
-      setIsNavigating(true);
-      onSelectSession(sessionId);
-
-      // Allow next navigation after delay (tmux commands need time)
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => {
-        setIsNavigating(false);
-      }, 500);
-    },
-    [isNavigating, onSelectSession]
-  );
-
-  const handlePrev = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (hasPrev && !isNavigating) {
-      handleNavigate(sessions[currentIndex - 1].id);
-    }
-  };
-
-  const handleNext = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (hasNext && !isNavigating) {
-      handleNavigate(sessions[currentIndex + 1].id);
-    }
-  };
 
   return (
     <div
@@ -153,89 +193,19 @@ export function MobileTabBar({
         </Button>
       )}
 
-      {/* Session/Tab navigation */}
+      {/* Current terminal's name, renamable in place */}
       <div className="flex min-w-0 flex-1 items-center gap-1">
-        <button
-          type="button"
-          onClick={handlePrev}
-          onTouchEnd={(e) => e.stopPropagation()}
-          disabled={!hasPrev || isNavigating}
-          aria-label="Previous terminal"
-          className="press focus-ring text-muted-foreground flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-[var(--fill-4)] disabled:pointer-events-none disabled:opacity-30"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-
-        {/* Session selector dropdown */}
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="press focus-ring flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full px-3 transition-colors hover:bg-[var(--fill-4)]"
-            >
-              <span className="truncate text-[0.8125rem] font-medium tracking-[-0.006em]">
-                {session?.name || "No terminal"}
-                {projectName && projectName !== "Uncategorized" && (
-                  <span className="text-muted-foreground font-normal">
-                    {" · "}
-                    {projectName}
-                  </span>
-                )}
-              </span>
-              <ChevronDown className="text-muted-foreground h-3 w-3 shrink-0" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="center"
-            className="max-h-[300px] min-w-[200px] overflow-y-auto"
-          >
-            {sessions
-              .map((s) => {
-                const sessionProject = s.project_id
-                  ? projects.find((p) => p.id === s.project_id)
-                  : null;
-                const isActive = s.id === session?.id;
-
-                return (
-                  <DropdownMenuItem
-                    key={s.id}
-                    onSelect={() => onSelectSession?.(s.id)}
-                    className={cn(
-                      "flex items-center gap-2",
-                      isActive && "bg-[var(--fill-3)]"
-                    )}
-                  >
-                    <Circle
-                      className={cn(
-                        "h-2 w-2",
-                        isActive
-                          ? "fill-primary text-primary"
-                          : "text-muted-foreground"
-                      )}
-                    />
-                    <span className="flex-1 truncate">{s.name}</span>
-                    {sessionProject &&
-                      sessionProject.name !== "Uncategorized" && (
-                        <span className="text-muted-foreground text-[0.6875rem]">
-                          {sessionProject.name}
-                        </span>
-                      )}
-                  </DropdownMenuItem>
-                );
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <button
-          type="button"
-          onClick={handleNext}
-          onTouchEnd={(e) => e.stopPropagation()}
-          disabled={!hasNext || isNavigating}
-          aria-label="Next terminal"
-          className="press focus-ring text-muted-foreground flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-[var(--fill-4)] disabled:pointer-events-none disabled:opacity-30"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
+        {session ? (
+          <MobileTerminalTitle
+            name={session.name}
+            projectName={projectName}
+            onRename={renameTerminal}
+          />
+        ) : (
+          <span className="text-muted-foreground flex h-9 min-w-0 flex-1 items-center justify-center px-3 text-[0.8125rem] font-medium">
+            No terminal
+          </span>
+        )}
       </div>
 
       {/* View mode toggle */}

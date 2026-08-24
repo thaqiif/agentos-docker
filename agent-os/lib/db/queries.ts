@@ -173,4 +173,18 @@ export const queries = {
 
   deleteDevServersByProject: (db: Database.Database) =>
     getStmt(db, `DELETE FROM dev_servers WHERE project_id = ?`),
+
+  // Settings
+  getSetting: (db: Database.Database) =>
+    getStmt(db, `SELECT value FROM settings WHERE key = ?`),
+
+  setSetting: (db: Database.Database) =>
+    getStmt(
+      db,
+      `INSERT INTO settings (key, value) VALUES (?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')`
+    ),
+
+  getAllSettings: (db: Database.Database) =>
+    getStmt(db, `SELECT key, value FROM settings`),
 };

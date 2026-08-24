@@ -234,6 +234,31 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
               session.id,
               session.name
             );
+
+            // Telegram notification for completed terminals. Bot token and
+            // chat ID live in the settings store rather than in-memory
+            // state, so this checks fresh every time rather than caching.
+            if (currentStatus === "done" && settings.enabled) {
+              void fetch("/api/settings")
+                .then((r) => r.json())
+                .then(async ({ settings: appSettings }) => {
+                  if (
+                    appSettings.notifyTerminalCompletion === "true" &&
+                    appSettings.telegramBotToken &&
+                    appSettings.telegramChatId
+                  ) {
+                    const { sendTelegramMessage } = await import(
+                      "@/lib/telegram"
+                    );
+                    await sendTelegramMessage(
+                      appSettings.telegramBotToken,
+                      appSettings.telegramChatId,
+                      `✅ *Terminal completed*\n\n*${session.name}*`
+                    );
+                  }
+                })
+                .catch(() => {});
+            }
           }
         }
 

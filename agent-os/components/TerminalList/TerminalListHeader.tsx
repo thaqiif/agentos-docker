@@ -7,6 +7,7 @@ import {
   separator,
 } from "@/components/a/ADropdownMenu";
 import { ThemeDialog } from "@/components/ThemeDialog";
+import { SettingsDialog } from "@/components/SettingsDialog";
 import {
   Plus,
   FolderPlus,
@@ -15,6 +16,7 @@ import {
   MoreHorizontal,
   Trash2,
   Palette,
+  Settings,
   Command,
 } from "lucide-react";
 
@@ -41,6 +43,7 @@ export function TerminalListHeader({
   notifications,
 }: TerminalListHeaderProps) {
   const [showThemeDialog, setShowThemeDialog] = useState(false);
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
 
   return (
     <div className="px-3 pt-3 pb-2">
@@ -91,6 +94,9 @@ export function TerminalListHeader({
                     }),
                   ]
                 : []),
+              menuItem("Settings…", () => setShowSettingsDialog(true), {
+                icon: Settings,
+              }),
               menuItem("Theme…", () => setShowThemeDialog(true), {
                 icon: Palette,
               }),
@@ -105,6 +111,10 @@ export function TerminalListHeader({
       </div>
 
       <ThemeDialog open={showThemeDialog} onOpenChange={setShowThemeDialog} />
+      <SettingsDialog
+        open={showSettingsDialog}
+        onOpenChange={setShowSettingsDialog}
+      />
     </div>
   );
 }
