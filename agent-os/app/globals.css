@@ -101,11 +101,12 @@
   --color-command-coral: #f5b6a6;
   --color-command-pink: #f3b5d2;
 
-  /* Geometric edge language: 0 / 1 / 2 / 4px only */
-  --radius-sm: 0px;
-  --radius-md: 1px;
-  --radius-lg: 2px;
-  --radius-xl: 4px;
+  /* Softened edge language: 3 / 4 / 6 / 8 / 12px */
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
 
   /* Motion temperament: quick, precise, no bounce */
   --animate-status-pulse: status-pulse 1.6s ease-in-out infinite;
@@ -132,7 +133,7 @@
 }
 
 :root {
-  --radius: 2px;
+  --radius: 8px;
   /* Mobile viewport height - JS hook sets this dynamically for keyboard */
   --app-height: 100vh;
   --app-height: 100dvh;
@@ -196,7 +197,7 @@
   color: hsl(var(--muted-foreground));
 }
 
-/* Thin workbench scrollbars — square thumbs, no pills */
+/* Thin workbench scrollbars — softly rounded thumbs */
 .scrollbar-thin,
 .workbench-scroll {
   scrollbar-width: thin;
@@ -214,7 +215,7 @@
 .scrollbar-thin::-webkit-scrollbar-thumb,
 .workbench-scroll::-webkit-scrollbar-thumb {
   background: hsl(var(--border-strong));
-  border-radius: 0;
+  border-radius: 4px;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb:hover,
 .workbench-scroll::-webkit-scrollbar-thumb:hover {
@@ -295,7 +296,7 @@ body {
   }
   .xterm-viewport::-webkit-scrollbar-thumb {
     background: hsl(var(--muted-foreground) / 0.3);
-    border-radius: 0;
+    border-radius: 2px;
   }
 }
 

@@ -6,7 +6,6 @@ import { statusStream } from "@/lib/status-stream";
 interface TerminalStatusResponse {
   sessionName: string;
   status: SessionStatus;
-  lastLine?: string;
   agentType?: AgentType;
 }
 
@@ -33,7 +32,6 @@ export async function GET(request: Request) {
       statuses[name] = {
         sessionName: entry.sessionName,
         status: entry.status,
-        lastLine: entry.lastLine,
         agentType: entry.agentType as AgentType,
       };
     }

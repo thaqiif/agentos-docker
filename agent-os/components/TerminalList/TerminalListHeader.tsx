@@ -43,7 +43,7 @@ export function TerminalListHeader({
   const [showThemeDialog, setShowThemeDialog] = useState(false);
 
   return (
-    <div className="border-sidebar-border border-b px-3 pt-2.5 pb-2">
+    <div className="border-sidebar-border border-b px-3.5 pt-3 pb-2.5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <svg

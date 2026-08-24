@@ -3,7 +3,6 @@ import type { TerminalRecord } from "@/lib/terminals";
 export interface SessionStatus {
   sessionName: string;
   status: "idle" | "running" | "waiting" | "done" | "error" | "dead";
-  lastLine?: string;
 }
 
 export interface TerminalListProps {

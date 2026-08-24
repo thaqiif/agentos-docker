@@ -166,7 +166,7 @@ export function ProjectCard({
     <div
       onClick={handleClick}
       className={cn(
-        "group relative flex cursor-pointer items-center gap-2.5 overflow-hidden rounded-none px-2 py-2",
+        "group relative flex cursor-pointer items-center gap-2.5 overflow-hidden rounded-lg px-2.5 py-2",
         "min-h-[40px] md:min-h-[34px]",
         "hover:bg-accent/50"
       )}

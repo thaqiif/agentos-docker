@@ -111,7 +111,7 @@ export function DevServerCard({
   return (
     <div
       className={cn(
-        "px-3 py-2 transition-colors",
+        "rounded-lg px-3 py-2 transition-colors",
         !isStopped && "bg-surface-raised/40",
         "hover:bg-accent/20"
       )}

@@ -84,7 +84,7 @@ export function DesktopView({
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Command strip. The left is identity — sidebar toggle and what is
             attached — and the view controls own the right. */}
-        <header className="border-border flex h-11 items-center justify-between gap-3 border-b pr-2 pl-1">
+        <header className="border-border flex h-12 items-center justify-between gap-3 border-b px-2">
           <div className="flex min-w-0 items-center gap-1">
             <Tooltip>
               <TooltipTrigger asChild>

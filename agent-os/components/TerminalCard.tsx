@@ -48,8 +48,6 @@ export interface TerminalCardProps {
   terminal: TerminalRecord;
   isActive?: boolean;
   tmuxStatus?: TmuxStatus;
-  /** Live tail of the terminal (tmux last line) for the status row */
-  statusDetail?: string;
   // Selection props
   isSelected?: boolean;
   isInSelectMode?: boolean;
@@ -62,57 +60,10 @@ export interface TerminalCardProps {
   onHoverEnd?: () => void;
 }
 
-const statusConfig: Record<TmuxStatus, { color: string; label: string }> = {
-  idle: {
-    color: "text-muted-foreground",
-    label: "idle",
-  },
-  running: {
-    color: "text-status-running",
-    label: "working",
-  },
-  waiting: {
-    color: "text-status-waiting animate-status-pulse",
-    label: "needs input",
-  },
-  done: {
-    color: "text-status-info",
-    label: "done",
-  },
-  error: {
-    color: "text-status-error",
-    label: "error",
-  },
-  dead: {
-    color: "text-foreground-subtle",
-    label: "stopped",
-  },
-};
-
-/** Statuses whose terminal tail is worth surfacing on the status row */
-const DETAIL_STATUSES = new Set<TmuxStatus>([
-  "running",
-  "waiting",
-  "done",
-  "error",
-]);
-
-function cleanPaneLine(line?: string | null): string | null {
-  if (!line) return null;
-  const cleaned = line
-    .replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, "")
-    .replace(/[\u2500-\u257F]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (!cleaned) return null;
-  return cleaned.length > 64 ? `${cleaned.slice(0, 63).trimEnd()}…` : cleaned;
-}
-
 export function TerminalCard({
   terminal: session,
   isActive,
   tmuxStatus,
-  statusDetail,
   isSelected,
   isInSelectMode,
   onToggleSelect,
@@ -125,12 +76,6 @@ export function TerminalCard({
   // tmux reports last activity in seconds since the epoch.
   const timeAgo = getTimeAgo(session.activity);
   const status = tmuxStatus || "dead";
-  const config = statusConfig[status];
-  // First class is the color; drops the pulse animation class for text use
-  const statusTextColor =
-    status === "idle" ? "text-muted-foreground" : config.color.split(" ")[0];
-  const liveDetail = cleanPaneLine(statusDetail);
-  const showDetail = DETAIL_STATUSES.has(status) && liveDetail;
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(session.name);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -274,7 +219,7 @@ export function TerminalCard({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className={cn(
-        "group relative flex w-full cursor-pointer items-center gap-2 overflow-hidden rounded-none px-2 py-1.5 text-left transition-colors",
+        "group relative flex w-full cursor-pointer items-center gap-2 overflow-hidden rounded-lg px-2.5 py-2 text-left transition-colors",
         "min-h-[36px] md:min-h-0",
         isSelected
           ? "bg-primary/15"
@@ -287,9 +232,6 @@ export function TerminalCard({
           "bg-status-waiting/5"
       )}
     >
-      {isActive && (
-        <span className="absolute left-0 top-0 h-full w-0.5 bg-primary" />
-      )}
       {/* Selection checkbox - visible when in select mode */}
       {isInSelectMode && onToggleSelect && (
         <button
@@ -304,9 +246,7 @@ export function TerminalCard({
         </button>
       )}
 
-      {/* Two-line content: title row + live status row */}
       <div className="min-w-0 flex-1">
-        {/* Line 1 — session name + inline meta/actions */}
         <div className="flex items-center gap-2">
           {isEditing ? (
             <input
@@ -377,27 +317,6 @@ export function TerminalCard({
           )}
         </div>
 
-        {/* Line 2 — live harness status */}
-        {!isInSelectMode && (
-          <div className="mt-0.5 flex min-w-0 items-baseline gap-1.5">
-            <span
-              className={cn(
-                "shrink-0 font-mono text-[9px] uppercase tracking-[0.14em]",
-                statusTextColor
-              )}
-            >
-              {config.label}
-            </span>
-            {showDetail && (
-              <span
-                className="truncate font-mono text-[10px] normal-case tracking-normal text-muted-foreground"
-                title={liveDetail ?? undefined}
-              >
-                {liveDetail}
-              </span>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

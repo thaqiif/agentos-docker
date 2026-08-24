@@ -245,7 +245,7 @@ export function FileEditDialog({
       onClick={handleClose}
     >
       <div
-        className="bg-background border-border-strong m-auto flex h-[90vh] w-[95vw] max-w-7xl overflow-hidden rounded-none border"
+        className="bg-background border-border-strong m-auto flex h-[90vh] w-[95vw] max-w-7xl overflow-hidden rounded-xl border"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Left sidebar - file list grouped by repo */}

@@ -13,7 +13,6 @@ import type { ProjectWithDevServers } from "@/lib/projects";
 interface SessionStatus {
   sessionName: string;
   status: "idle" | "running" | "waiting" | "done" | "error" | "dead";
-  lastLine?: string;
 }
 
 export interface ProjectsSectionProps {
@@ -117,7 +116,7 @@ export function ProjectsSection({
         const projectDevServers = getProjectDevServers(project.id);
 
         return (
-          <div key={project.id} className="space-y-1 py-1.5 first:pt-0.5">
+          <div key={project.id} className="space-y-1 py-2 first:pt-1">
             {/* Project header */}
             <ProjectCard
               project={project}
@@ -152,7 +151,7 @@ export function ProjectsSection({
 
             {/* Project contents when expanded */}
             {project.expanded && (
-              <div className="ml-4 space-y-0.5 pb-1 pl-1">
+              <div className="ml-3 space-y-1 pb-1.5 pl-1">
                 {/* Dev servers for this project */}
                 {projectDevServers.length > 0 && (
                   <div className="space-y-px pb-0.5">
@@ -189,7 +188,6 @@ export function ProjectsSection({
                         terminal={session}
                         isActive={session.id === activeSessionId}
                         tmuxStatus={sessionStatuses?.[session.id]?.status}
-                        statusDetail={sessionStatuses?.[session.id]?.lastLine}
                         isSelected={selectedIds.has(session.id)}
                         isInSelectMode={isInSelectMode}
                         onToggleSelect={(shiftKey) =>

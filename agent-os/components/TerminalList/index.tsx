@@ -157,7 +157,7 @@ export function TerminalList({
 
       {/* Session list */}
       <ScrollArea className="w-full flex-1">
-        <div className="scrollbar-thin max-w-full px-1.5 py-1">
+        <div className="scrollbar-thin max-w-full px-2 py-2">
           {/* Loading state */}
           {isInitialLoading && <ProjectSectionSkeleton count={2} />}
 

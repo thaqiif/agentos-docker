@@ -5,7 +5,6 @@ import type { NotificationSettings } from "@/lib/notifications";
 export interface SessionStatus {
   sessionName: string;
   status: "idle" | "running" | "waiting" | "done" | "error" | "dead";
-  lastLine?: string;
 }
 
 export interface ViewProps {

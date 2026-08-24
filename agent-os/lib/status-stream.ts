@@ -27,7 +27,6 @@ const IDLE_SHUTDOWN_MS = 30000; // no subscribers for this long -> stop
 export interface SessionStatusEntry {
   sessionName: string;
   status: SessionStatus;
-  lastLine: string;
   /** Harness detected from the running process, or "shell" for a plain shell. */
   agentType: ProviderId;
 }
@@ -35,19 +34,6 @@ export interface SessionStatusEntry {
 export type StatusSnapshot = Record<string, SessionStatusEntry>;
 
 type Subscriber = (snapshot: StatusSnapshot) => void;
-
-// eslint-disable-next-line no-control-regex
-const ANSI = /\x1b\[[0-9;?]*[a-zA-Z]/g;
-
-/** Last visible line of a pane, cleaned for display. */
-function lastVisibleLine(pane: string): string {
-  const lines = pane
-    .replace(ANSI, "")
-    .split("\n")
-    .map((l) => l.replace(/\s+$/, ""))
-    .filter((l) => l.trim().length > 0);
-  return lines.length ? lines[lines.length - 1].trim() : "";
-}
 
 class StatusStream {
   private subscribers = new Set<Subscriber>();
@@ -134,7 +120,6 @@ class StatusStream {
       await Promise.all(
         terminals.map(async (terminal) => {
           const providerId = terminal.provider;
-          // One capture feeds both the classifier and the display tail.
           const [pane, hookState] = await Promise.all([
             statusDetector.capturePane(terminal.name),
             readHookState(terminal.name),
@@ -149,7 +134,6 @@ class StatusStream {
           next[terminal.name] = {
             sessionName: terminal.name,
             status,
-            lastLine: lastVisibleLine(pane),
             agentType: providerId ?? "shell",
           };
         })

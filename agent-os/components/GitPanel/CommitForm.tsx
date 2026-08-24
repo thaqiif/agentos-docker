@@ -147,7 +147,7 @@ export function CommitForm({
           placeholder="Describe your changes..."
           rows={3}
           className={cn(
-            "border-input bg-background w-full resize-none rounded-none border px-2.5 py-2 font-mono text-xs",
+            "border-input bg-background w-full resize-none rounded-md border px-3 py-2.5 font-mono text-xs",
             "focus-visible:border-ring focus-visible:ring-ring/60 focus-visible:ring-1 focus-visible:outline-none",
             "placeholder:text-muted-foreground/50"
           )}
