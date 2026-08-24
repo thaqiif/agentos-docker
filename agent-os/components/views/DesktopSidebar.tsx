@@ -128,7 +128,7 @@ export function DesktopSidebar({
         style={{ width }}
         className={cn(
           "glass-thick glass-float fixed top-0 left-0 z-40 h-full overflow-hidden",
-          "transition-transform duration-[400ms] ease-[cubic-bezier(0.32,0.72,0,1)]",
+          "transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]",
           revealed ? "translate-x-0" : "-translate-x-full"
         )}
       >

@@ -23,6 +23,25 @@ function ThemeClassHandler({ children }: { children: React.ReactNode }) {
     if (variant && variant !== "default" && variant !== "deep") {
       root.setAttribute("data-theme-variant", variant);
     }
+
+    // Update theme-color meta tag to match the actual background
+    const updateThemeColor = () => {
+      const bg = getComputedStyle(root).getPropertyValue("--background").trim();
+      if (bg) {
+        const [h, s, l] = bg.split(" ");
+        const themeColor = `hsl(${h}, ${s}, ${l})`;
+        let metaTag = document.querySelector('meta[name="theme-color"]');
+        if (!metaTag) {
+          metaTag = document.createElement("meta");
+          metaTag.setAttribute("name", "theme-color");
+          document.head.appendChild(metaTag);
+        }
+        metaTag.setAttribute("content", themeColor);
+      }
+    };
+
+    // Small delay to ensure CSS variables are computed after class changes
+    requestAnimationFrame(updateThemeColor);
   }, [theme, systemTheme]);
 
   return <>{children}</>;

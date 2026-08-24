@@ -151,7 +151,7 @@ export function ProjectsSection({
 
             {/* Project contents when expanded */}
             {project.expanded && (
-              <div className="ml-4 flex flex-col gap-0.5 border-l border-[var(--fill-3)] pb-1 pl-1.5">
+              <div className="ml-4 flex flex-col gap-0.5 pb-1 pl-1.5">
                 {/* Dev servers for this project */}
                 {projectDevServers.length > 0 && (
                   <div className="flex flex-col gap-0.5 pb-0.5">

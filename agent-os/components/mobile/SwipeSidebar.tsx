@@ -37,6 +37,8 @@ export function SwipeSidebar({ isOpen, onClose, children }: SwipeSidebarProps) {
   const panelRef = useRef<HTMLElement>(null);
   const scrimRef = useRef<HTMLDivElement>(null);
   const springRef = useRef<SpringHandle | null>(null);
+  const springTargetRef = useRef<number | null>(null);
+  const springActiveRef = useRef(false);
 
   const widthRef = useRef(280);
   const xRef = useRef(-280);
@@ -65,14 +67,23 @@ export function SwipeSidebar({ isOpen, onClose, children }: SwipeSidebarProps) {
 
   const springTo = useCallback(
     (target: number, velocity = 0) => {
+      // Already springing toward this target (e.g. a gesture release just
+      // started it) — the controlled-state effect re-fires right after via
+      // onClose(), and restarting here would drop the flick's momentum.
+      if (springActiveRef.current && springTargetRef.current === target) {
+        return;
+      }
+      springTargetRef.current = target;
       if (prefersReducedMotion()) {
         springRef.current?.stop();
+        springActiveRef.current = false;
         paint(target);
         return;
       }
       if (springRef.current) {
         springRef.current.stop();
       }
+      springActiveRef.current = true;
       springRef.current = spring(
         xRef.current,
         target,
@@ -80,6 +91,7 @@ export function SwipeSidebar({ isOpen, onClose, children }: SwipeSidebarProps) {
         { ...SPRING.sheet, velocity },
         () => {
           springRef.current = null;
+          springActiveRef.current = false;
         }
       );
     },
@@ -113,6 +125,7 @@ export function SwipeSidebar({ isOpen, onClose, children }: SwipeSidebarProps) {
     const onPointerDown = (e: PointerEvent) => {
       if (!isOpen || e.pointerType === "mouse") return;
       springRef.current?.stop();
+      springActiveRef.current = false;
       tracker.current.reset();
       tracker.current.add(xRef.current);
       dragRef.current = {
