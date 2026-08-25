@@ -11,71 +11,51 @@ const migrations: Migration[] = [
   {
     id: 1,
     name: "add_group_path_to_sessions",
-    up: (db) => {
-      db.exec(
-        `ALTER TABLE sessions ADD COLUMN group_path TEXT NOT NULL DEFAULT 'sessions'`
-      );
-    },
+    // No-op: the sessions table was removed when terminals became
+    // plain tmux sessions. Kept so migration ids stay stable.
+    up: () => {},
   },
   {
     id: 2,
     name: "add_agent_type_to_sessions",
-    up: (db) => {
-      db.exec(
-        `ALTER TABLE sessions ADD COLUMN agent_type TEXT NOT NULL DEFAULT 'claude'`
-      );
-    },
+    // No-op: the sessions table was removed when terminals became
+    // plain tmux sessions. Kept so migration ids stay stable.
+    up: () => {},
   },
   {
     id: 3,
     name: "add_worktree_columns_to_sessions",
-    up: (db) => {
-      db.exec(`ALTER TABLE sessions ADD COLUMN worktree_path TEXT`);
-      db.exec(`ALTER TABLE sessions ADD COLUMN branch_name TEXT`);
-      db.exec(`ALTER TABLE sessions ADD COLUMN base_branch TEXT`);
-      db.exec(`ALTER TABLE sessions ADD COLUMN dev_server_port INTEGER`);
-    },
+    // No-op: the sessions table was removed when terminals became
+    // plain tmux sessions. Kept so migration ids stay stable.
+    up: () => {},
   },
   {
     id: 4,
     name: "add_pr_tracking_to_sessions",
-    up: (db) => {
-      db.exec(`ALTER TABLE sessions ADD COLUMN pr_url TEXT`);
-      db.exec(`ALTER TABLE sessions ADD COLUMN pr_number INTEGER`);
-      db.exec(`ALTER TABLE sessions ADD COLUMN pr_status TEXT`);
-    },
+    // No-op: the sessions table was removed when terminals became
+    // plain tmux sessions. Kept so migration ids stay stable.
+    up: () => {},
   },
   {
     id: 5,
     name: "add_group_path_index",
-    up: (db) => {
-      db.exec(
-        `CREATE INDEX IF NOT EXISTS idx_sessions_group ON sessions(group_path)`
-      );
-    },
+    // No-op: the sessions table was removed when terminals became
+    // plain tmux sessions. Kept so migration ids stay stable.
+    up: () => {},
   },
   {
     id: 6,
     name: "add_orchestration_columns_to_sessions",
-    up: (db) => {
-      db.exec(
-        `ALTER TABLE sessions ADD COLUMN conductor_session_id TEXT REFERENCES sessions(id)`
-      );
-      db.exec(`ALTER TABLE sessions ADD COLUMN worker_task TEXT`);
-      db.exec(`ALTER TABLE sessions ADD COLUMN worker_status TEXT`);
-      db.exec(
-        `CREATE INDEX IF NOT EXISTS idx_sessions_conductor ON sessions(conductor_session_id)`
-      );
-    },
+    // No-op: the sessions table was removed when terminals became
+    // plain tmux sessions. Kept so migration ids stay stable.
+    up: () => {},
   },
   {
     id: 7,
     name: "add_auto_approve_to_sessions",
-    up: (db) => {
-      db.exec(
-        `ALTER TABLE sessions ADD COLUMN auto_approve INTEGER NOT NULL DEFAULT 0`
-      );
-    },
+    // No-op: the sessions table was removed when terminals became
+    // plain tmux sessions. Kept so migration ids stay stable.
+    up: () => {},
   },
   {
     id: 8,
@@ -99,17 +79,9 @@ const migrations: Migration[] = [
   {
     id: 9,
     name: "add_project_id_to_sessions",
-    up: (db) => {
-      db.exec(
-        `ALTER TABLE sessions ADD COLUMN project_id TEXT REFERENCES projects(id)`
-      );
-      db.exec(
-        `UPDATE sessions SET project_id = 'uncategorized' WHERE project_id IS NULL`
-      );
-      db.exec(
-        `CREATE INDEX IF NOT EXISTS idx_sessions_project ON sessions(project_id)`
-      );
-    },
+    // No-op: the sessions table was removed when terminals became
+    // plain tmux sessions. Kept so migration ids stay stable.
+    up: () => {},
   },
   {
     id: 10,
@@ -148,13 +120,9 @@ const migrations: Migration[] = [
   {
     id: 11,
     name: "add_tmux_name_to_sessions",
-    up: (db) => {
-      db.exec(`ALTER TABLE sessions ADD COLUMN tmux_name TEXT`);
-      // Backfill existing sessions with computed tmux name
-      db.exec(
-        `UPDATE sessions SET tmux_name = agent_type || '-' || id WHERE tmux_name IS NULL`
-      );
-    },
+    // No-op: the sessions table was removed when terminals became
+    // plain tmux sessions. Kept so migration ids stay stable.
+    up: () => {},
   },
   {
     id: 12,
@@ -181,6 +149,65 @@ const migrations: Migration[] = [
       db.exec(
         `CREATE INDEX IF NOT EXISTS idx_project_repositories_project ON project_repositories(project_id)`
       );
+    },
+  },
+  {
+    id: 14,
+    name: "drop_session_tables",
+    up: (db) => {
+      // Terminals are tmux sessions now, and tmux is the only record of
+      // them. Messages and tool calls belonged to the in-app chat view,
+      // which went with them; groups were superseded by projects.
+      db.exec(`DROP TABLE IF EXISTS tool_calls`);
+      db.exec(`DROP TABLE IF EXISTS messages`);
+      db.exec(`DROP TABLE IF EXISTS sessions`);
+      db.exec(`DROP TABLE IF EXISTS groups`);
+    },
+  },
+  {
+    id: 15,
+    name: "add_terminals_registry",
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS terminals (
+          name TEXT PRIMARY KEY,
+          working_directory TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          last_seen_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+      `);
+    },
+  },
+  {
+    id: 16,
+    name: "repair_mangled_terminal_names",
+    up: (db) => {
+      // tmux rewrites "." and ":" in session names, but renames used to be
+      // recorded as typed. Any such row can never match a live session: it
+      // shows as a permanently stopped terminal, and the real session turns
+      // up alongside it as a second entry. Point them at the name tmux
+      // would have chosen, dropping the row if that name is already taken —
+      // that is the live entry, and it is the one worth keeping.
+      const rows = db
+        .prepare(`SELECT name FROM terminals`)
+        .all() as { name: string }[];
+
+      const taken = new Set(rows.map((r) => r.name));
+      const rename = db.prepare(`UPDATE terminals SET name = ? WHERE name = ?`);
+      const drop = db.prepare(`DELETE FROM terminals WHERE name = ?`);
+
+      for (const { name } of rows) {
+        const fixed = name.replace(/[.:]/g, "_");
+        if (fixed === name) continue;
+
+        if (taken.has(fixed)) {
+          drop.run(name);
+        } else {
+          rename.run(fixed, name);
+          taken.add(fixed);
+        }
+        taken.delete(name);
+      }
     },
   },
 ];

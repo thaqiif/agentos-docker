@@ -1,13 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  GitCommit,
-  GitBranch,
-  Send,
-  Loader2,
-  AlertTriangle,
-} from "lucide-react";
+import { Loader2, AlertTriangle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -120,20 +114,19 @@ export function CommitForm({
   }
 
   return (
-    <div className="bg-muted/20 space-y-3 p-3">
+    <div className="glass glass-edge-top relative z-10 space-y-2 p-3">
       {/* Repo indicator (multi-repo mode) */}
       {repoName && (
-        <div className="text-muted-foreground flex items-center gap-1 text-xs">
-          <GitBranch className="h-3 w-3" />
-          Committing to:{" "}
-          <span className="text-foreground font-medium">{repoName}</span>
+        <div className="ui-meta flex items-center gap-1.5">
+          Committing to:
+          <span className="text-foreground">{repoName}</span>
           <span className="text-muted-foreground/70">({branch})</span>
         </div>
       )}
 
       {/* Warning for multiple repos with staged changes */}
       {multipleReposWarning && (
-        <div className="flex items-start gap-2 rounded-md bg-yellow-500/10 px-2 py-1.5 text-xs text-yellow-600 dark:text-yellow-500">
+        <div className="bg-status-waiting/10 text-status-waiting flex items-start gap-2 px-2 py-1.5 text-xs">
           <AlertTriangle className="mt-0.5 h-3 w-3 flex-shrink-0" />
           <span>
             Multiple repos have staged changes. Only the first will be
@@ -144,9 +137,9 @@ export function CommitForm({
 
       {/* Commit message input */}
       <div className="space-y-1.5">
-        <label className="text-muted-foreground flex items-center gap-1 text-xs">
-          <GitCommit className="h-3 w-3" />
-          Commit message
+        <label className="ui-label flex items-center gap-2">
+          <span>01</span>
+          commit.msg
         </label>
         <textarea
           value={message}
@@ -154,19 +147,18 @@ export function CommitForm({
           placeholder="Describe your changes..."
           rows={3}
           className={cn(
-            "w-full resize-none rounded-md px-3 py-2 text-sm",
-            "bg-muted/50",
-            "focus:ring-primary/50 focus:ring-2 focus:outline-none",
+            "border-input bg-background w-full resize-none rounded-md border px-3 py-2.5 font-mono text-xs",
+            "focus-visible:border-ring focus-visible:ring-ring/60 focus-visible:ring-1 focus-visible:outline-none",
             "placeholder:text-muted-foreground/50"
           )}
         />
       </div>
 
       {/* Error message */}
-      {error && <p className="px-1 text-xs text-red-500">{error}</p>}
+      {error && <p className="text-status-error px-1 text-xs">{error}</p>}
 
       {/* Success message */}
-      {success && <p className="px-1 text-xs text-green-500">{success}</p>}
+      {success && <p className="text-status-running px-1 text-xs">{success}</p>}
 
       {/* Buttons */}
       <div className="flex gap-2">
@@ -178,11 +170,13 @@ export function CommitForm({
           className="min-h-[44px] flex-1"
         >
           {committing ? (
-            <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+            <>
+              <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+              COMMIT
+            </>
           ) : (
-            <GitCommit className="mr-1 h-4 w-4" />
+            "COMMIT"
           )}
-          Commit
         </Button>
 
         <Button
@@ -193,11 +187,16 @@ export function CommitForm({
           className="min-h-[44px] flex-1"
         >
           {pushing ? (
-            <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+            <>
+              <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+              COMMIT &amp; PUSH
+            </>
           ) : (
-            <Send className="mr-1 h-4 w-4" />
+            <>
+              COMMIT &amp; PUSH
+              <ArrowRight className="h-3.5 w-3.5" />
+            </>
           )}
-          Commit & Push
         </Button>
       </div>
     </div>

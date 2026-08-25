@@ -11,11 +11,22 @@ interface SearchBarProps {
   onFindNext: () => void;
   onFindPrevious: () => void;
   onClose: () => void;
+  matchCount?: number;
+  matchTotal?: number;
 }
 
 export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
   (
-    { visible, query, onQueryChange, onFindNext, onFindPrevious, onClose },
+    {
+      visible,
+      query,
+      onQueryChange,
+      onFindNext,
+      onFindPrevious,
+      onClose,
+      matchCount,
+      matchTotal,
+    },
     ref
   ) => {
     if (!visible) return null;
@@ -23,12 +34,11 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
     return (
       <div
         className={cn(
-          "flex items-center gap-2 px-4 py-2",
-          "bg-zinc-900/90 backdrop-blur-sm",
-          "border-b border-zinc-800"
+          "glass glass-edge-bottom relative z-20 flex items-center gap-1.5 px-3 py-1.5",
+          "focus-within:ring-primary/40 focus-within:ring-2 focus-within:ring-inset"
         )}
       >
-        <Search className="h-4 w-4 text-zinc-500" />
+        <Search className="text-muted-foreground/70 h-4 w-4 shrink-0" />
         <input
           ref={ref}
           type="text"
@@ -36,31 +46,36 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder="Search in terminal..."
           className={cn(
-            "flex-1 bg-transparent text-sm text-zinc-100 placeholder:text-zinc-500",
+            "placeholder:text-muted-foreground/70 text-foreground min-w-0 flex-1 bg-transparent py-1.5 text-[0.8125rem]",
             "focus:outline-none"
           )}
         />
-        <div className="flex items-center gap-1">
+        {matchTotal !== undefined && (
+          <span className="text-muted-foreground shrink-0 text-[0.6875rem] tabular-nums">
+            {matchCount ?? 0}/{matchTotal}
+          </span>
+        )}
+        <div className="flex items-center gap-0.5">
           <button
             onClick={onFindPrevious}
-            className="rounded p-1.5 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+            className="press focus-ring text-muted-foreground hover:text-foreground flex size-7 items-center justify-center rounded-full transition-colors hover:bg-[var(--fill-3)]"
             title="Previous (Shift+Enter)"
           >
-            <ChevronUp className="h-4 w-4" />
+            <ChevronUp className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={onFindNext}
-            className="rounded p-1.5 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+            className="press focus-ring text-muted-foreground hover:text-foreground flex size-7 items-center justify-center rounded-full transition-colors hover:bg-[var(--fill-3)]"
             title="Next (Enter)"
           >
-            <ChevronDown className="h-4 w-4" />
+            <ChevronDown className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={onClose}
-            className="rounded p-1.5 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+            className="press focus-ring text-muted-foreground hover:text-foreground flex size-7 items-center justify-center rounded-full transition-colors hover:bg-[var(--fill-3)]"
             title="Close (Esc)"
           >
-            <X className="h-4 w-4" />
+            <X className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>

@@ -21,13 +21,11 @@ export function KeybarToggleButton({
       onClick={onToggle}
       className={cn(
         "absolute right-3 z-30",
-        "flex items-center justify-center",
-        "h-11 w-11 rounded-full",
-        "bg-secondary/90 backdrop-blur-sm",
-        "shadow-lg",
-        "text-muted-foreground hover:bg-accent hover:text-foreground",
-        "touch-manipulation transition-all duration-200",
-        "active:scale-95",
+        "flex h-11 w-11 items-center justify-center rounded-full",
+        "glass-thin glass-float",
+        "press focus-ring text-muted-foreground hover:text-foreground",
+        isVisible && "text-primary",
+        "touch-manipulation transition-colors duration-200",
         // Position: moves up when keyboard is visible (accounts for safe-area + taller keys + recent commands bar)
         isVisible
           ? "bottom-[265px]"
@@ -36,9 +34,9 @@ export function KeybarToggleButton({
       aria-label={isVisible ? "Hide keyboard" : "Show keyboard"}
     >
       {isVisible ? (
-        <KeyboardOff className="h-5 w-5" />
+        <KeyboardOff className="h-4 w-4" />
       ) : (
-        <Keyboard className="h-5 w-5" />
+        <Keyboard className="h-4 w-4" />
       )}
     </button>
   );

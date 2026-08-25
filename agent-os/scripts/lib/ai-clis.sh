@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # AI CLI detection and installation for agent-os
+#
+# Four supported harnesses, deliberately. Each is installed unpinned so a
+# rebuild always lands on the newest release the running Node supports.
 
 detect_ai_clis() {
     local installed=()
@@ -7,10 +10,7 @@ detect_ai_clis() {
     command -v claude &> /dev/null && installed+=("claude")
     command -v codex &> /dev/null && installed+=("codex")
     command -v opencode &> /dev/null && installed+=("opencode")
-    command -v kilo &> /dev/null && installed+=("kilo")
-    command -v gemini &> /dev/null && installed+=("gemini")
-    command -v aider &> /dev/null && installed+=("aider")
-    command -v cursor &> /dev/null && installed+=("cursor")
+    command -v commandcode &> /dev/null && installed+=("commandcode")
 
     echo "${installed[*]}"
 }
@@ -22,7 +22,7 @@ install_claude_code() {
     fi
 
     log_info "Installing Claude Code..."
-    curl -fsSL https://claude.ai/install.sh | bash
+    npm install -g @anthropic-ai/claude-code
 
     if is_interactive; then
         log_info "Authenticating Claude Code..."
@@ -46,55 +46,32 @@ install_codex() {
 
     log_info "Authenticating Codex..."
     echo ""
-    echo "Please set your OPENAI_API_KEY environment variable."
+    echo "Run 'codex login', or set OPENAI_API_KEY."
     echo "Get your key at: https://platform.openai.com/api-keys"
 }
 
-install_aider() {
-    if command -v aider &> /dev/null; then
-        log_success "Aider already installed"
+install_opencode() {
+    if command -v opencode &> /dev/null; then
+        log_success "OpenCode already installed"
         return 0
     fi
 
-    log_info "Installing Aider..."
+    log_info "Installing OpenCode..."
+    npm install -g opencode-ai
 
-    if command -v pipx &> /dev/null; then
-        pipx install aider-chat
-    elif command -v pip3 &> /dev/null; then
-        pip3 install aider-chat
-    else
-        log_error "Please install Python/pip first, then run: pip install aider-chat"
-        return 1
-    fi
+    log_info "Run 'opencode' to complete setup and authentication when ready."
 }
 
-install_gemini_cli() {
-    if command -v gemini &> /dev/null; then
-        log_success "Gemini CLI already installed"
+install_command_code() {
+    if command -v commandcode &> /dev/null; then
+        log_success "Command Code already installed"
         return 0
     fi
 
-    log_info "Installing Gemini CLI..."
-    npm install -g @google/gemini-cli 2>/dev/null || npm install -g gemini-cli
+    log_info "Installing Command Code..."
+    npm install -g command-code
 
-    log_info "Authenticating Gemini CLI..."
-    echo ""
-    echo "Please complete the authentication."
-    gemini auth login 2>/dev/null || true
-}
-
-install_kilocode_cli() {
-    if command -v kilo &> /dev/null; then
-        log_success "Kilo Code CLI already installed"
-        return 0
-    fi
-
-    log_info "Installing Kilo Code CLI..."
-    npm install -g @kilocode/cli
-
-    log_info "Authenticating Kilo Code CLI..."
-    echo ""
-    echo "Run 'kilo' to complete setup and authentication when ready."
+    log_info "Run 'commandcode' to complete setup and authentication when ready."
 }
 
 prompt_ai_cli_install() {
@@ -113,10 +90,9 @@ prompt_ai_cli_install() {
     echo ""
     echo "  1) Claude Code (Anthropic) - Recommended"
     echo "  2) Codex (OpenAI)"
-    echo "  3) Aider (Multi-LLM)"
-    echo "  4) Gemini CLI (Google)"
-    echo "  5) Kilo Code CLI (Kilo)"
-    echo "  6) Skip - I'll install one myself"
+    echo "  3) OpenCode (multi-provider)"
+    echo "  4) Command Code"
+    echo "  5) Skip - I'll install one myself"
     echo ""
 
     if ! is_interactive; then
@@ -125,24 +101,22 @@ prompt_ai_cli_install() {
         return
     fi
 
-    read -p "Which would you like to install? [1-6, default: 1] " -r choice
+    read -p "Which would you like to install? [1-5, default: 1] " -r choice
     echo ""
 
     case "${choice:-1}" in
         1) install_claude_code ;;
         2) install_codex ;;
-        3) install_aider ;;
-        4) install_gemini_cli ;;
-        5) install_kilocode_cli ;;
-        6)
+        3) install_opencode ;;
+        4) install_command_code ;;
+        5)
             log_info "Skipping AI CLI installation"
             echo ""
             echo "Install one of these before using AgentOS:"
-            echo "  Claude Code: npm install -g @anthropic-ai/claude-code"
-            echo "  Codex:       npm install -g @openai/codex"
-            echo "  Aider:       pip install aider-chat"
-            echo "  Gemini:      npm install -g gemini-cli"
-            echo "  Kilo Code:   npm install -g @kilocode/cli"
+            echo "  Claude Code:  npm install -g @anthropic-ai/claude-code"
+            echo "  Codex:        npm install -g @openai/codex"
+            echo "  OpenCode:     npm install -g opencode-ai"
+            echo "  Command Code: npm install -g command-code"
             echo ""
             ;;
         *) log_warn "Invalid choice, skipping" ;;

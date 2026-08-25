@@ -49,23 +49,23 @@ export interface ABadgeProps {
 }
 
 const SIZE_CLASSES: Record<ABadgeSize, string> = {
-  sm: "h-4 px-1.5 py-0 text-[10px] leading-none",
-  md: "h-5 px-2 py-0 text-xs leading-none",
+  sm: "h-[1.125rem] px-1.5 py-0 text-[0.625rem] leading-none",
+  md: "h-5 px-2 py-0 text-[0.6875rem] leading-none",
 };
 
+/* Status colour lives in the fill and the label, never in a ring around
+   them — an outlined chip reads as a control the user can press. */
 const VARIANT_CLASSES: Record<ABadgeVariant, string> = {
   default: "",
   secondary: "",
   destructive: "",
   outline: "",
-  new: "border-transparent bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400",
-  beta: "border-transparent bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400",
-  pro: "border-transparent bg-violet-500/15 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400",
-  waiting:
-    "border-transparent bg-yellow-500/15 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400",
-  running:
-    "border-transparent bg-green-500/15 text-green-600 dark:bg-green-500/20 dark:text-green-400",
-  idle: "border-transparent bg-gray-500/15 text-gray-600 dark:bg-gray-500/20 dark:text-gray-400",
+  new: "bg-status-running/14 text-status-running",
+  beta: "bg-status-waiting/14 text-status-waiting",
+  pro: "bg-primary/14 text-primary",
+  waiting: "bg-status-waiting/14 text-status-waiting",
+  running: "bg-status-running/14 text-status-running",
+  idle: "bg-[var(--fill-2)] text-muted-foreground",
 };
 
 const BASE_VARIANT_MAP: Record<

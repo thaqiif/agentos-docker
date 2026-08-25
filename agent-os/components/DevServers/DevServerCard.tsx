@@ -20,6 +20,7 @@ import type { DevServer, DevServerStatus } from "@/lib/db";
 
 interface DevServerCardProps {
   server: DevServer;
+  index?: number;
   projectName?: string;
   onStart: (id: string) => Promise<void>;
   onStop: (id: string) => Promise<void>;
@@ -30,28 +31,56 @@ interface DevServerCardProps {
 
 const statusConfig: Record<
   DevServerStatus,
-  { color: string; bgColor: string; label: string }
+  { glyph: "dot" | "pulse" | "cross" | "hollow"; color: string; label: string }
 > = {
   running: {
-    color: "bg-green-500",
-    bgColor: "bg-green-500/10",
+    glyph: "dot",
+    color: "text-status-running",
     label: "Running",
   },
   stopped: {
-    color: "bg-zinc-500",
-    bgColor: "bg-zinc-500/10",
+    glyph: "hollow",
+    color: "text-muted-foreground/70",
     label: "Stopped",
   },
   starting: {
-    color: "bg-yellow-500",
-    bgColor: "bg-yellow-500/10",
+    glyph: "pulse",
+    color: "text-status-waiting",
     label: "Starting",
   },
-  failed: { color: "bg-red-500", bgColor: "bg-red-500/10", label: "Failed" },
+  failed: {
+    glyph: "cross",
+    color: "text-status-error",
+    label: "Failed",
+  },
 };
+
+function StatusGlyph({
+  glyph,
+  color,
+}: {
+  glyph: "dot" | "pulse" | "cross" | "hollow";
+  color: string;
+}) {
+  if (glyph === "cross") {
+    return <X className={cn("h-3 w-3 shrink-0 stroke-[3]", color)} />;
+  }
+  return (
+    <span
+      className={cn(
+        "inline-block h-1.5 w-1.5 shrink-0 rounded-full",
+        glyph === "dot" && "bg-current",
+        glyph === "pulse" && "animate-status-pulse border border-current",
+        glyph === "hollow" && "border border-current",
+        color
+      )}
+    />
+  );
+}
 
 export function DevServerCard({
   server,
+  index,
   projectName,
   onStart,
   onStop,
@@ -82,141 +111,137 @@ export function DevServerCard({
   return (
     <div
       className={cn(
-        "border-border/50 rounded-md border px-2 py-1.5",
-        "bg-card/50 hover:bg-card/80 transition-colors"
+        "rounded-lg px-3 py-2 transition-colors",
+        !isStopped && "bg-surface-raised/40",
+        "hover:bg-[var(--fill-4)]"
       )}
     >
-      {/* Header row */}
-      <div className="flex items-center gap-2">
-        {/* Status dot */}
-        <div className={cn("h-2 w-2 rounded-full", status.color)} />
+      {/* Service row */}
+      <div className="flex items-center gap-2.5">
+        <span className="w-4 shrink-0 text-[0.625rem] text-muted-foreground/70">
+          {typeof index === "number"
+            ? String(index + 1)
+            : "--"}
+        </span>
 
-        {/* Name */}
+        <StatusGlyph glyph={status.glyph} color={status.color} />
+
         <span className="flex-1 truncate text-sm font-medium">
           {server.name}
         </span>
 
-        {/* Type badge */}
-        <span
-          className={cn(
-            "flex items-center gap-1 rounded px-1.5 py-0.5",
-            "text-muted-foreground text-[10px] font-medium",
-            "bg-muted/50"
-          )}
-        >
+        <span className="text-muted-foreground/70 flex shrink-0 items-center gap-1 text-[0.625rem] font-medium tracking-[0.045em] uppercase">
           {server.type === "docker" ? (
             <Container className="h-3 w-3" />
           ) : (
             <Server className="h-3 w-3" />
           )}
-          {server.type === "docker" ? "Docker" : "Node"}
+          {server.type}
         </span>
       </div>
 
-      {/* Project name (if provided) */}
-      {projectName && (
-        <div className="text-muted-foreground mt-1 truncate text-xs">
-          {projectName}
-        </div>
-      )}
+      {/* Meta ledger */}
+      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-[26px]">
+        <span className="ui-meta min-w-0 truncate">$ {server.command}</span>
+        {server.pid !== null && (
+          <span className="ui-meta text-muted-foreground/70 shrink-0">
+            pid {server.pid}
+          </span>
+        )}
+        {server.pid === null && server.container_id && (
+          <span className="ui-meta text-muted-foreground/70 shrink-0">
+            ctr {server.container_id.slice(0, 12)}
+          </span>
+        )}
+        {projectName && (
+          <span className="ui-meta text-muted-foreground/70 shrink-0 truncate">
+            {projectName}
+          </span>
+        )}
 
-      {/* Port badge */}
-      {primaryPort && (
-        <div className="mt-1 flex items-center gap-1">
-          {isRunning ? (
+        {primaryPort &&
+          (isRunning ? (
             <a
               href={`http://localhost:${primaryPort}`}
               target="_blank"
               rel="noopener noreferrer"
-              className={cn(
-                "flex items-center gap-1 rounded px-2 py-1",
-                "font-mono text-xs transition-colors",
-                "bg-primary/10 text-primary hover:bg-primary/20"
-              )}
+              title={`Open http://localhost:${primaryPort}`}
+              className="ui-meta text-primary hover:text-primary/80 flex shrink-0 items-center gap-1 transition-colors"
             >
-              <ExternalLink className="h-3 w-3" />
               localhost:{primaryPort}
+              <ExternalLink className="h-3 w-3" />
+              open ↗
             </a>
           ) : (
-            <span
-              className={cn(
-                "flex items-center gap-1 rounded px-2 py-1",
-                "font-mono text-xs",
-                "bg-muted/30 text-muted-foreground"
-              )}
-            >
+            <span className="ui-meta text-muted-foreground shrink-0">
               localhost:{primaryPort}
             </span>
-          )}
+          ))}
+
+        {primaryPort && isRunning && (
           <button
             onClick={() => primaryPort && copy(`localhost:${primaryPort}`)}
             disabled={!isRunning}
-            className={cn(
-              "flex items-center justify-center rounded p-1",
-              "text-xs transition-colors",
-              isRunning
-                ? "text-muted-foreground hover:text-foreground hover:bg-muted"
-                : "text-muted-foreground/50 cursor-not-allowed"
-            )}
             title="Copy URL"
+            className={cn(
+              "shrink-0 transition-colors",
+              copied ? "text-status-running" : "text-muted-foreground hover:text-foreground"
+            )}
           >
             {copied ? (
-              <Check className="h-3 w-3 text-green-500" />
+              <Check className="h-3 w-3" />
             ) : (
               <Copy className="h-3 w-3" />
             )}
           </button>
-        </div>
-      )}
-
-      {/* Actions */}
-      <div className="mt-1.5 flex items-center gap-1">
-        {isRunning && (
-          <>
-            {confirmingStop ? (
-              <>
-                <ActionButton
-                  icon={Square}
-                  label="Confirm"
-                  onClick={() => {
-                    setConfirmingStop(false);
-                    handleAction(() => onStop(server.id));
-                  }}
-                  disabled={loading}
-                  variant="danger"
-                />
-                <ActionButton
-                  icon={X}
-                  label="Cancel"
-                  onClick={() => setConfirmingStop(false)}
-                  disabled={loading}
-                />
-              </>
-            ) : (
-              <>
-                <ActionButton
-                  icon={Square}
-                  label="Stop"
-                  onClick={() => setConfirmingStop(true)}
-                  disabled={loading}
-                  variant="danger"
-                />
-                <ActionButton
-                  icon={RefreshCw}
-                  label="Restart"
-                  onClick={() => handleAction(() => onRestart(server.id))}
-                  disabled={loading}
-                />
-                <ActionButton
-                  icon={FileText}
-                  label="Logs"
-                  onClick={() => onViewLogs(server.id)}
-                  disabled={loading}
-                />
-              </>
-            )}
-          </>
         )}
+      </div>
+
+      {/* Utility actions */}
+      <div className="mt-1.5 flex items-center gap-1 pl-[26px]">
+        {isRunning &&
+          (confirmingStop ? (
+            <>
+              <ActionButton
+                icon={Square}
+                label="Confirm"
+                onClick={() => {
+                  setConfirmingStop(false);
+                  handleAction(() => onStop(server.id));
+                }}
+                disabled={loading}
+                variant="danger"
+              />
+              <ActionButton
+                icon={X}
+                label="Cancel"
+                onClick={() => setConfirmingStop(false)}
+                disabled={loading}
+              />
+            </>
+          ) : (
+            <>
+              <ActionButton
+                icon={Square}
+                label="Stop"
+                onClick={() => setConfirmingStop(true)}
+                disabled={loading}
+                variant="danger"
+              />
+              <ActionButton
+                icon={RefreshCw}
+                label="Restart"
+                onClick={() => handleAction(() => onRestart(server.id))}
+                disabled={loading}
+              />
+              <ActionButton
+                icon={FileText}
+                label="Logs"
+                onClick={() => onViewLogs(server.id)}
+                disabled={loading}
+              />
+            </>
+          ))}
 
         {isStopped && (
           <>
@@ -263,9 +288,9 @@ export function DevServerCard({
         )}
 
         {server.status === "starting" && (
-          <span className="text-muted-foreground flex items-center gap-1 text-xs">
+          <span className="ui-meta flex items-center gap-1.5">
             <RefreshCw className="h-3 w-3 animate-spin" />
-            Starting...
+            starting
           </span>
         )}
       </div>
@@ -294,17 +319,16 @@ function ActionButton({
       disabled={disabled}
       title={label}
       className={cn(
-        "flex h-7 items-center gap-1 rounded px-1.5",
-        "text-xs font-medium transition-colors",
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        variant === "primary" &&
-          "bg-primary/10 text-primary hover:bg-primary/20",
+        "flex h-6 items-center gap-1.5 px-1.5 text-[0.75rem] font-medium transition-colors",
+        "disabled:pointer-events-none disabled:opacity-50",
+        variant === "primary" && "text-primary hover:text-primary/80",
         variant === "danger" &&
-          "bg-red-500/10 text-red-500 hover:bg-red-500/20",
-        variant === "default" && "bg-muted/50 text-foreground hover:bg-muted"
+          "text-muted-foreground hover:bg-destructive/10 hover:text-status-error",
+        variant === "default" &&
+          "text-muted-foreground hover:text-foreground"
       )}
     >
-      <Icon className="h-3.5 w-3.5" />
+      <Icon className="h-3 w-3" />
       <span className="hidden sm:inline">{label}</span>
     </button>
   );

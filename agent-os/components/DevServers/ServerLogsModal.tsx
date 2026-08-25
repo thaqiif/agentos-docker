@@ -62,58 +62,61 @@ export function ServerLogsModal({
   }, [serverId]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="overlay-in fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[3px]">
       <div
         className={cn(
-          "flex h-[80vh] w-full max-w-3xl flex-col rounded-xl",
-          "bg-background border-border border",
-          "shadow-2xl"
+          "flex h-[80vh] w-full max-w-3xl flex-col overflow-hidden",
+          "bg-background lift-in rounded-2xl shadow-[var(--elev-4)]"
         )}
       >
         {/* Header */}
-        <div className="border-border flex items-center justify-between border-b px-4 py-3">
-          <h2 className="truncate text-lg font-semibold">Logs: {serverName}</h2>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => fetchLogs(true)}
-              disabled={refreshing}
-              className={cn(
-                "hover:bg-muted rounded-md p-1.5 transition-colors",
-                "disabled:opacity-50"
-              )}
-              title="Refresh"
-            >
-              <RefreshCw
-                className={cn("h-4 w-4", refreshing && "animate-spin")}
-              />
-            </button>
-            <button
-              onClick={onClose}
-              className="hover:bg-muted rounded-md p-1.5 transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
+        <div className="glass glass-edge-bottom relative z-10 flex shrink-0 items-center gap-2 px-4 py-3">
+          <div className="min-w-0 flex-1">
+            <h2 className="type-headline truncate">{serverName}</h2>
+            <p className="ui-label">Logs</p>
           </div>
+          <button
+            onClick={() => fetchLogs(true)}
+            disabled={refreshing}
+            title="Refresh"
+            aria-label="Refresh logs"
+            className={cn(
+              "press-sm focus-ring text-muted-foreground hover:text-foreground flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--fill-3)] transition-colors",
+              "disabled:pointer-events-none disabled:opacity-30"
+            )}
+          >
+            <RefreshCw
+              className={cn("h-3.5 w-3.5", refreshing && "animate-spin")}
+            />
+          </button>
+          <button
+            onClick={onClose}
+            title="Close"
+            aria-label="Close"
+            className="press-sm focus-ring text-muted-foreground hover:text-foreground flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--fill-3)] transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
-        {/* Logs content */}
+        {/* Log terminal */}
         <div
           ref={logsRef}
           className={cn(
-            "flex-1 overflow-auto p-4",
-            "bg-zinc-950 font-mono text-sm leading-relaxed"
+            "scrollbar-thin flex-1 overflow-auto p-3",
+            "bg-background font-mono text-xs leading-relaxed"
           )}
         >
           {loading ? (
-            <div className="flex h-full items-center justify-center">
-              <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
-              <span className="text-muted-foreground ml-2">
-                Loading logs...
+            <div className="flex h-full items-center justify-center gap-2">
+              <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
+              <span className="type-subhead text-muted-foreground">
+                Loading logs
               </span>
             </div>
           ) : logs.length === 0 ? (
-            <div className="text-muted-foreground flex h-full items-center justify-center">
-              No logs available
+            <div className="type-subhead text-muted-foreground flex h-full items-center justify-center">
+              No output
             </div>
           ) : (
             <div className="space-y-0.5">
@@ -123,10 +126,10 @@ export function ServerLogsModal({
                   className={cn(
                     "break-all whitespace-pre-wrap",
                     line.includes("error") || line.includes("Error")
-                      ? "text-red-400"
+                      ? "text-status-error"
                       : line.includes("warn") || line.includes("Warning")
-                        ? "text-yellow-400"
-                        : "text-zinc-300"
+                        ? "text-status-waiting"
+                        : "text-muted-foreground"
                   )}
                 >
                   {line || " "}
@@ -137,12 +140,10 @@ export function ServerLogsModal({
         </div>
 
         {/* Footer */}
-        <div className="border-border text-muted-foreground border-t px-4 py-2 text-xs">
-          Auto-refreshing every 3 seconds
+        <div className="edge-fade-top text-muted-foreground flex shrink-0 items-center justify-between px-5 py-3">
+          <span className="ui-meta">Auto-refresh every 3 seconds</span>
           {refreshing && (
-            <span className="ml-2">
-              <RefreshCw className="inline h-3 w-3 animate-spin" />
-            </span>
+            <RefreshCw className="text-muted-foreground inline h-3 w-3 animate-spin" />
           )}
         </div>
       </div>

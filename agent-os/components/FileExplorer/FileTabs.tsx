@@ -41,9 +41,9 @@ export function FileTabs({
   return (
     <div
       ref={scrollRef}
-      className="bg-muted/30 scrollbar-none flex items-center gap-0.5 overflow-x-auto px-1"
+      className="scrollbar-none glass glass-edge-bottom relative z-10 flex h-9 items-stretch overflow-x-auto"
     >
-      {files.map((file) => {
+      {files.map((file, index) => {
         const isActive = file.path === activeFilePath;
         const dirty = isDirty(file.path);
         const fileName = file.path.split("/").pop() || file.path;
@@ -63,32 +63,44 @@ export function FileTabs({
               }
             }}
             className={cn(
-              "flex cursor-pointer items-center gap-1.5 px-3 py-2 text-sm whitespace-nowrap transition-colors",
-              "min-h-[40px] md:min-h-[36px]",
-              "hover:bg-accent/50",
+              "group relative flex cursor-pointer items-center gap-2 whitespace-nowrap border-r border-[var(--fill-2)] px-2.5 text-xs transition-colors",
               isActive
                 ? "bg-background text-foreground"
-                : "text-muted-foreground"
+                : "text-muted-foreground hover:bg-[var(--fill-4)] hover:text-foreground"
             )}
           >
+            <span
+              className={cn(
+                "text-[0.625rem] tracking-[0.02em]",
+                isActive ? "text-primary" : "text-muted-foreground/70"
+              )}
+            >
+              {index + 1}
+            </span>
             <FileIcon extension={ext} />
-            <span className="max-w-[120px] truncate">{fileName}</span>
+            <span className="max-w-[140px] truncate font-mono">{fileName}</span>
             {dirty && (
-              <span className="bg-primary h-2 w-2 flex-shrink-0 rounded-full" />
+              <span className="bg-status-waiting h-1.5 w-1.5 flex-shrink-0" />
             )}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onClose(file.path);
               }}
+              aria-label={`Close ${fileName}`}
               className={cn(
-                "hover:bg-accent ml-1 flex-shrink-0 rounded p-0.5",
-                "opacity-0 group-hover:opacity-100",
-                isActive && "opacity-100"
+                "-mr-1 flex-shrink-0 p-0.5 transition-opacity",
+                "hover:text-foreground",
+                isActive
+                  ? "opacity-60 hover:opacity-100"
+                  : "opacity-0 group-hover:opacity-60 hover:!opacity-100"
               )}
             >
               <X className="h-3 w-3" />
             </button>
+            {isActive && (
+              <span className="bg-primary absolute inset-x-0 bottom-0 h-px" />
+            )}
           </div>
         );
       })}
@@ -97,22 +109,7 @@ export function FileTabs({
 }
 
 function FileIcon({ extension }: { extension: string }) {
-  const colorMap: Record<string, string> = {
-    js: "text-yellow-400",
-    jsx: "text-yellow-400",
-    ts: "text-blue-400",
-    tsx: "text-blue-400",
-    css: "text-pink-400",
-    scss: "text-pink-400",
-    html: "text-orange-400",
-    xml: "text-orange-400",
-    json: "text-green-400",
-    yaml: "text-purple-400",
-    yml: "text-purple-400",
-    md: "text-blue-300",
-    py: "text-green-500",
-  };
-
-  const color = colorMap[extension] || "text-muted-foreground";
-  return <File className={cn("h-3.5 w-3.5 flex-shrink-0", color)} />;
+  return (
+    <File className="text-muted-foreground h-3 w-3 flex-shrink-0 opacity-70" />
+  );
 }

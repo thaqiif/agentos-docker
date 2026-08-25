@@ -3,22 +3,22 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * A badge is a capsule, not a boxed label — and it is set in the system face
+ * at caption size. The old all-caps spaced-out mono shouted over the content
+ * it was supposed to annotate.
+ */
 const badgeVariants = cva(
-  "inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.6875rem] leading-none font-medium tracking-normal whitespace-nowrap",
   {
     variants: {
       variant: {
-        default:
-          "border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80",
-        secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        destructive:
-          "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
-        outline: "text-foreground",
-        success:
-          "border-transparent bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30",
-        warning:
-          "border-transparent bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30",
+        default: "bg-primary/12 text-primary",
+        secondary: "bg-[var(--fill-2)] text-muted-foreground",
+        destructive: "bg-destructive/12 text-destructive",
+        outline: "border border-[var(--fill-1)] text-foreground",
+        success: "bg-status-running/14 text-status-running",
+        warning: "bg-status-waiting/14 text-status-waiting",
       },
     },
     defaultVariants: {

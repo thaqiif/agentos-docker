@@ -2,11 +2,8 @@
 
 import { useState, useRef, useCallback } from "react";
 import {
-  File,
   Plus,
   Minus,
-  Edit3,
-  ArrowRight,
   ChevronRight,
   Check,
   MoreVertical,
@@ -62,6 +59,11 @@ export function FileChanges({
   }
 
   const showAllButton = files.length > 1 && (onStageAll || onUnstageAll);
+  const sectionLabel = isStaged
+    ? "staged"
+    : title.toLowerCase().includes("untracked")
+      ? "untracked"
+      : "changes";
 
   // Group files by repo if enabled
   const groupedFiles = groupByRepo
@@ -78,30 +80,29 @@ export function FileChanges({
     : [["", files] as [string, AnyGitFile[]]];
 
   return (
-    <div className="mb-4">
-      <div className="flex items-center gap-2 px-3 py-2">
+    <div className="mb-3">
+      <div className="flex items-center gap-2 px-3 py-1.5">
         <button
           onClick={() => setExpanded(!expanded)}
-          className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm font-medium transition-colors"
+          className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors"
         >
           <ChevronRight
             className={cn(
-              "h-4 w-4 transition-transform",
+              "h-3 w-3 transition-transform",
               expanded && "rotate-90"
             )}
           />
-          <span>{title}</span>
+          <span className="ui-label">
+            {sectionLabel} <span className="tabular-nums">{files.length}</span>
+          </span>
         </button>
-        <span className="bg-muted ml-auto rounded-full px-2 py-0.5 text-xs">
-          {files.length}
-        </span>
         {showAllButton && (
           <button
             onClick={(e) => {
               e.stopPropagation();
               isStaged ? onUnstageAll?.() : onStageAll?.();
             }}
-            className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs transition-colors"
+            className="text-muted-foreground hover:text-foreground ml-auto flex items-center gap-1 text-[0.75rem] font-medium transition-colors"
           >
             {isStaged ? (
               <Minus className="h-3 w-3" />
@@ -114,11 +115,11 @@ export function FileChanges({
       </div>
 
       {expanded && (
-        <div className="space-y-0.5">
+        <div className="divide-y divide-[var(--fill-3)]">
           {groupedFiles.map(([repoName, repoFiles]) => (
             <div key={repoName || "default"}>
               {repoName && (
-                <div className="bg-muted/30 text-muted-foreground mx-2 mt-2 mb-1 rounded px-2 py-1 text-xs font-medium">
+                <div className="bg-surface ui-meta mx-2 mt-1 mb-1 border border-[var(--fill-2)] px-2 py-1">
                   {repoName}
                 </div>
               )}
@@ -218,7 +219,7 @@ function FileItem({
     setSwipeOffset(0);
   }, [swipeOffset, onSwipeLeft, onSwipeRight]);
 
-  const statusIcon = getStatusIcon(file.status);
+  const statusGlyph = getStatusGlyph(file.status);
   const statusColor = getStatusColor(file.status);
   const fileName = file.path.split("/").pop() || file.path;
   const filePath = file.path.includes("/")
@@ -239,13 +240,13 @@ function FileItem({
         {onSwipeRight && (
           <div
             className={cn(
-              "flex items-center justify-start bg-green-500/20 pl-4",
+              "flex items-center justify-start bg-status-running/10 pl-4",
               swipeOffset > 0 ? "flex-1" : "w-0"
             )}
             style={{ width: swipeOffset > 0 ? `${swipeOffset}px` : 0 }}
           >
             {swipeOffset > SWIPE_THRESHOLD / 2 && (
-              <Plus className="h-5 w-5 text-green-500" />
+              <Plus className="text-status-running h-4 w-4" />
             )}
           </div>
         )}
@@ -257,7 +258,7 @@ function FileItem({
         {onSwipeLeft && (
           <div
             className={cn(
-              "flex items-center justify-end bg-yellow-500/20 pr-4",
+              "flex items-center justify-end bg-status-waiting/10 pr-4",
               swipeOffset < 0 ? "flex-1" : "w-0"
             )}
             style={{
@@ -265,7 +266,7 @@ function FileItem({
             }}
           >
             {swipeOffset < -SWIPE_THRESHOLD / 2 && (
-              <Minus className="h-5 w-5 text-yellow-500" />
+              <Minus className="text-status-waiting h-4 w-4" />
             )}
           </div>
         )}
@@ -274,37 +275,48 @@ function FileItem({
       {/* File item */}
       <div
         className={cn(
-          "relative flex w-full items-center gap-2 px-3 py-2 text-sm",
+          "relative flex min-h-8 w-full items-center gap-2 py-1.5 pl-3 pr-2",
           "transition-colors",
-          "min-h-[44px]", // Mobile touch target
-          isSelected ? "bg-accent" : "bg-background hover:bg-accent/50"
+          isSelected ? "bg-[var(--fill-3)]" : "bg-background hover:bg-[var(--fill-4)]"
         )}
         style={{
           transform: `translateX(${swipeOffset}px)`,
           transition: isSwiping ? "none" : "transform 0.2s ease-out",
         }}
       >
+        {/* Selected marker */}
+        {isSelected && (
+          <span className="bg-primary absolute inset-y-0 left-0 w-0.5" />
+        )}
+
         {/* Clickable area for file */}
         <button
           onClick={onClick}
           className="flex min-w-0 flex-1 items-center gap-2 text-left"
         >
-          {/* Status icon */}
-          <span className={cn("flex-shrink-0", statusColor)}>{statusIcon}</span>
+          {/* Status glyph */}
+          <span
+            className={cn(
+              "flex h-4 w-4 flex-shrink-0 items-center justify-center text-[0.6875rem] font-medium",
+              statusColor
+            )}
+          >
+            {statusGlyph}
+          </span>
 
           {/* File info */}
           <div className="min-w-0 flex-1">
-            <span className="block truncate">{fileName}</span>
+            <span className="block truncate text-xs text-foreground">
+              {fileName}
+            </span>
             {filePath && (
-              <span className="text-muted-foreground block truncate text-xs">
-                {filePath}
-              </span>
+              <span className="ui-meta block truncate">{filePath}</span>
             )}
           </div>
         </button>
 
         {/* Action buttons - visible on hover (desktop) */}
-        <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
           {/* Stage/Unstage button */}
           {isStaged
             ? onUnstage && (
@@ -313,10 +325,10 @@ function FileItem({
                     e.stopPropagation();
                     onUnstage();
                   }}
-                  className="hover:bg-accent flex h-7 w-7 items-center justify-center rounded text-yellow-500 transition-colors"
+                  className="text-status-waiting hover:bg-[var(--fill-3)] flex h-7 w-7 items-center justify-center transition-colors"
                   title="Unstage"
                 >
-                  <Minus className="h-4 w-4" />
+                  <Minus className="h-3.5 w-3.5" />
                 </button>
               )
             : onStage && (
@@ -325,10 +337,10 @@ function FileItem({
                     e.stopPropagation();
                     onStage();
                   }}
-                  className="hover:bg-accent flex h-7 w-7 items-center justify-center rounded text-green-500 transition-colors"
+                  className="text-status-running hover:bg-[var(--fill-3)] flex h-7 w-7 items-center justify-center transition-colors"
                   title="Stage"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5" />
                 </button>
               )}
 
@@ -337,31 +349,31 @@ function FileItem({
             <DropdownMenuTrigger asChild>
               <button
                 onClick={(e) => e.stopPropagation()}
-                className="text-muted-foreground hover:text-foreground hover:bg-accent flex h-7 w-7 items-center justify-center rounded transition-colors"
+                className="text-muted-foreground hover:text-foreground hover:bg-[var(--fill-3)] flex h-7 w-7 items-center justify-center transition-colors"
               >
-                <MoreVertical className="h-4 w-4" />
+                <MoreVertical className="h-3.5 w-3.5" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {isStaged
                 ? onUnstage && (
                     <DropdownMenuItem onClick={onUnstage}>
-                      <Minus className="mr-2 h-4 w-4" />
+                      <Minus className="mr-2 h-3.5 w-3.5" />
                       Unstage
                     </DropdownMenuItem>
                   )
                 : onStage && (
                     <DropdownMenuItem onClick={onStage}>
-                      <Plus className="mr-2 h-4 w-4" />
+                      <Plus className="mr-2 h-3.5 w-3.5" />
                       Stage
                     </DropdownMenuItem>
                   )}
               {onDiscard && !isStaged && (
                 <DropdownMenuItem
                   onClick={onDiscard}
-                  className="text-red-500 focus:text-red-500"
+                  className="text-status-error focus:text-status-error"
                 >
-                  <Undo2 className="mr-2 h-4 w-4" />
+                  <Undo2 className="mr-2 h-3.5 w-3.5" />
                   Discard Changes
                 </DropdownMenuItem>
               )}
@@ -371,43 +383,45 @@ function FileItem({
 
         {/* Staged indicator - always visible */}
         {isStaged && (
-          <Check className="h-4 w-4 flex-shrink-0 text-green-500 group-hover:hidden" />
+          <Check className="text-status-running h-3.5 w-3.5 flex-shrink-0 group-hover:hidden" />
         )}
 
         {/* Arrow - visible when not hovering */}
-        <ArrowRight className="text-muted-foreground h-4 w-4 flex-shrink-0 group-hover:hidden" />
+        <ChevronRight className="text-muted-foreground h-3.5 w-3.5 flex-shrink-0 group-hover:hidden" />
       </div>
     </div>
   );
 }
 
-function getStatusIcon(status: GitFile["status"]) {
+function getStatusGlyph(status: GitFile["status"]): string {
   switch (status) {
     case "modified":
-      return <Edit3 className="h-4 w-4" />;
+      return "M";
     case "added":
-    case "untracked":
-      return <Plus className="h-4 w-4" />;
+      return "A";
     case "deleted":
-      return <Minus className="h-4 w-4" />;
+      return "D";
+    case "untracked":
+      return "U";
     case "renamed":
-      return <ArrowRight className="h-4 w-4" />;
+      return "R";
     default:
-      return <File className="h-4 w-4" />;
+      return "·";
   }
 }
 
 function getStatusColor(status: GitFile["status"]): string {
   switch (status) {
     case "modified":
-      return "text-yellow-500";
+      return "text-status-waiting";
     case "added":
-    case "untracked":
-      return "text-green-500";
+      return "text-status-running";
     case "deleted":
-      return "text-red-500";
+      return "text-status-error";
     case "renamed":
-      return "text-blue-500";
+      return "text-status-info";
+    case "untracked":
+      return "text-muted-foreground";
     default:
       return "text-muted-foreground";
   }

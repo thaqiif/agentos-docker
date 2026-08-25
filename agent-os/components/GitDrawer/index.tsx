@@ -247,112 +247,111 @@ export function GitDrawer({
     <>
       <div
         className={cn(
-          "bg-muted/30 flex h-full flex-col transition-all duration-200 ease-out",
+          "bg-background border-[var(--fill-1)] flex h-full flex-col border-t transition-all duration-200 ease-out",
           isAnimatingIn
             ? "translate-x-0 opacity-100"
             : "translate-x-4 opacity-0"
         )}
       >
-        {/* Header */}
-        <div className="px-3 py-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Git Changes</span>
-              {status && (
-                <span className="bg-muted rounded-full px-2 py-0.5 text-xs">
-                  <GitBranch className="mr-1 inline h-3 w-3" />
-                  {status.branch}
-                </span>
-              )}
-              {existingPR && (
-                <button
-                  onClick={() => window.open(existingPR.url, "_blank")}
-                  className="bg-muted hover:bg-accent inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs transition-colors"
-                  title={`${existingPR.title} (#${existingPR.number})`}
-                >
-                  <GitPullRequest className="h-3 w-3" />
-                  View PR
-                  <ExternalLink className="h-2.5 w-2.5" />
-                </button>
-              )}
-            </div>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => refetchStatus()}
-                disabled={isRefetching || loading}
-                className="h-7 w-7"
+        {/* Deck header */}
+        <div className="glass glass-edge-bottom relative z-10 flex h-10 shrink-0 items-center justify-between gap-1 px-1.5">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5 px-3">
+            <GitBranch className="text-primary h-3 w-3 shrink-0" />
+            <span className="ui-label">Git</span>
+            <span className="ui-meta min-w-0 truncate">
+              {status?.branch || "…"}
+            </span>
+            {status && (status.ahead > 0 || status.behind > 0) && (
+              <span className="ui-meta hidden items-center gap-2 sm:flex">
+                {status.ahead > 0 && (
+                  <span className="flex items-center gap-0.5">
+                    <ArrowUp className="h-3 w-3" />
+                    {status.ahead}
+                  </span>
+                )}
+                {status.behind > 0 && (
+                  <span className="flex items-center gap-0.5">
+                    <ArrowDown className="h-3 w-3" />
+                    {status.behind}
+                  </span>
+                )}
+              </span>
+            )}
+            {existingPR && (
+              <button
+                onClick={() => window.open(existingPR.url, "_blank")}
+                className="hover:bg-[var(--fill-3)] text-muted-foreground hover:text-foreground inline-flex shrink-0 items-center gap-1 rounded-full bg-[var(--fill-2)] px-2 py-0.5 text-[0.6875rem] font-medium transition-colors"
+                title={`${existingPR.title} (#${existingPR.number})`}
               >
-                <RefreshCw
-                  className={cn("h-3.5 w-3.5", isRefetching && "animate-spin")}
-                />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onOpenChange(false)}
-                className="h-7 w-7"
-              >
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+                <GitPullRequest className="h-3 w-3" />
+                View PR
+                <ExternalLink className="h-2.5 w-2.5" />
+              </button>
+            )}
           </div>
-
-          {/* Ahead/behind indicator */}
-          {status && (status.ahead > 0 || status.behind > 0) && (
-            <div className="text-muted-foreground mt-1 flex items-center gap-3 text-xs">
-              {status.ahead > 0 && (
-                <span className="flex items-center gap-1">
-                  <ArrowUp className="h-3 w-3" />
-                  {status.ahead} ahead
-                </span>
-              )}
-              {status.behind > 0 && (
-                <span className="flex items-center gap-1">
-                  <ArrowDown className="h-3 w-3" />
-                  {status.behind} behind
-                </span>
-              )}
-            </div>
-          )}
+          <div className="flex shrink-0 items-stretch">
+            <button
+              onClick={() => refetchStatus()}
+              disabled={isRefetching || loading}
+              className="press focus-ring text-muted-foreground hover:text-foreground flex size-8 shrink-0 items-center justify-center rounded-full transition-colors duration-200 hover:bg-[var(--fill-3)] disabled:pointer-events-none disabled:opacity-30"
+              title="Refresh"
+            >
+              <RefreshCw
+                className={cn("h-3 w-3", isRefetching && "animate-spin")}
+              />
+            </button>
+            <button
+              onClick={() => onOpenChange(false)}
+              className="press focus-ring text-muted-foreground hover:text-foreground flex size-8 shrink-0 items-center justify-center rounded-full transition-colors duration-200 hover:bg-[var(--fill-3)]"
+              title="Close git"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto py-2">
+        <div className="scrollbar-thin flex-1 overflow-y-auto py-2">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+              <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
             </div>
           ) : isError ? (
             <div className="flex flex-col items-center gap-2 py-8 text-center">
-              <AlertCircle className="h-8 w-8 text-red-500" />
-              <p className="text-muted-foreground text-sm">
-                {error?.message ?? "Failed to load git status"}
+              <AlertCircle className="text-status-error h-5 w-5" />
+              <p className="ui-meta">
+                {error?.message ?? "failed to load git status"}
+              </p>
+              {/* Name the directory that was checked. "Not a git repository"
+                  on its own gives the user nothing to act on. */}
+              <p className="ui-meta text-muted-foreground/70 break-all">
+                {workingDirectory}
               </p>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => refetchStatus()}
+                className=""
               >
                 Retry
               </Button>
             </div>
           ) : stagedFiles.length === 0 && unstagedFiles.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 py-8 text-center">
-              <span className="text-muted-foreground text-sm">No changes</span>
+            <div className="flex flex-col items-center gap-2 py-8 text-center">
+              <p className="ui-label">Everything is committed</p>
+              <p className="ui-meta">working tree has no changes</p>
               {!isOnMainBranch && !existingPR && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => createPRMutation.mutate()}
                   disabled={createPRMutation.isPending}
-                  className="gap-1.5"
+                  className="mt-2 gap-1.5"
                 >
                   {createPRMutation.isPending ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <Loader2 className="h-3 w-3 animate-spin" />
                   ) : (
-                    <GitPullRequest className="h-3.5 w-3.5" />
+                    <GitPullRequest className="h-3 w-3" />
                   )}
                   Create PR
                 </Button>
@@ -430,7 +429,7 @@ export function GitDrawer({
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <AlertTriangle className="text-status-error h-4 w-4" />
               Discard Changes
             </DialogTitle>
             <DialogDescription>

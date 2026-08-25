@@ -1,16 +1,15 @@
 "use client";
 
 import { ShimmeringLoader } from "@/components/ui/skeleton";
-import { Terminal, FolderOpen, GitBranch } from "lucide-react";
+import { FolderOpen, GitBranch } from "lucide-react";
 
 export function TerminalSkeleton() {
   return (
-    <div className="bg-background flex h-full w-full flex-col items-center justify-center gap-3">
-      <Terminal className="text-muted-foreground/50 h-8 w-8 animate-pulse" />
-      <div className="flex items-center gap-2">
-        <div className="bg-primary/50 h-2 w-2 animate-pulse rounded-full" />
-        <span className="text-muted-foreground text-sm">Connecting...</span>
-      </div>
+    <div className="ambient-canvas flex h-full w-full flex-col items-center justify-center gap-2.5">
+      <span className="bg-primary animate-status-pulse h-2 w-2 rounded-full" />
+      <span className="text-muted-foreground text-[0.8125rem]">
+        Connecting…
+      </span>
     </div>
   );
 }
@@ -19,10 +18,10 @@ export function FileExplorerSkeleton() {
   return (
     <div className="bg-background h-full w-full p-4">
       <div className="mb-4 flex items-center gap-2">
-        <FolderOpen className="text-muted-foreground/50 h-4 w-4" />
+        <FolderOpen className="text-muted-foreground/45 h-4 w-4" />
         <ShimmeringLoader className="h-4 w-32" />
       </div>
-      <div className="space-y-2 pl-4">
+      <div className="space-y-2.5 pl-4">
         {Array.from({ length: 8 }).map((_, i) => (
           <div key={i} className="flex items-center gap-2">
             <ShimmeringLoader className="h-4 w-4" delayIndex={i} />
@@ -38,11 +37,11 @@ export function GitPanelSkeleton() {
   return (
     <div className="bg-background h-full w-full p-4">
       <div className="mb-4 flex items-center gap-2">
-        <GitBranch className="text-muted-foreground/50 h-4 w-4" />
+        <GitBranch className="text-muted-foreground/45 h-4 w-4" />
         <ShimmeringLoader className="h-4 w-24" />
       </div>
       <div className="space-y-3">
-        <ShimmeringLoader className="h-8 w-full rounded" />
+        <ShimmeringLoader className="h-9 w-full rounded-lg" />
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="flex items-center gap-2">

@@ -6,7 +6,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +26,7 @@ import {
   GitBranch,
   Star,
   FolderOpen,
+  ArrowRight,
 } from "lucide-react";
 import { FolderPicker } from "@/components/FolderPicker";
 import { useUpdateProject } from "@/data/projects";
@@ -47,19 +47,11 @@ import type {
 const AGENT_OPTIONS: { value: AgentType; label: string }[] = [
   { value: "claude", label: "Claude Code" },
   { value: "commandcode", label: "Command Code" },
-  { value: "zero", label: "Zero" },
   { value: "claude-a", label: "Claude (a)" },
   { value: "claude-b", label: "Claude (b)" },
   { value: "claude-c", label: "Claude (c)" },
   { value: "codex", label: "Codex" },
   { value: "opencode", label: "OpenCode" },
-  { value: "kilocode", label: "Kilo Code" },
-  { value: "gemini", label: "Gemini CLI" },
-  { value: "aider", label: "Aider" },
-  { value: "cursor", label: "Cursor CLI" },
-  { value: "amp", label: "Amp" },
-  { value: "pi", label: "Pi" },
-  { value: "omp", label: "Oh My Pi" },
 ];
 
 interface DevServerConfig {
@@ -466,96 +458,136 @@ export function ProjectSettingsDialog({
         open={open && !folderPickerRepoId}
         onOpenChange={(o) => !o && handleClose()}
       >
-        <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Project Settings</DialogTitle>
+        <DialogContent className="scrollbar-thin max-h-[90vh] max-w-lg gap-0 overflow-y-auto p-0">
+          <DialogHeader className="border-b border-[var(--fill-2)] px-6 py-4">
+            <DialogTitle className="type-title-3">Project settings</DialogTitle>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Project Name */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Project Name</label>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="my-awesome-project"
-              />
-            </div>
+          <form onSubmit={handleSubmit}>
+            <div className="divide-y divide-[var(--fill-3)] px-6">
+              {/* Project Name */}
+              <div className="space-y-2 py-4">
+                <div className="flex items-center gap-2"><label htmlFor="project-settings-name" className="text-[0.8125rem] font-medium text-foreground">
+                    Project Name
+                  </label>
+                </div>
+                <Input
+                  id="project-settings-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="my-awesome-project"
+                  className="font-mono text-sm"
+                />
+              </div>
 
-            {/* Working Directory */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Working Directory</label>
-              <Input
-                value={workingDirectory}
-                onChange={(e) => setWorkingDirectory(e.target.value)}
-                placeholder="~/projects/my-app"
-              />
-            </div>
+              {/* Working Directory */}
+              <div className="space-y-2 py-4">
+                <div className="flex items-center gap-2"><label
+                    htmlFor="project-settings-working-directory"
+                    className="text-[0.8125rem] font-medium text-foreground"
+                  >
+                    Working Directory
+                  </label>
+                </div>
+                <Input
+                  id="project-settings-working-directory"
+                  value={workingDirectory}
+                  onChange={(e) => setWorkingDirectory(e.target.value)}
+                  placeholder="~/projects/my-app"
+                  className="font-mono text-sm"
+                />
+              </div>
 
-            {/* Agent Type */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Default Agent</label>
-              <Select
-                value={agentType}
-                onValueChange={(v) => handleAgentTypeChange(v as AgentType)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {AGENT_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              {/* Agent Type */}
+              <div className="space-y-2 py-4">
+                <div className="flex items-center gap-2"><label
+                    htmlFor="project-settings-agent"
+                    className="text-[0.8125rem] font-medium text-foreground"
+                  >
+                    Default Agent
+                  </label>
+                </div>
+                <Select
+                  value={agentType}
+                  onValueChange={(v) => handleAgentTypeChange(v as AgentType)}
+                >
+                  <SelectTrigger
+                    id="project-settings-agent"
+                    className="font-mono text-sm"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="scrollbar-thin">
+                    {AGENT_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        <span className="font-mono text-xs">{opt.label}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Default Model */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Default Model</label>
-              <Select
-                key={agentType}
-                value={defaultModel}
-                onValueChange={setDefaultModel}
-              >
-                <SelectTrigger>
-                  <SelectValue>{selectedModelLabel}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {modelOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              {/* Default Model */}
+              <div className="space-y-2 py-4">
+                <div className="flex items-center gap-2"><label
+                    htmlFor="project-settings-model"
+                    className="text-[0.8125rem] font-medium text-foreground"
+                  >
+                    Default Model
+                  </label>
+                </div>
+                <Select
+                  key={agentType}
+                  value={defaultModel}
+                  onValueChange={setDefaultModel}
+                >
+                  <SelectTrigger
+                    id="project-settings-model"
+                    className="font-mono text-sm"
+                  >
+                    <SelectValue>{selectedModelLabel}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="scrollbar-thin">
+                    {modelOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        <span className="font-mono text-xs">{opt.label}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Initial Prompt */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Initial Prompt</label>
-              <Textarea
-                value={initialPrompt}
-                onChange={(e) => setInitialPrompt(e.target.value)}
-                placeholder="This prompt will be prepended to all sessions in this project..."
-                rows={3}
-                className="resize-none"
-              />
-              <p className="text-muted-foreground text-xs">
-                This prompt will be automatically prepended to all new sessions
-                created in this project.
-              </p>
-            </div>
+              {/* Initial Prompt */}
+              <div className="space-y-2 py-4">
+                <div className="flex items-center gap-2"><label
+                    htmlFor="project-settings-initial-prompt"
+                    className="text-[0.8125rem] font-medium text-foreground"
+                  >
+                    Initial Prompt
+                  </label>
+                </div>
+                <Textarea
+                  id="project-settings-initial-prompt"
+                  value={initialPrompt}
+                  onChange={(e) => setInitialPrompt(e.target.value)}
+                  placeholder="This prompt will be prepended to all sessions in this project..."
+                  rows={3}
+                  className="resize-none"
+                />
+                <p className="text-muted-foreground text-xs">
+                  This prompt will be automatically prepended to all new sessions
+                  created in this project.
+                </p>
+              </div>
 
             {/* Dev Servers */}
-            <div className="space-y-3">
+            <div className="space-y-3 py-4">
               <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 text-sm font-medium">
-                  <Server className="h-4 w-4" />
-                  Dev Servers
-                </label>
+                <div className="flex items-center gap-2"><label className="ui-label flex items-center gap-2">
+                    <Server className="h-3.5 w-3.5" />
+                    Dev Servers
+                  </label>
+                </div>
                 <div className="flex gap-1">
                   <Button
                     type="button"
@@ -563,11 +595,12 @@ export function ProjectSettingsDialog({
                     size="sm"
                     onClick={detectDevServers}
                     disabled={isDetecting || !workingDirectory}
+                    className=""
                   >
                     {isDetecting ? (
-                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                      <Loader2 className="h-3 w-3 animate-spin" />
                     ) : (
-                      <RefreshCw className="mr-1 h-3 w-3" />
+                      <RefreshCw className="h-3 w-3" />
                     )}
                     Detect
                   </Button>
@@ -576,24 +609,22 @@ export function ProjectSettingsDialog({
                     variant="outline"
                     size="sm"
                     onClick={addDevServer}
+                    className=""
                   >
-                    <Plus className="mr-1 h-3 w-3" />
+                    <Plus className="h-3 w-3" />
                     Add
                   </Button>
                 </div>
               </div>
 
               {visibleDevServers.length === 0 ? (
-                <p className="text-muted-foreground py-2 text-sm">
+                <p className="ui-meta py-2">
                   No dev servers configured.
                 </p>
               ) : (
-                <div className="space-y-2">
+                <div className="divide-y divide-[var(--fill-3)] border-y border-[var(--fill-2)]">
                   {visibleDevServers.map((ds) => (
-                    <div
-                      key={ds.id}
-                      className="bg-accent/30 space-y-2 rounded-lg p-3"
-                    >
+                    <div key={ds.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
                       <div className="flex items-center gap-2">
                         <Input
                           value={ds.name}
@@ -601,7 +632,7 @@ export function ProjectSettingsDialog({
                             updateDevServer(ds.id, { name: e.target.value })
                           }
                           placeholder="Server name"
-                          className="h-8 flex-1"
+                          className="h-8 flex-1 font-mono text-sm"
                         />
                         <Select
                           value={ds.type}
@@ -624,7 +655,8 @@ export function ProjectSettingsDialog({
                           variant="ghost"
                           size="icon-sm"
                           onClick={() => removeDevServer(ds.id)}
-                          className="text-red-500 hover:text-red-600"
+                          aria-label={`Remove dev server ${ds.name || ds.id}`}
+                          className="text-muted-foreground hover:bg-destructive/10 hover:text-status-error"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -637,7 +669,7 @@ export function ProjectSettingsDialog({
                         placeholder={
                           ds.type === "docker" ? "Service name" : "npm run dev"
                         }
-                        className="h-8"
+                        className="h-8 font-mono text-sm"
                       />
                       <div className="flex gap-2">
                         <Input
@@ -651,7 +683,7 @@ export function ProjectSettingsDialog({
                             })
                           }
                           placeholder="Port"
-                          className="h-8 w-24"
+                          className="h-8 w-24 font-mono text-sm"
                         />
                         <Input
                           value={ds.portEnvVar || ""}
@@ -661,7 +693,7 @@ export function ProjectSettingsDialog({
                             })
                           }
                           placeholder="Port env var (e.g., PORT)"
-                          className="h-8 flex-1"
+                          className="h-8 flex-1 font-mono text-sm"
                         />
                       </div>
                     </div>
@@ -671,12 +703,13 @@ export function ProjectSettingsDialog({
             </div>
 
             {/* Repositories */}
-            <div className="space-y-3">
+            <div className="space-y-3 py-4">
               <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 text-sm font-medium">
-                  <GitBranch className="h-4 w-4" />
-                  Git Repositories
-                </label>
+                <div className="flex items-center gap-2"><label className="ui-label flex items-center gap-2">
+                    <GitBranch className="h-3.5 w-3.5" />
+                    Git Repositories
+                  </label>
+                </div>
                 <div className="flex gap-1">
                   <Button
                     type="button"
@@ -684,11 +717,12 @@ export function ProjectSettingsDialog({
                     size="sm"
                     onClick={detectRepositories}
                     disabled={isDetectingRepos || !workingDirectory}
+                    className=""
                   >
                     {isDetectingRepos ? (
-                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                      <Loader2 className="h-3 w-3 animate-spin" />
                     ) : (
-                      <RefreshCw className="mr-1 h-3 w-3" />
+                      <RefreshCw className="h-3 w-3" />
                     )}
                     Detect
                   </Button>
@@ -697,25 +731,23 @@ export function ProjectSettingsDialog({
                     variant="outline"
                     size="sm"
                     onClick={addRepository}
+                    className=""
                   >
-                    <Plus className="mr-1 h-3 w-3" />
+                    <Plus className="h-3 w-3" />
                     Add
                   </Button>
                 </div>
               </div>
 
               {visibleRepositories.length === 0 ? (
-                <p className="text-muted-foreground py-2 text-sm">
+                <p className="ui-meta py-2">
                   No repositories configured. Git changes will use the working
                   directory.
                 </p>
               ) : (
-                <div className="space-y-2">
+                <div className="divide-y divide-[var(--fill-3)] border-y border-[var(--fill-2)]">
                   {visibleRepositories.map((repo) => (
-                    <div
-                      key={repo.id}
-                      className="bg-accent/30 space-y-2 rounded-lg p-3"
-                    >
+                    <div key={repo.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
                       <div className="flex items-center gap-2">
                         <Input
                           value={repo.name}
@@ -723,7 +755,7 @@ export function ProjectSettingsDialog({
                             updateRepository(repo.id, { name: e.target.value })
                           }
                           placeholder="Repository name"
-                          className="h-8 flex-1"
+                          className="h-8 flex-1 font-mono text-sm"
                         />
                         <Button
                           type="button"
@@ -735,7 +767,11 @@ export function ProjectSettingsDialog({
                               ? "Primary repository"
                               : "Set as primary"
                           }
-                          className={repo.isPrimary ? "text-yellow-500" : ""}
+                          aria-label={
+                            repo.isPrimary
+                              ? `Primary repository ${repo.name || repo.id}`
+                              : `Set ${repo.name || repo.id} as primary`
+                          }
                         >
                           <Star
                             className={`h-3 w-3 ${repo.isPrimary ? "fill-current" : ""}`}
@@ -746,7 +782,8 @@ export function ProjectSettingsDialog({
                           variant="ghost"
                           size="icon-sm"
                           onClick={() => removeRepository(repo.id)}
-                          className="text-red-500 hover:text-red-600"
+                          aria-label={`Remove repository ${repo.name || repo.id}`}
+                          className="text-muted-foreground hover:bg-destructive/10 hover:text-status-error"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -758,7 +795,7 @@ export function ProjectSettingsDialog({
                             updateRepository(repo.id, { path: e.target.value })
                           }
                           placeholder="~/path/to/repository"
-                          className="h-8 flex-1"
+                          className="h-8 flex-1 font-mono text-sm"
                         />
                         <Button
                           type="button"
@@ -766,6 +803,7 @@ export function ProjectSettingsDialog({
                           size="icon-sm"
                           onClick={() => setFolderPickerRepoId(repo.id)}
                           title="Browse folders"
+                          aria-label="Browse folders"
                         >
                           <FolderOpen className="h-3.5 w-3.5" />
                         </Button>
@@ -780,16 +818,34 @@ export function ProjectSettingsDialog({
               </p>
             </div>
 
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            {error && (
+              <p className="flex items-center gap-2 pt-3 pb-4 font-mono text-xs text-status-error">
+                <span className="h-1.5 w-1.5 shrink-0 animate-status-pulse bg-status-error" />
+                {error}
+              </p>
+            )}
+            </div>
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleClose}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Saving..." : "Save Changes"}
-              </Button>
-            </DialogFooter>
+            <div className="flex items-center justify-end gap-2 border-t border-[var(--fill-2)] px-6 py-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              className=""
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className=""
+            >
+              {isLoading ? "Saving..." : "Save Changes"}
+              {!isLoading && (
+                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+              )}
+            </Button>
+          </div>
           </form>
         </DialogContent>
       </Dialog>

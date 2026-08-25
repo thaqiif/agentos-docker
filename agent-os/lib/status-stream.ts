@@ -1,0 +1,281 @@
+/**
+ * Terminal Status Stream
+ *
+ * A single server-wide ticker that samples every tmux session and pushes
+ * changes to subscribed clients over SSE. Entries are keyed by tmux session
+ * name, which is a terminal's only identity.
+ *
+ * Why a singleton: the detector shells out to tmux per session. If each
+ * browser tab polled independently, cost scaled with tabs x sessions. One
+ * ticker sampling on behalf of everyone is strictly cheaper than the old
+ * per-client polling, while being roughly 20x more responsive.
+ *
+ * The ticker is adaptive: it samples fast while anything is moving and backs
+ * off when the whole board is quiet, so an idle machine is not paying for a
+ * 1 Hz tmux sweep it does not need.
+ */
+
+import { statusDetector, type SessionStatus } from "@/lib/status-detector";
+import { type ProviderId } from "@/lib/providers/registry";
+import { listTerminals } from "@/lib/terminals";
+import { readHookState } from "@/lib/status-hooks";
+import { getAllProjects } from "@/lib/projects";
+import { resolveProjectForPath } from "@/lib/terminal-projects";
+import { getDb, queries } from "@/lib/db";
+import { sendTelegramMessage } from "@/lib/telegram";
+
+const FAST_TICK_MS = 700; // something is running or blocked
+const SLOW_TICK_MS = 1500; // everything quiet
+const IDLE_SHUTDOWN_MS = 30000; // no subscribers for this long -> stop, unless keepAlive is on
+
+// A session must be observed "running" continuously for at least this long
+// before a notification re-arms. Hook-reported state is edge-triggered
+// (PreToolUse, Notification, etc.), so a task finishing can produce one
+// spurious "running" sample between two "done" samples with nothing new
+// actually having started. Without this, that single blip cleared the
+// "already notified" flag and the very next "done" sample fired again —
+// the same completion announced two or three times in a row.
+const RUNNING_DEBOUNCE_MS = 1500;
+
+/** Reads the always-on toggle fresh each time — it's a checkbox, not a hot path. */
+function keepAliveEnabled(): boolean {
+  try {
+    const db = getDb();
+    const row = queries.getSetting(db).get("notifyKeepServerAlive") as
+      | { value: string }
+      | undefined;
+    return row?.value === "true";
+  } catch {
+    return false;
+  }
+}
+
+function getSetting(key: string): string | null {
+  try {
+    const db = getDb();
+    const row = queries.getSetting(db).get(key) as
+      | { value: string }
+      | undefined;
+    return row?.value ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export interface SessionStatusEntry {
+  sessionName: string;
+  status: SessionStatus;
+  /** Harness detected from the running process, or "shell" for a plain shell. */
+  agentType: ProviderId;
+}
+
+export type StatusSnapshot = Record<string, SessionStatusEntry>;
+
+type Subscriber = (snapshot: StatusSnapshot) => void;
+
+class StatusStream {
+  private subscribers = new Set<Subscriber>();
+  private timer: NodeJS.Timeout | null = null;
+  private snapshot: StatusSnapshot = {};
+  private serialized = "";
+  private lastSubscriberAt = Date.now();
+  private ticking = false;
+  /** Previous status per session, to detect a fresh transition into "done". */
+  private previousStatus = new Map<string, SessionStatus>();
+  /** One Telegram ping per "done" episode, mirroring the client-side rule. */
+  private lastNotified = new Map<string, SessionStatus>();
+  /** When a session most recently switched into "running", to debounce blips. */
+  private runningSinceAt = new Map<string, number>();
+
+  subscribe(fn: Subscriber): () => void {
+    this.subscribers.add(fn);
+    this.lastSubscriberAt = Date.now();
+    this.ensureRunning();
+
+    // Hand the new subscriber whatever we already know, immediately.
+    if (Object.keys(this.snapshot).length) fn(this.snapshot);
+
+    return () => {
+      this.subscribers.delete(fn);
+      this.lastSubscriberAt = Date.now();
+    };
+  }
+
+  /** Current snapshot, sampling on demand if the ticker is cold. */
+  async getSnapshot(): Promise<StatusSnapshot> {
+    if (!Object.keys(this.snapshot).length) await this.tick();
+    return this.snapshot;
+  }
+
+  /** Mark a terminal seen and re-sample so the change lands immediately. */
+  async acknowledge(sessionName: string): Promise<void> {
+    statusDetector.acknowledge(sessionName);
+    await this.tick();
+  }
+
+  /** Public so a settings change can (re)start polling without a subscriber. */
+  ensureRunning(): void {
+    if (this.timer) return;
+    void this.tick();
+    this.schedule();
+  }
+
+  private schedule(): void {
+    if (this.timer) clearTimeout(this.timer);
+
+    const active = Object.values(this.snapshot).some(
+      (e) => e.status === "running" || e.status === "waiting"
+    );
+    const delay = active ? FAST_TICK_MS : SLOW_TICK_MS;
+
+    this.timer = setTimeout(() => {
+      void this.tick().finally(() => {
+        // Stop the ticker once nobody has listened for a while — unless the
+        // user opted into always-on polling so Telegram alerts keep firing
+        // with every browser tab closed.
+        if (
+          this.subscribers.size === 0 &&
+          Date.now() - this.lastSubscriberAt > IDLE_SHUTDOWN_MS &&
+          !keepAliveEnabled()
+        ) {
+          if (this.timer) clearTimeout(this.timer);
+          this.timer = null;
+          return;
+        }
+        this.schedule();
+      });
+    }, delay);
+
+    // Never hold the process open for this.
+    this.timer.unref?.();
+  }
+
+  private async tick(): Promise<void> {
+    if (this.ticking) return;
+    this.ticking = true;
+
+    try {
+      await statusDetector.refreshCache(true);
+
+      // Every tmux session is a terminal, and the harness is whatever is
+      // running in it right now. Deriving the provider from the session
+      // name was always a guess, and a wrong one as soon as somebody
+      // started Claude inside a terminal that had been opened as a shell.
+      const terminals = await listTerminals();
+
+      const next: StatusSnapshot = {};
+
+      await Promise.all(
+        terminals.map(async (terminal) => {
+          const providerId = terminal.provider;
+          const [pane, hookState] = await Promise.all([
+            statusDetector.capturePane(terminal.name),
+            readHookState(terminal.name),
+          ]);
+          const status = statusDetector.classify(
+            terminal.name,
+            pane,
+            providerId,
+            hookState
+          );
+
+          next[terminal.name] = {
+            sessionName: terminal.name,
+            status,
+            agentType: providerId ?? "shell",
+          };
+        })
+      );
+
+      const pathByName = new Map(terminals.map((t) => [t.name, t.path]));
+      this.checkTelegramNotifications(next, pathByName);
+      statusDetector.cleanup();
+
+      const serialized = JSON.stringify(next);
+      this.snapshot = next;
+
+      // Only wake clients when something actually changed.
+      if (serialized !== this.serialized) {
+        this.serialized = serialized;
+        for (const fn of this.subscribers) {
+          try {
+            fn(next);
+          } catch {
+            // A broken subscriber must not stall the tick.
+          }
+        }
+      }
+    } finally {
+      this.ticking = false;
+    }
+  }
+
+  /**
+   * Fires a Telegram message the moment a session's status becomes "done",
+   * from the server ticker rather than a subscribed browser tab. tmux keeps
+   * running long after every tab closes, so this is the only place a
+   * completion alert can be relied on to fire.
+   */
+  private checkTelegramNotifications(
+    next: StatusSnapshot,
+    pathByName: Map<string, string>
+  ): void {
+    const notifyEnabled = getSetting("notifyTerminalCompletion") === "true";
+    const botToken = getSetting("telegramBotToken");
+    const chatId = getSetting("telegramChatId");
+    const wired = notifyEnabled && botToken && chatId;
+
+    let projects: ReturnType<typeof getAllProjects> | null = null;
+    const now = Date.now();
+
+    for (const [name, entry] of Object.entries(next)) {
+      const prev = this.previousStatus.get(name);
+      this.previousStatus.set(name, entry.status);
+
+      if (entry.status === "running") {
+        // Track when this run started, but only treat it as a genuinely new
+        // episode — and clear the notified flag — once it has held "running"
+        // for the debounce window. A single-sample blip back to "running"
+        // between two "done" reads never crosses that and so never re-arms.
+        if (prev !== "running") this.runningSinceAt.set(name, now);
+        const startedAt = this.runningSinceAt.get(name) ?? now;
+        if (now - startedAt >= RUNNING_DEBOUNCE_MS) {
+          this.lastNotified.delete(name);
+        }
+        continue;
+      }
+
+      this.runningSinceAt.delete(name);
+      if (entry.status !== "done") continue;
+      if (prev === undefined) continue; // first sample after boot: not a transition
+      if (this.lastNotified.get(name) === "done") continue; // already announced
+
+      this.lastNotified.set(name, "done");
+      if (!wired) continue;
+
+      // Terminals have no stored project link; resolve it the same way the
+      // sidebar does, by longest working-directory prefix match.
+      projects ??= getAllProjects();
+      const path = pathByName.get(name);
+      const projectName = path
+        ? projects.find((p) => p.id === resolveProjectForPath(path, projects!))
+            ?.name
+        : undefined;
+
+      void sendTelegramMessage(
+        botToken!,
+        chatId!,
+        `✅ *Terminal completed*\n\n*${name}*${
+          projectName && projectName !== "Uncategorized"
+            ? `\n_Project: ${projectName}_`
+            : ""
+        }`
+      ).catch(() => {});
+    }
+  }
+}
+
+// Survive Next.js dev hot-reload: one ticker per process, not per module eval.
+const globalRef = globalThis as unknown as { __agentosStatusStream?: StatusStream };
+export const statusStream =
+  globalRef.__agentosStatusStream ?? (globalRef.__agentosStatusStream = new StatusStream());

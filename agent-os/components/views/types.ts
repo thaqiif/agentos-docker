@@ -1,30 +1,24 @@
-import type { Session } from "@/lib/db";
+import type { TerminalRecord } from "@/lib/terminals";
 import type { ProjectWithDevServers } from "@/lib/projects";
 import type { NotificationSettings } from "@/lib/notifications";
-import type { TabData } from "@/lib/panes";
 
 export interface SessionStatus {
   sessionName: string;
-  status: "idle" | "running" | "waiting" | "error" | "dead";
-  lastLine?: string;
-  claudeSessionId?: string | null;
+  status: "idle" | "running" | "waiting" | "done" | "error" | "dead";
 }
 
 export interface ViewProps {
-  sessions: Session[];
+  terminals: TerminalRecord[];
   projects: ProjectWithDevServers[];
-  sessionStatuses: Record<string, SessionStatus>;
+  /** Keyed by tmux session name. */
+  terminalStatuses: Record<string, SessionStatus>;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
-  activeSession: Session | undefined;
-  focusedActiveTab: TabData | null;
+  activeSession: TerminalRecord | undefined;
   copiedSessionId: boolean;
   setCopiedSessionId: (copied: boolean) => void;
 
   // Dialogs
-  showNewSessionDialog: boolean;
-  setShowNewSessionDialog: (show: boolean) => void;
-  newSessionProjectId: string | null;
   showNotificationSettings: boolean;
   setShowNotificationSettings: (show: boolean) => void;
   showQuickSwitcher: boolean;
@@ -37,11 +31,12 @@ export interface ViewProps {
   requestPermission: () => Promise<boolean>;
 
   // Handlers
-  attachToSession: (session: Session) => void;
-  openSessionInNewTab: (session: Session) => void;
-  handleNewSessionInProject: (projectId: string) => void;
-  handleOpenTerminal: (projectId: string) => void;
-  handleSessionCreated: (sessionId: string) => Promise<void>;
+  attachToTerminal: (name: string) => void;
+  /** Open a new terminal, optionally in a project's working directory. */
+  handleNewTerminal: (projectId?: string) => Promise<void>;
+  handleCloseTerminal: (name: string) => Promise<void>;
+  /** Detach the workbench from the attached session, leaving it running. */
+  handleDetachTerminal: () => void;
   handleCreateProject: (
     name: string,
     workingDirectory: string,
@@ -62,5 +57,5 @@ export interface ViewProps {
   setStartDevServerProjectId: (id: string | null) => void;
 
   // Pane
-  renderPane: (paneId: string) => React.ReactNode;
+  renderPane: () => React.ReactNode;
 }

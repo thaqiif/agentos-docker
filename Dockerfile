@@ -5,7 +5,7 @@
 # under agent-os/ in this repo with our downstream UI patches already applied)
 # into a self-contained image and runs it in the foreground as a non-root user.
 
-FROM node:20-bookworm-slim
+FROM node:22-bookworm-slim
 
 # ---- System dependencies AgentOS needs at runtime ----
 # tmux: drives the terminal sessions  |  ripgrep: code search
@@ -95,14 +95,12 @@ ARG INSTALL_CLAUDE_CODE=true
 ARG INSTALL_CODEX=true
 ARG INSTALL_OPENCODE=true
 ARG INSTALL_COMMAND_CODE=true
-ARG INSTALL_ZERO=true
 RUN set -eux; \
     pkgs=""; \
     if [ "${INSTALL_CLAUDE_CODE}" = "true" ]; then pkgs="${pkgs} @anthropic-ai/claude-code"; fi; \
     if [ "${INSTALL_CODEX}" = "true" ]; then pkgs="${pkgs} @openai/codex"; fi; \
     if [ "${INSTALL_OPENCODE}" = "true" ]; then pkgs="${pkgs} opencode-ai"; fi; \
     if [ "${INSTALL_COMMAND_CODE}" = "true" ]; then pkgs="${pkgs} command-code"; fi; \
-    if [ "${INSTALL_ZERO}" = "true" ]; then pkgs="${pkgs} @gitlawb/zero"; fi; \
     if [ -n "${pkgs}" ]; then npm install -g ${pkgs} && npm cache clean --force; fi
 
 # ---- Headless browser for AI-agent frontend verification ----

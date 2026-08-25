@@ -11,7 +11,6 @@ import {
 import { Button } from "./ui/button";
 import {
   ChevronRight,
-  ChevronDown,
   Folder,
   FolderOpen,
   Home,
@@ -21,6 +20,7 @@ import {
   HardDrive,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AEmptyState } from "@/components/a/AEmptyState";
 import type { FileNode } from "@/lib/file-utils";
 
 interface DirectoryPickerProps {
@@ -170,64 +170,90 @@ export function DirectoryPicker({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="flex max-h-[80vh] max-w-md flex-col">
         <DialogHeader>
-          <DialogTitle>Select Directory</DialogTitle>
+          <DialogTitle>Choose a directory</DialogTitle>
         </DialogHeader>
 
         {/* Navigation bar */}
-        <div className="flex items-center gap-2 border-b pb-2">
-          <Button variant="ghost" size="icon-sm" onClick={goRoot} title="Root">
-            <HardDrive className="h-4 w-4" />
+        <div className="flex shrink-0 items-center gap-1 rounded-full bg-[var(--fill-4)] py-1 pr-1 pl-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={goRoot}
+            aria-label="Root"
+            className="rounded-full"
+          >
+            <HardDrive className="h-3.5 w-3.5" />
           </Button>
-          <Button variant="ghost" size="icon-sm" onClick={goHome} title="Home">
-            <Home className="h-4 w-4" />
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={goHome}
+            aria-label="Home"
+            className="rounded-full"
+          >
+            <Home className="h-3.5 w-3.5" />
           </Button>
           <Button
             variant="ghost"
             size="icon-sm"
             onClick={goUp}
             disabled={currentPath === "/"}
-            title="Go up"
+            aria-label="Go up"
+            className="rounded-full"
           >
-            <ChevronUp className="h-4 w-4" />
+            <ChevronUp className="h-3.5 w-3.5" />
           </Button>
-          <span className="text-muted-foreground flex-1 truncate font-mono text-sm">
+          <span className="ui-meta min-w-0 flex-1 truncate px-1">
             {currentPath}
           </span>
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={selectCurrentDirectory}
-            title="Select this directory"
+            className="shrink-0 gap-1.5 rounded-full"
           >
-            <FolderInput className="mr-1 h-4 w-4" />
-            Use This
+            <FolderInput className="h-3.5 w-3.5" />
+            Use this
           </Button>
         </div>
 
         {/* Directory listing */}
-        <div className="max-h-[400px] min-h-[200px] flex-1 overflow-y-auto">
+        <div className="scrollbar-thin max-h-[400px] min-h-[200px] flex-1 overflow-y-auto">
           {loading && directories.length === 0 ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+            <div className="flex items-center justify-center gap-2 py-8">
+              <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
+              <span className="text-muted-foreground text-[0.8125rem]">
+                Loading…
+              </span>
             </div>
           ) : error ? (
-            <div className="py-8 text-center text-sm text-red-500">{error}</div>
-          ) : directories.length === 0 ? (
-            <div className="text-muted-foreground py-8 text-center text-sm">
-              No subdirectories
-            </div>
-          ) : (
-            <DirectoryTree
-              nodes={directories}
-              expanded={expanded}
-              selectedPath={selectedPath}
-              onToggle={toggleExpand}
-              onSelect={handleSelect}
-              onDoubleClick={(path) => {
-                setCurrentPath(path);
-                setExpanded(new Set());
-              }}
+            <AEmptyState
+              size="compact"
+              tone="error"
+              title="Couldn't read that directory"
+              description={error}
             />
+          ) : directories.length === 0 ? (
+            <AEmptyState
+              size="compact"
+              icon={Folder}
+              title="No subdirectories"
+              description="This directory has nothing inside it."
+            />
+          ) : (
+            <div className="py-1">
+              <DirectoryTree
+                nodes={directories}
+                expanded={expanded}
+                selectedPath={selectedPath}
+                onToggle={toggleExpand}
+                onSelect={handleSelect}
+                onDoubleClick={(path) => {
+                  setCurrentPath(path);
+                  setExpanded(new Set());
+                }}
+              />
+            </div>
           )}
         </div>
 
@@ -264,7 +290,9 @@ function DirectoryTree({
   depth = 0,
 }: DirectoryTreeProps) {
   return (
-    <div>
+    <div
+      className={cn("w-full", depth > 0 && "ml-3 border-l border-[var(--fill-3)]")}
+    >
       {nodes.map((node) => {
         const isExpanded = expanded.has(node.path);
         const isSelected = selectedPath === node.path;
@@ -283,11 +311,12 @@ function DirectoryTree({
                 }
               }}
               className={cn(
-                "flex w-full cursor-pointer items-center gap-2 px-2 py-2 text-left transition-colors",
-                "min-h-[40px] text-sm md:min-h-[32px]",
-                isSelected ? "bg-primary/20 text-primary" : "hover:bg-accent"
+                "press-sm relative flex h-8 w-full cursor-pointer items-center gap-1.5 rounded-lg pr-2 pl-2 text-left",
+                "transition-colors duration-200",
+                isSelected
+                  ? "bg-primary/14 text-foreground"
+                  : "hover:bg-[var(--fill-4)]"
               )}
-              style={{ paddingLeft: `${depth * 16 + 8}px` }}
             >
               {/* Expand/collapse */}
               <button
@@ -295,24 +324,27 @@ function DirectoryTree({
                   e.stopPropagation();
                   onToggle(node);
                 }}
-                className="hover:bg-muted flex h-5 w-5 flex-shrink-0 items-center justify-center rounded"
-              >
-                {isExpanded ? (
-                  <ChevronDown className="text-muted-foreground h-4 w-4" />
-                ) : (
-                  <ChevronRight className="text-muted-foreground h-4 w-4" />
+                aria-label={isExpanded ? "Collapse" : "Expand"}
+                className={cn(
+                  "text-muted-foreground hover:text-foreground flex h-4 w-4 flex-shrink-0 items-center justify-center",
+                  "transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]",
+                  isExpanded && "rotate-90"
                 )}
+              >
+                <ChevronRight className="h-3 w-3" />
               </button>
 
               {/* Icon */}
               {isExpanded ? (
-                <FolderOpen className="h-4 w-4 flex-shrink-0 text-blue-400" />
+                <FolderOpen className="text-muted-foreground h-3.5 w-3.5 flex-shrink-0" />
               ) : (
-                <Folder className="h-4 w-4 flex-shrink-0 text-blue-400" />
+                <Folder className="text-muted-foreground h-3.5 w-3.5 flex-shrink-0" />
               )}
 
               {/* Name */}
-              <span className="flex-1 truncate font-medium">{node.name}</span>
+              <span className="text-foreground flex-1 truncate text-[0.8125rem]">
+                {node.name}
+              </span>
             </div>
 
             {/* Children */}

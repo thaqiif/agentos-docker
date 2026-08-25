@@ -2,8 +2,8 @@
  * AgentOS Design System
  *
  * A collection of reusable UI components that follow AgentOS design guidelines:
- * - No strong borders, uses subtle shadows instead
- * - Purple theme (HSL hue 270)
+ * - Structural 1px borders instead of floating shadows
+ * - Command Code workbench language: near-black canvas, burple accent
  * - Mobile-first design
  * - Consistent styling across the app
  *

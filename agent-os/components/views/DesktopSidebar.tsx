@@ -1,42 +1,44 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { SessionList } from "@/components/SessionList";
-import { SidebarFooter } from "@/components/SidebarFooter";
+import { TerminalList } from "@/components/TerminalList";
 import { cn } from "@/lib/utils";
+import { useSidebarWidth } from "@/hooks/useSidebarWidth";
 
 // Delay before an unpinned, hover-revealed sidebar collapses again
 const COLLAPSE_DELAY_MS = 300;
 
 interface DesktopSidebarProps {
   isPinned: boolean;
-  togglePin: () => void;
+  /** Notification bell, rendered into the sidebar header. */
+  notifications?: React.ReactNode;
+  onQuickSwitch?: () => void;
   activeSessionId?: string;
-  sessionStatuses: React.ComponentProps<typeof SessionList>["sessionStatuses"];
-  onSelect: (sessionId: string) => void;
-  onOpenInTab: (sessionId: string) => void;
-  onNewSessionInProject: (projectId: string) => void;
-  onOpenTerminal: (projectId: string) => void;
+  terminalStatuses: React.ComponentProps<typeof TerminalList>["terminalStatuses"];
+  onSelect: (name: string) => void;
+  onNewTerminal: (projectId?: string) => void;
+  onCloseTerminal: (projectId: string) => void;
   onStartDevServer: (projectId: string) => void;
   onCreateDevServer: React.ComponentProps<
-    typeof SessionList
+    typeof TerminalList
   >["onCreateDevServer"];
 }
 
 export function DesktopSidebar({
   isPinned,
-  togglePin,
+  notifications,
+  onQuickSwitch,
   activeSessionId,
-  sessionStatuses,
+  terminalStatuses,
   onSelect,
-  onOpenInTab,
-  onNewSessionInProject,
-  onOpenTerminal,
+  onNewTerminal,
+  onCloseTerminal,
   onStartDevServer,
   onCreateDevServer,
 }: DesktopSidebarProps) {
   // When unpinned, the sidebar floats and reveals on hover near the left edge
   const [revealed, setRevealed] = useState(false);
+  const { width, isResizing, startResize } = useSidebarWidth();
   const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cancelCollapse = () => {
@@ -57,49 +59,75 @@ export function DesktopSidebar({
     setRevealed(true);
   };
 
+  // Drag handle sitting on the sidebar's right edge. It is wider than it
+  // looks so it is actually grabbable, but nothing is painted until it is
+  // hovered — a permanent line would compete with the material's own edge.
+  const resizeHandle = (
+    <div
+      onMouseDown={startResize}
+      role="separator"
+      aria-orientation="vertical"
+      className={cn(
+        "absolute top-0 right-0 z-50 h-full w-1 cursor-col-resize",
+        "transition-colors duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]",
+        "after:absolute after:inset-y-0 after:-left-1 after:w-3 after:content-['']",
+        isResizing ? "bg-primary/60" : "hover:bg-primary/35"
+      )}
+    />
+  );
+
   const content = (
     <div className="flex h-full flex-col">
       <div className="min-h-0 flex-1 overflow-hidden">
-        <SessionList
+        <TerminalList
           activeSessionId={activeSessionId}
-          sessionStatuses={sessionStatuses}
+          terminalStatuses={terminalStatuses}
           onSelect={onSelect}
-          onOpenInTab={onOpenInTab}
-          onNewSessionInProject={onNewSessionInProject}
-          onOpenTerminal={onOpenTerminal}
+          onNewTerminal={onNewTerminal}
+          onCloseTerminal={onCloseTerminal}
           onStartDevServer={onStartDevServer}
           onCreateDevServer={onCreateDevServer}
-          pinControls={{ isPinned, onTogglePin: togglePin }}
+          notifications={notifications}
+          onQuickSwitch={onQuickSwitch}
         />
       </div>
-      <SidebarFooter />
     </div>
   );
 
-  if (isPinned) {
-    return (
-      <div className="bg-sidebar-background w-60 flex-shrink-0 overflow-hidden shadow-xl shadow-black/10 transition-all duration-200 dark:shadow-black/30">
-        {content}
-      </div>
-    );
-  }
-
+  // A single div carries both states. Switching `isPinned` used to swap in
+  // a completely different element (pinned vs floating), which remounted
+  // the DOM and skipped the transition entirely. Keeping one element means
+  // both the pin-in and pin-out animate through the same `transition-*`
+  // classes instead of just snapping.
   return (
     <>
-      {/* Hover trigger strip on the left edge reveals the floating sidebar */}
+      {/* Hover trigger strip on the left edge reveals the floating sidebar.
+          Harmless while pinned since nothing floats to reveal. */}
+      {!isPinned && (
+        <div
+          className="fixed top-0 left-0 z-30 h-full w-2"
+          onMouseEnter={revealNow}
+        />
+      )}
       <div
-        className="fixed top-0 left-0 z-30 h-full w-2"
-        onMouseEnter={revealNow}
-      />
-      <div
-        onMouseEnter={revealNow}
-        onMouseLeave={scheduleCollapse}
+        onMouseEnter={!isPinned ? revealNow : undefined}
+        onMouseLeave={!isPinned ? scheduleCollapse : undefined}
+        style={{ width }}
         className={cn(
-          "bg-sidebar-background fixed top-0 left-0 z-40 h-full w-60 overflow-hidden shadow-2xl transition-transform duration-200 ease-out dark:shadow-black/50",
-          revealed ? "translate-x-0" : "-translate-x-full"
+          "z-20 h-full overflow-hidden",
+          "transition-[width,transform] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]",
+          isPinned
+            ? [
+                "glass glass-edge-right relative flex-shrink-0 translate-x-0",
+              ]
+            : [
+                "glass-thick glass-float fixed top-0 left-0 z-40",
+                revealed ? "translate-x-0" : "-translate-x-full",
+              ]
         )}
       >
         {content}
+        {resizeHandle}
       </div>
     </>
   );

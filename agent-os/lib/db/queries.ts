@@ -14,176 +14,31 @@ function getStmt(db: Database.Database, sql: string): Database.Statement {
 }
 
 export const queries = {
-  // Sessions
-  createSession: (db: Database.Database) =>
+  // Terminals registry
+  rememberTerminal: (db: Database.Database) =>
     getStmt(
       db,
-      `INSERT INTO sessions (id, name, tmux_name, working_directory, parent_session_id, model, system_prompt, group_path, agent_type, auto_approve, project_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO terminals (name, working_directory)
+       VALUES (?, ?)
+       ON CONFLICT(name) DO UPDATE SET
+         working_directory = excluded.working_directory,
+         last_seen_at = datetime('now')`
     ),
 
-  getSession: (db: Database.Database) =>
-    getStmt(db, `SELECT * FROM sessions WHERE id = ?`),
-
-  getAllSessions: (db: Database.Database) =>
-    getStmt(db, `SELECT * FROM sessions ORDER BY updated_at DESC`),
-
-  updateSessionStatus: (db: Database.Database) =>
+  touchTerminal: (db: Database.Database) =>
     getStmt(
       db,
-      `UPDATE sessions SET status = ?, updated_at = datetime('now') WHERE id = ?`
+      `UPDATE terminals SET last_seen_at = datetime('now') WHERE name = ?`
     ),
 
-  updateSessionClaudeId: (db: Database.Database) =>
-    getStmt(
-      db,
-      `UPDATE sessions SET claude_session_id = ?, updated_at = datetime('now') WHERE id = ?`
-    ),
+  getAllTerminals: (db: Database.Database) =>
+    getStmt(db, `SELECT * FROM terminals ORDER BY created_at ASC`),
 
-  updateSessionName: (db: Database.Database) =>
-    getStmt(
-      db,
-      `UPDATE sessions SET name = ?, tmux_name = ?, updated_at = datetime('now') WHERE id = ?`
-    ),
+  forgetTerminal: (db: Database.Database) =>
+    getStmt(db, `DELETE FROM terminals WHERE name = ?`),
 
-  deleteSession: (db: Database.Database) =>
-    getStmt(db, `DELETE FROM sessions WHERE id = ?`),
-
-  updateSessionWorktree: (db: Database.Database) =>
-    getStmt(
-      db,
-      `UPDATE sessions SET worktree_path = ?, branch_name = ?, base_branch = ?, dev_server_port = ?, updated_at = datetime('now') WHERE id = ?`
-    ),
-
-  updateSessionPR: (db: Database.Database) =>
-    getStmt(
-      db,
-      `UPDATE sessions SET pr_url = ?, pr_number = ?, pr_status = ?, updated_at = datetime('now') WHERE id = ?`
-    ),
-
-  updateSessionGroup: (db: Database.Database) =>
-    getStmt(
-      db,
-      `UPDATE sessions SET group_path = ?, updated_at = datetime('now') WHERE id = ?`
-    ),
-
-  getSessionsByGroup: (db: Database.Database) =>
-    getStmt(
-      db,
-      `SELECT * FROM sessions WHERE group_path = ? ORDER BY updated_at DESC`
-    ),
-
-  moveSessionsToGroup: (db: Database.Database) =>
-    getStmt(
-      db,
-      `UPDATE sessions SET group_path = ?, updated_at = datetime('now') WHERE group_path = ?`
-    ),
-
-  updateSessionProject: (db: Database.Database) =>
-    getStmt(
-      db,
-      `UPDATE sessions SET project_id = ?, updated_at = datetime('now') WHERE id = ?`
-    ),
-
-  getSessionsByProject: (db: Database.Database) =>
-    getStmt(
-      db,
-      `SELECT * FROM sessions WHERE project_id = ? ORDER BY updated_at DESC`
-    ),
-
-  // Orchestration
-  getWorkersByConductor: (db: Database.Database) =>
-    getStmt(
-      db,
-      `SELECT * FROM sessions WHERE conductor_session_id = ? ORDER BY created_at ASC`
-    ),
-
-  updateWorkerStatus: (db: Database.Database) =>
-    getStmt(
-      db,
-      `UPDATE sessions SET worker_status = ?, updated_at = datetime('now') WHERE id = ?`
-    ),
-
-  createWorkerSession: (db: Database.Database) =>
-    getStmt(
-      db,
-      `INSERT INTO sessions (id, name, tmux_name, working_directory, conductor_session_id, worker_task, worker_status, model, group_path, agent_type, project_id)
-       VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?)`
-    ),
-
-  // Messages
-  createMessage: (db: Database.Database) =>
-    getStmt(
-      db,
-      `INSERT INTO messages (session_id, role, content, duration_ms)
-       VALUES (?, ?, ?, ?)`
-    ),
-
-  getSessionMessages: (db: Database.Database) =>
-    getStmt(
-      db,
-      `SELECT * FROM messages WHERE session_id = ? ORDER BY timestamp ASC`
-    ),
-
-  getLastMessage: (db: Database.Database) =>
-    getStmt(
-      db,
-      `SELECT * FROM messages WHERE session_id = ? ORDER BY timestamp DESC LIMIT 1`
-    ),
-
-  updateMessageDuration: (db: Database.Database) =>
-    getStmt(db, `UPDATE messages SET duration_ms = ? WHERE id = ?`),
-
-  // Tool calls
-  createToolCall: (db: Database.Database) =>
-    getStmt(
-      db,
-      `INSERT INTO tool_calls (message_id, session_id, tool_name, tool_input, status)
-       VALUES (?, ?, ?, ?, 'pending')`
-    ),
-
-  updateToolCallResult: (db: Database.Database) =>
-    getStmt(
-      db,
-      `UPDATE tool_calls SET tool_result = ?, status = ? WHERE id = ?`
-    ),
-
-  updateToolCallStatus: (db: Database.Database) =>
-    getStmt(db, `UPDATE tool_calls SET status = ? WHERE id = ?`),
-
-  getSessionToolCalls: (db: Database.Database) =>
-    getStmt(
-      db,
-      `SELECT * FROM tool_calls WHERE session_id = ? ORDER BY timestamp ASC`
-    ),
-
-  getMessageToolCalls: (db: Database.Database) =>
-    getStmt(
-      db,
-      `SELECT * FROM tool_calls WHERE message_id = ? ORDER BY timestamp ASC`
-    ),
-
-  // Groups
-  getAllGroups: (db: Database.Database) =>
-    getStmt(db, `SELECT * FROM groups ORDER BY sort_order ASC, name ASC`),
-
-  getGroup: (db: Database.Database) =>
-    getStmt(db, `SELECT * FROM groups WHERE path = ?`),
-
-  createGroup: (db: Database.Database) =>
-    getStmt(db, `INSERT INTO groups (path, name, sort_order) VALUES (?, ?, ?)`),
-
-  updateGroupName: (db: Database.Database) =>
-    getStmt(db, `UPDATE groups SET name = ? WHERE path = ?`),
-
-  updateGroupExpanded: (db: Database.Database) =>
-    getStmt(db, `UPDATE groups SET expanded = ? WHERE path = ?`),
-
-  updateGroupOrder: (db: Database.Database) =>
-    getStmt(db, `UPDATE groups SET sort_order = ? WHERE path = ?`),
-
-  deleteGroup: (db: Database.Database) =>
-    getStmt(db, `DELETE FROM groups WHERE path = ?`),
+  renameTerminalRow: (db: Database.Database) =>
+    getStmt(db, `UPDATE terminals SET name = ? WHERE name = ?`),
 
   // Projects
   createProject: (db: Database.Database) =>
@@ -318,4 +173,18 @@ export const queries = {
 
   deleteDevServersByProject: (db: Database.Database) =>
     getStmt(db, `DELETE FROM dev_servers WHERE project_id = ?`),
+
+  // Settings
+  getSetting: (db: Database.Database) =>
+    getStmt(db, `SELECT value FROM settings WHERE key = ?`),
+
+  setSetting: (db: Database.Database) =>
+    getStmt(
+      db,
+      `INSERT INTO settings (key, value) VALUES (?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')`
+    ),
+
+  getAllSettings: (db: Database.Database) =>
+    getStmt(db, `SELECT key, value FROM settings`),
 };

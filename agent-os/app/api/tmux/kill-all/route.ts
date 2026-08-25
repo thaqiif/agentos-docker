@@ -1,58 +1,33 @@
 import { NextResponse } from "next/server";
-import { exec } from "child_process";
-import { promisify } from "util";
-import { getDb, queries, type Session } from "@/lib/db";
-import { getManagedSessionPattern } from "@/lib/providers/registry";
+import { listTerminals, killTerminal } from "@/lib/terminals";
 
-const execAsync = promisify(exec);
-
-// POST /api/tmux/kill-all - Kill all AgentOS tmux sessions and remove from database
+/**
+ * POST /api/tmux/kill-all - close every terminal.
+ *
+ * This used to kill only sessions whose names matched AgentOS's own naming
+ * scheme, then sweep a database table to match. Terminals are just tmux
+ * sessions now, with no rows to clean up and no notion of "managed": what
+ * the sidebar lists is what this closes.
+ */
 export async function POST() {
   try {
-    const db = getDb();
-
-    // Get all tmux sessions
-    const { stdout } = await execAsync(
-      'tmux list-sessions -F "#{session_name}" 2>/dev/null || echo ""',
-      { timeout: 5000 }
-    );
-
-    const managedSessionPattern = getManagedSessionPattern();
-    const tmuxSessions = stdout
-      .trim()
-      .split("\n")
-      .filter((s) => s && managedSessionPattern.test(s));
-
-    // Kill each tmux session
+    const terminals = await listTerminals();
     const killed: string[] = [];
-    for (const session of tmuxSessions) {
+
+    for (const terminal of terminals) {
       try {
-        await execAsync(`tmux kill-session -t "${session}"`, { timeout: 5000 });
-        killed.push(session);
+        await killTerminal(terminal.name);
+        killed.push(terminal.name);
       } catch {
-        // Session might already be dead, continue
+        // Already gone, or died while we were iterating. Either is fine.
       }
     }
 
-    // Delete ALL sessions from database
-    const dbSessions = queries.getAllSessions(db).all() as Session[];
-    for (const session of dbSessions) {
-      try {
-        queries.deleteSession(db).run(session.id);
-      } catch {
-        // Continue on error
-      }
-    }
-
-    return NextResponse.json({
-      killed: killed.length,
-      sessions: killed,
-      deletedFromDb: dbSessions.length,
-    });
+    return NextResponse.json({ killed: killed.length, sessions: killed });
   } catch (error) {
-    console.error("Error killing tmux sessions:", error);
+    console.error("Error killing terminals:", error);
     return NextResponse.json(
-      { error: "Failed to kill sessions" },
+      { error: "Failed to close terminals" },
       { status: 500 }
     );
   }

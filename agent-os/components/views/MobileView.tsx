@@ -1,33 +1,24 @@
 "use client";
 
-import { SessionList } from "@/components/SessionList";
-import { NewSessionDialog } from "@/components/NewSessionDialog";
+import { TerminalList } from "@/components/TerminalList";
 import { StartServerDialog } from "@/components/DevServers/StartServerDialog";
-import { SidebarFooter } from "@/components/SidebarFooter";
-import { PaneLayout } from "@/components/PaneLayout";
 import { SwipeSidebar } from "@/components/mobile/SwipeSidebar";
 import { QuickSwitcher } from "@/components/QuickSwitcher";
 import type { ViewProps } from "./types";
 import { fileOpenActions } from "@/stores/fileOpen";
 
 export function MobileView({
-  sessions,
+  terminals,
   projects,
-  sessionStatuses,
+  terminalStatuses,
   sidebarOpen,
   setSidebarOpen,
   activeSession,
-  focusedActiveTab,
-  showNewSessionDialog,
-  setShowNewSessionDialog,
-  newSessionProjectId,
   showQuickSwitcher,
   setShowQuickSwitcher,
-  attachToSession,
-  openSessionInNewTab,
-  handleNewSessionInProject,
-  handleOpenTerminal,
-  handleSessionCreated,
+  attachToTerminal,
+  handleNewTerminal,
+  handleCloseTerminal,
   handleCreateProject,
   handleStartDevServer,
   handleCreateDevServer,
@@ -42,54 +33,35 @@ export function MobileView({
         <div className="flex h-full flex-col">
           {/* Session list */}
           <div className="min-h-0 flex-1 overflow-hidden">
-            <SessionList
-              activeSessionId={focusedActiveTab?.sessionId || undefined}
-              sessionStatuses={sessionStatuses}
+            <TerminalList
+              activeSessionId={activeSession?.id}
+              terminalStatuses={terminalStatuses}
               onSelect={(id) => {
-                const session = sessions.find((s) => s.id === id);
-                if (session) attachToSession(session);
-                setSidebarOpen(false);
-              }}
-              onOpenInTab={(id) => {
-                const session = sessions.find((s) => s.id === id);
-                if (session) openSessionInNewTab(session);
-                setSidebarOpen(false);
-              }}
-              onNewSessionInProject={handleNewSessionInProject}
-              onOpenTerminal={handleOpenTerminal}
+            attachToTerminal(id);
+          }}
+              onNewTerminal={handleNewTerminal}
+              onCloseTerminal={handleCloseTerminal}
               onStartDevServer={handleStartDevServer}
               onCreateDevServer={handleCreateDevServer}
             />
           </div>
 
-          <SidebarFooter />
         </div>
       </SwipeSidebar>
 
       {/* Terminal fills the screen */}
       <div className="min-h-0 w-full flex-1">
-        <PaneLayout renderPane={renderPane} />
+        {renderPane()}
       </div>
 
       {/* Dialogs */}
-      <NewSessionDialog
-        open={showNewSessionDialog}
-        projects={projects}
-        selectedProjectId={newSessionProjectId ?? undefined}
-        onClose={() => setShowNewSessionDialog(false)}
-        onCreated={handleSessionCreated}
-        onCreateProject={handleCreateProject}
-      />
       <QuickSwitcher
-        sessions={sessions}
+        terminals={terminals}
         open={showQuickSwitcher}
         onOpenChange={setShowQuickSwitcher}
-        currentSessionId={focusedActiveTab?.sessionId ?? undefined}
+        currentSessionId={activeSession?.id}
         activeSessionWorkingDir={activeSession?.working_directory ?? undefined}
-        onSelectSession={(sessionId) => {
-          const session = sessions.find((s) => s.id === sessionId);
-          if (session) attachToSession(session);
-        }}
+        onSelectSession={(name) => attachToTerminal(name)}
         onSelectFile={(file, line) => {
           // Convert relative path to absolute by prepending working directory
           const absolutePath = activeSession?.working_directory

@@ -9,260 +9,106 @@ import {
   type ReactNode,
 } from "react";
 import {
-  type PaneState,
-  type PaneData,
-  type TabData,
-  createInitialPaneState,
-  createPaneData,
-  createTab,
-  splitPane,
-  closePane,
-  countPanes,
-  savePaneState,
-  loadPaneState,
-  MAX_PANES,
+  type WorkbenchState,
+  type ViewMode,
+  createInitialWorkbenchState,
+  saveWorkbenchState,
+  loadWorkbenchState,
+  PANE_ID,
 } from "@/lib/panes";
 import { useViewport } from "@/hooks/useViewport";
 
 interface PaneContextValue {
-  state: PaneState;
-  focusedPaneId: string;
-  canSplit: boolean;
-  canClose: boolean;
+  paneId: string;
+  attachedTmux: string | null;
+  viewMode: ViewMode;
+  gitDrawerOpen: boolean;
+  shellDrawerOpen: boolean;
   isMobile: boolean;
-  focusPane: (paneId: string) => void;
-  splitHorizontal: (paneId: string) => void;
-  splitVertical: (paneId: string) => void;
-  close: (paneId: string) => void;
-  // Tab management
-  addTab: (paneId: string) => void;
-  closeTab: (paneId: string, tabId: string) => void;
-  switchTab: (paneId: string, tabId: string) => void;
-  // Session management (operates on active tab)
-  attachSession: (paneId: string, sessionId: string, tmuxName: string) => void;
-  detachSession: (paneId: string) => void;
-  getPaneData: (paneId: string) => PaneData;
-  getActiveTab: (paneId: string) => TabData | null;
+  /** True once localStorage has been read, so we do not flash the default. */
+  hydrated: boolean;
+  attach: (tmuxName: string) => void;
+  /** Stop pointing at a session. The session itself keeps running. */
+  detach: () => void;
+  setViewMode: (mode: ViewMode) => void;
+  toggleGitDrawer: () => void;
+  toggleShellDrawer: () => void;
+  /** Ask tmux to split the attached session's active pane. */
+  splitPane: (direction: "horizontal" | "vertical") => void;
 }
 
 const PaneContext = createContext<PaneContextValue | null>(null);
 
-// Default pane data for migration from old format
-const defaultPaneData: PaneData = createPaneData();
-
 export function PaneProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<PaneState>(createInitialPaneState);
+  const [state, setState] = useState<WorkbenchState>(
+    createInitialWorkbenchState
+  );
   const [hydrated, setHydrated] = useState(false);
   const { isMobile } = useViewport();
 
-  // Load from localStorage after hydration
   useEffect(() => {
-    const saved = loadPaneState();
-    if (saved) {
-      // Migrate old pane data format if needed
-      const migratedPanes: Record<string, PaneData> = {};
-      for (const [paneId, paneData] of Object.entries(saved.panes)) {
-        if ("tabs" in paneData && Array.isArray(paneData.tabs)) {
-          // New format
-          migratedPanes[paneId] = paneData as PaneData;
-        } else {
-          // Old format - migrate to new
-          const oldData = paneData as {
-            sessionId?: string | null;
-            attachedTmux?: string | null;
-          };
-          const tab = createTab();
-          tab.sessionId = oldData.sessionId || null;
-          tab.attachedTmux = oldData.attachedTmux || null;
-          migratedPanes[paneId] = {
-            tabs: [tab],
-            activeTabId: tab.id,
-          };
-        }
-      }
-      setState({ ...saved, panes: migratedPanes });
-    }
+    const saved = loadWorkbenchState();
+    if (saved) setState(saved);
     setHydrated(true);
   }, []);
 
-  // Persist state changes to localStorage (only after hydration)
   useEffect(() => {
-    if (hydrated) {
-      savePaneState(state);
-    }
+    if (hydrated) saveWorkbenchState(state);
   }, [state, hydrated]);
 
-  const focusPane = useCallback((paneId: string) => {
-    setState((prev) => ({ ...prev, focusedPaneId: paneId }));
+  const attach = useCallback((tmuxName: string) => {
+    setState((prev) => ({ ...prev, attachedTmux: tmuxName }));
   }, []);
 
-  const splitHorizontal = useCallback((paneId: string) => {
-    setState((prev) => {
-      const newState = splitPane(prev, paneId, "horizontal");
-      return newState || prev;
-    });
+  const detach = useCallback(() => {
+    // Back to the terminal view as well: files and git have no working
+    // directory to point at once nothing is attached.
+    setState((prev) => ({ ...prev, attachedTmux: null, viewMode: "terminal" }));
   }, []);
 
-  const splitVertical = useCallback((paneId: string) => {
-    setState((prev) => {
-      const newState = splitPane(prev, paneId, "vertical");
-      return newState || prev;
-    });
+  const setViewMode = useCallback((viewMode: ViewMode) => {
+    setState((prev) => ({ ...prev, viewMode }));
   }, []);
 
-  const close = useCallback((paneId: string) => {
-    setState((prev) => {
-      const newState = closePane(prev, paneId);
-      return newState || prev;
-    });
+  const toggleGitDrawer = useCallback(() => {
+    setState((prev) => ({ ...prev, gitDrawerOpen: !prev.gitDrawerOpen }));
   }, []);
 
-  // Tab management
-  const addTab = useCallback((paneId: string) => {
-    setState((prev) => {
-      const pane = prev.panes[paneId];
-      if (!pane) return prev;
-      const newTab = createTab();
-      return {
-        ...prev,
-        panes: {
-          ...prev.panes,
-          [paneId]: {
-            ...pane,
-            tabs: [...pane.tabs, newTab],
-            activeTabId: newTab.id,
-          },
-        },
-      };
-    });
+  const toggleShellDrawer = useCallback(() => {
+    setState((prev) => ({ ...prev, shellDrawerOpen: !prev.shellDrawerOpen }));
   }, []);
 
-  const closeTab = useCallback((paneId: string, tabId: string) => {
-    setState((prev) => {
-      const pane = prev.panes[paneId];
-      if (!pane || pane.tabs.length <= 1) return prev; // Keep at least one tab
-
-      const newTabs = pane.tabs.filter((t) => t.id !== tabId);
-      const newActiveTabId =
-        pane.activeTabId === tabId ? newTabs[0].id : pane.activeTabId;
-
-      return {
-        ...prev,
-        panes: {
-          ...prev.panes,
-          [paneId]: {
-            ...pane,
-            tabs: newTabs,
-            activeTabId: newActiveTabId,
-          },
-        },
-      };
-    });
-  }, []);
-
-  const switchTab = useCallback((paneId: string, tabId: string) => {
-    setState((prev) => {
-      const pane = prev.panes[paneId];
-      if (!pane) return prev;
-      return {
-        ...prev,
-        panes: {
-          ...prev.panes,
-          [paneId]: {
-            ...pane,
-            activeTabId: tabId,
-          },
-        },
-      };
-    });
-  }, []);
-
-  // Attach session to active tab
-  const attachSession = useCallback(
-    (paneId: string, sessionId: string, tmuxName: string) => {
-      setState((prev) => {
-        const pane = prev.panes[paneId];
-        if (!pane) return prev;
-
-        const newTabs = pane.tabs.map((tab) =>
-          tab.id === pane.activeTabId
-            ? { ...tab, sessionId, attachedTmux: tmuxName }
-            : tab
-        );
-
-        return {
-          ...prev,
-          panes: {
-            ...prev.panes,
-            [paneId]: { ...pane, tabs: newTabs },
-          },
-        };
-      });
+  // Fire-and-forget: tmux redraws the attached client itself, so there is
+  // nothing to update on this side. The terminal is showing tmux's output,
+  // and the new pane simply appears in it.
+  const splitPane = useCallback(
+    (direction: "horizontal" | "vertical") => {
+      if (!state.attachedTmux) return;
+      fetch("/api/tmux/split", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session: state.attachedTmux, direction }),
+      }).catch((err) => console.error("Failed to split tmux pane:", err));
     },
-    []
+    [state.attachedTmux]
   );
-
-  // Detach session from active tab
-  const detachSession = useCallback((paneId: string) => {
-    setState((prev) => {
-      const pane = prev.panes[paneId];
-      if (!pane) return prev;
-
-      const newTabs = pane.tabs.map((tab) =>
-        tab.id === pane.activeTabId
-          ? { ...tab, sessionId: null, attachedTmux: null }
-          : tab
-      );
-
-      return {
-        ...prev,
-        panes: {
-          ...prev.panes,
-          [paneId]: { ...pane, tabs: newTabs },
-        },
-      };
-    });
-  }, []);
-
-  const getPaneData = useCallback(
-    (paneId: string): PaneData => {
-      return state.panes[paneId] || defaultPaneData;
-    },
-    [state.panes]
-  );
-
-  const getActiveTab = useCallback(
-    (paneId: string): TabData | null => {
-      const pane = state.panes[paneId];
-      if (!pane) return null;
-      return pane.tabs.find((t) => t.id === pane.activeTabId) || null;
-    },
-    [state.panes]
-  );
-
-  // On mobile: disable splits (single pane only)
-  const canSplit = !isMobile && countPanes(state.layout) < MAX_PANES;
-  const canClose = !isMobile && countPanes(state.layout) > 1;
 
   return (
     <PaneContext.Provider
       value={{
-        state,
-        focusedPaneId: state.focusedPaneId,
-        canSplit,
-        canClose,
+        paneId: PANE_ID,
+        attachedTmux: state.attachedTmux,
+        viewMode: state.viewMode,
+        gitDrawerOpen: state.gitDrawerOpen,
+        shellDrawerOpen: state.shellDrawerOpen,
         isMobile,
-        focusPane,
-        splitHorizontal,
-        splitVertical,
-        close,
-        addTab,
-        closeTab,
-        switchTab,
-        attachSession,
-        detachSession,
-        getPaneData,
-        getActiveTab,
+        hydrated,
+        attach,
+        detach,
+        setViewMode,
+        toggleGitDrawer,
+        toggleShellDrawer,
+        splitPane,
       }}
     >
       {children}

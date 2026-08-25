@@ -86,7 +86,10 @@ export function useGitStatus(
     queryFn: () => fetchGitStatus(workingDir),
     staleTime: 10000, // Consider fresh for 10s
     refetchInterval: 15000, // Poll every 15s (was 3s)
-    enabled: !!workingDir && (options?.enabled ?? true),
+    // "~" is the Uncategorized project's placeholder directory, not a real
+    // checkout, so asking about it only ever yields "Not a git repository".
+    // useGitCheck already skips it; this query did not.
+    enabled: !!workingDir && workingDir !== "~" && (options?.enabled ?? true),
   });
 }
 

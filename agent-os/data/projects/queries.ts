@@ -4,7 +4,7 @@ import type {
   DetectedDevServer,
 } from "@/lib/projects";
 import { projectKeys } from "./keys";
-import { sessionKeys } from "../sessions/keys";
+import { terminalKeys } from "../terminals/keys";
 
 async function fetchProjects(): Promise<ProjectWithRepositories[]> {
   const res = await fetch("/api/projects");
@@ -72,7 +72,7 @@ export function useDeleteProject() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: projectKeys.list() });
-      queryClient.invalidateQueries({ queryKey: sessionKeys.list() });
+      queryClient.invalidateQueries({ queryKey: terminalKeys.all });
     },
   });
 }

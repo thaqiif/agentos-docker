@@ -17,13 +17,8 @@ import {
   clearTabNotifications,
 } from "@/lib/notifications";
 
-// Temporarily disabled: notifications (toasts, sounds, browser notifications,
-// tab-title flash/badge) fire off the session status detector, which isn't
-// accurate enough yet (too many false positives). Flip back to true to
-// re-enable the whole system once detection is improved.
-const NOTIFICATIONS_ENABLED = false;
 
-type SessionStatus = "idle" | "running" | "waiting" | "error" | "dead";
+type SessionStatus = "idle" | "running" | "waiting" | "done" | "error" | "dead";
 
 interface SessionState {
   id: string;
@@ -42,8 +37,8 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
   const [permissionGranted, setPermissionGranted] = useState(false);
   const previousStates = useRef<Map<string, SessionStatus>>(new Map());
   const waitingCount = useRef(0);
-  // Track which sessions have been notified to prevent duplicates
-  const notifiedSessions = useRef<Set<string>>(new Set());
+  /** Last outcome announced per session, cleared when it starts running. */
+  const lastNotifiedStatus = useRef<Map<string, SessionStatus>>(new Map());
 
   // Load settings on mount
   useEffect(() => {
@@ -51,11 +46,50 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
     setPermissionGranted(canSendBrowserNotification());
   }, []);
 
-  // Request permission
+  // Request permission, and say what happened. Silent failure here was the
+  // main reason "enable browser alerts" looked broken: a denied or
+  // non-secure origin produced no prompt and no message.
   const requestPermission = useCallback(async () => {
-    const granted = await requestNotificationPermission();
-    setPermissionGranted(granted);
-    return granted;
+    const outcome = await requestNotificationPermission();
+    setPermissionGranted(outcome === "granted");
+
+    switch (outcome) {
+      case "granted":
+        toast.success("Browser alerts enabled", {
+          description: "Sending a test notification now.",
+        });
+        sendBrowserNotification(
+          "AgentOS alerts are on",
+          { body: "You'll be notified when a session needs input or finishes." },
+          undefined,
+          true
+        );
+        break;
+      case "denied":
+        toast.error("Browser alerts are blocked", {
+          description:
+            "Your browser has denied notifications for this site. Re-allow them in the site settings next to the address bar.",
+        });
+        break;
+      case "dismissed":
+        toast.warning("Permission dismissed", {
+          description: "Choose Allow when the browser asks to enable alerts.",
+        });
+        break;
+      case "insecure-context":
+        toast.error("Browser alerts need HTTPS", {
+          description:
+            "Notifications are disabled on plain http origins. Use https or reach AgentOS via localhost.",
+        });
+        break;
+      case "unsupported":
+        toast.error("Browser alerts unavailable", {
+          description: "This browser does not support notifications.",
+        });
+        break;
+    }
+
+    return outcome === "granted";
   }, []);
 
   // Update settings
@@ -93,7 +127,6 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
       sessionName: string,
       message?: string
     ) => {
-      if (!NOTIFICATIONS_ENABLED) return;
       if (!settings.enabled || !settings.events[event]) return;
 
       const titles: Record<NotificationEvent, string> = {
@@ -147,7 +180,6 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
   // Check for state changes and notify
   const checkStateChanges = useCallback(
     (sessions: SessionState[], activeSessionId?: string | null) => {
-      if (!NOTIFICATIONS_ENABLED) return;
       if (!settings.enabled) return;
 
       let newWaitingCount = 0;
@@ -156,8 +188,9 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
         const prevStatus = previousStates.current.get(session.id);
         const currentStatus = session.status;
 
-        // Track waiting count
-        if (currentStatus === "waiting") {
+        // Tab badge counts anything wanting attention: blocked on input, or
+        // finished and not yet looked at.
+        if (currentStatus === "waiting" || currentStatus === "done") {
           newWaitingCount++;
         }
 
@@ -176,35 +209,35 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
           return;
         }
 
-        // Detect transitions and notify (with deduplication)
-        const notifyKey = `${session.id}-${currentStatus}`;
-
-        if (currentStatus === "waiting" && prevStatus !== "waiting") {
-          if (!notifiedSessions.current.has(notifyKey)) {
-            notifiedSessions.current.add(notifyKey);
-            notify("waiting", session.id, session.name);
-          }
-        } else if (currentStatus === "error" && prevStatus !== "error") {
-          if (!notifiedSessions.current.has(notifyKey)) {
-            notifiedSessions.current.add(notifyKey);
-            notify("error", session.id, session.name);
-          }
+        // One notification per session per episode.
+        //
+        // An "episode" is a stretch of work: it opens when the session goes
+        // running and closes when we have announced its outcome. Keying off
+        // the previous status alone was not enough — switching sessions
+        // re-keys the status query, and a replayed snapshot then looked like
+        // a fresh transition, so the same "done" fired again every time the
+        // user moved between sessions.
+        if (currentStatus === "running") {
+          lastNotifiedStatus.current.delete(session.id);
         } else if (
-          currentStatus === "idle" &&
-          (prevStatus === "running" || prevStatus === "waiting")
+          currentStatus === "waiting" ||
+          currentStatus === "error" ||
+          currentStatus === "done"
         ) {
-          const completedKey = `${session.id}-completed`;
-          if (!notifiedSessions.current.has(completedKey)) {
-            notifiedSessions.current.add(completedKey);
-            notify("completed", session.id, session.name);
-          }
-        }
+          const alreadyAnnounced =
+            lastNotifiedStatus.current.get(session.id) === currentStatus;
 
-        // Clear notification tracking when status changes away from notified state
-        if (prevStatus !== currentStatus) {
-          notifiedSessions.current.delete(`${session.id}-${prevStatus}`);
-          if (prevStatus === "idle") {
-            notifiedSessions.current.delete(`${session.id}-completed`);
+          if (!alreadyAnnounced) {
+            lastNotifiedStatus.current.set(session.id, currentStatus);
+            notify(
+              currentStatus === "done" ? "completed" : currentStatus,
+              session.id,
+              session.name
+            );
+            // Telegram completion alerts fire from the server-side status
+            // ticker (lib/status-stream.ts), not from here — tmux sessions
+            // outlive every browser tab, so that's the only place a "done"
+            // transition can be relied on to still be watched.
           }
         }
 

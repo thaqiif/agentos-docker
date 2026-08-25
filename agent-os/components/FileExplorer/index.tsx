@@ -6,14 +6,7 @@ import { FileEditor } from "./FileEditor";
 import { FileTabs } from "./FileTabs";
 import type { UseFileEditorReturn } from "@/hooks/useFileEditor";
 import { useViewport } from "@/hooks/useViewport";
-import {
-  Loader2,
-  AlertCircle,
-  ArrowLeft,
-  Folder,
-  Save,
-  FolderOpen,
-} from "lucide-react";
+import { Loader2, ArrowLeft, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -122,7 +115,7 @@ export function FileExplorer({
   if (!isHydrated) {
     return (
       <div className="bg-background flex h-full w-full items-center justify-center">
-        <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+        <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
       </div>
     );
   }
@@ -257,74 +250,88 @@ function DesktopFileExplorer({
   return (
     <div ref={containerRef} className="bg-background flex h-full w-full">
       {/* File tree panel */}
-      <div className="flex h-full flex-col" style={{ width: treeWidth }}>
-        <div className="flex items-center gap-2 p-3">
-          <FolderOpen className="text-muted-foreground h-4 w-4 flex-shrink-0" />
-          <p className="flex-1 truncate text-sm font-medium">Files</p>
+      <div
+        className="flex h-full min-w-0 shrink-0 flex-col"
+        style={{ width: treeWidth }}
+      >
+        <div className="glass glass-edge-bottom relative z-10 flex h-9 shrink-0 items-center gap-2 px-2.5">
+          <span className="ui-label">Files</span>
+          <span className="ui-meta truncate">{workingDirectory}</span>
         </div>
-        <div className="flex-1 overflow-y-auto">
+        <div className="scrollbar-thin flex-1 overflow-y-auto">
           {loading ? (
-            <div className="flex h-32 items-center justify-center">
-              <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+            <div className="flex h-32 items-center justify-center gap-2">
+              <Loader2 className="text-muted-foreground h-3.5 w-3.5 animate-spin" />
+              <span className="ui-label">Loading</span>
             </div>
           ) : error ? (
-            <div className="text-muted-foreground flex h-32 flex-col items-center justify-center p-4">
-              <AlertCircle className="mb-2 h-8 w-8" />
-              <p className="text-center text-sm">{error}</p>
+            <div className="flex h-32 flex-col items-center justify-center gap-2 p-4">
+              <span className="text-destructive ui-label">Couldn't load</span>
+              <p className="ui-meta text-center">{error}</p>
             </div>
           ) : files.length === 0 ? (
-            <div className="text-muted-foreground flex h-32 items-center justify-center">
-              <p className="text-sm">Empty directory</p>
+            <div className="flex h-32 flex-col items-center justify-center gap-2">
+              <p className="ui-label">Nothing here</p>
+              <p className="ui-meta">directory has no entries</p>
             </div>
           ) : (
-            <FileTree
-              nodes={files}
-              basePath={workingDirectory}
-              onFileClick={onFileClick}
-            />
+            <div className="py-1">
+              <FileTree
+                nodes={files}
+                basePath={workingDirectory}
+                onFileClick={onFileClick}
+                activePath={activeFilePath ?? undefined}
+              />
+            </div>
           )}
         </div>
       </div>
 
       {/* Resize handle */}
-      <div
-        className="bg-muted/50 hover:bg-primary/50 active:bg-primary w-1 flex-shrink-0 cursor-col-resize transition-colors"
-        onMouseDown={handleMouseDown}
-      />
+      <div className="bg-border relative w-px shrink-0 transition-colors hover:bg-primary active:bg-primary">
+        <div
+          className="absolute inset-y-0 -left-1 -right-1 cursor-col-resize"
+          onMouseDown={handleMouseDown}
+        />
+      </div>
 
       {/* Editor panel */}
-      <div className="bg-muted/20 flex h-full min-w-0 flex-1 flex-col">
+      <div className="flex h-full min-w-0 flex-1 flex-col">
         {/* Tabs */}
         {openFiles.length > 0 && (
-          <div className="bg-background/50">
-            <FileTabs
-              files={openFiles}
-              activeFilePath={activeFilePath}
-              onSelect={onSelectTab}
-              onClose={onCloseTab}
-              isDirty={isDirty}
-            />
-          </div>
+          <FileTabs
+            files={openFiles}
+            activeFilePath={activeFilePath}
+            onSelect={onSelectTab}
+            onClose={onCloseTab}
+            isDirty={isDirty}
+          />
         )}
 
         {/* Editor or empty state */}
-        <div className="flex-1 overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-hidden">
           {fileLoading ? (
-            <div className="flex h-full items-center justify-center">
-              <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+            <div className="flex h-full items-center justify-center gap-2">
+              <Loader2 className="text-muted-foreground h-3.5 w-3.5 animate-spin" />
+              <span className="ui-label">Loading</span>
             </div>
           ) : activeFile ? (
             <FileEditor
               content={activeFile.currentContent}
               language={activeFile.language}
               isBinary={activeFile.isBinary}
+              dirty={activeFilePath ? isDirty(activeFilePath) : false}
+              saving={saving}
               onChange={(content) => updateContent(activeFile.path, content)}
               onSave={onSave}
             />
           ) : (
-            <div className="text-muted-foreground flex h-full flex-col items-center justify-center">
-              <Folder className="mb-4 h-12 w-12 opacity-50" />
-              <p className="text-sm">Select a file to edit</p>
+            <div className="flex h-full flex-col items-center justify-center gap-2">
+              <p className="ui-label">No file open</p>
+              <p className="ui-meta">no file open</p>
+              <p className="ui-meta text-muted-foreground/70">
+                ❯ select a file from the tree
+              </p>
             </div>
           )}
         </div>
@@ -376,9 +383,14 @@ function MobileFileExplorer({
     return (
       <div className="bg-background flex h-full w-full flex-col">
         {/* Header */}
-        <div className="bg-muted/30 flex items-center gap-2 p-2">
-          <Button variant="ghost" size="icon-sm" onClick={onBack}>
-            <ArrowLeft className="h-5 w-5" />
+        <div className="glass glass-edge-bottom relative z-10 flex h-10 shrink-0 items-center gap-1 pr-1 pl-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onBack}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="min-w-0 flex-1">
             <FileTabs
@@ -395,25 +407,28 @@ function MobileFileExplorer({
               size="sm"
               onClick={onSave}
               disabled={saving}
-              className="flex-shrink-0"
+              className=""
             >
-              <Save className="mr-1 h-4 w-4" />
-              Save
+              <Save className="h-3 w-3" />
+              save
             </Button>
           )}
         </div>
 
         {/* Editor */}
-        <div className="flex-1 overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-hidden">
           {fileLoading ? (
-            <div className="flex h-full items-center justify-center">
-              <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+            <div className="flex h-full items-center justify-center gap-2">
+              <Loader2 className="text-muted-foreground h-3.5 w-3.5 animate-spin" />
+              <span className="ui-label">Loading</span>
             </div>
           ) : (
             <FileEditor
               content={activeFile.currentContent}
               language={activeFile.language}
               isBinary={activeFile.isBinary}
+              dirty={isCurrentDirty}
+              saving={saving}
               onChange={(content) => updateContent(activeFile.path, content)}
               onSave={onSave}
             />
@@ -435,42 +450,42 @@ function MobileFileExplorer({
   // Show file tree
   return (
     <div className="bg-background flex h-full w-full flex-col">
-      <div className="flex items-center gap-2 p-3">
-        <Folder className="text-muted-foreground h-4 w-4 flex-shrink-0" />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">Files</p>
-          <p className="text-muted-foreground truncate text-xs">
-            {workingDirectory}
-          </p>
-        </div>
+      <div className="glass glass-edge-bottom relative z-10 flex h-12 shrink-0 flex-col justify-center gap-0.5 px-3">
+        <span className="ui-label">Files</span>
+        <span className="ui-meta truncate">{workingDirectory}</span>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="scrollbar-thin flex-1 overflow-y-auto">
         {loading ? (
-          <div className="flex h-32 items-center justify-center">
-            <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+          <div className="flex h-32 items-center justify-center gap-2">
+            <Loader2 className="text-muted-foreground h-3.5 w-3.5 animate-spin" />
+            <span className="ui-label">Loading</span>
           </div>
         ) : error ? (
-          <div className="text-muted-foreground flex h-32 flex-col items-center justify-center p-4">
-            <AlertCircle className="mb-2 h-8 w-8" />
-            <p className="text-center text-sm">{error}</p>
+          <div className="flex h-32 flex-col items-center justify-center gap-2 p-4">
+            <span className="text-destructive ui-label">Couldn't load</span>
+            <p className="ui-meta text-center">{error}</p>
           </div>
         ) : files.length === 0 ? (
-          <div className="text-muted-foreground flex h-32 items-center justify-center">
-            <p className="text-sm">Empty directory</p>
+          <div className="flex h-32 flex-col items-center justify-center gap-2">
+            <p className="ui-label">Nothing here</p>
+            <p className="ui-meta">directory has no entries</p>
           </div>
         ) : (
-          <FileTree
-            nodes={files}
-            basePath={workingDirectory}
-            onFileClick={onFileClick}
-          />
+          <div className="py-1">
+            <FileTree
+              nodes={files}
+              basePath={workingDirectory}
+              onFileClick={onFileClick}
+              activePath={activeFilePath ?? undefined}
+            />
+          </div>
         )}
       </div>
 
       {fileLoading && (
         <div className="bg-background/80 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
-          <Loader2 className="text-primary h-8 w-8 animate-spin" />
+          <Loader2 className="text-primary h-6 w-6 animate-spin" />
         </div>
       )}
     </div>
@@ -500,7 +515,10 @@ function UnsavedChangesDialog({
     >
       <DialogContent showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle>Unsaved changes</DialogTitle>
+          <span className="ui-label">Unsaved changes</span>
+          <DialogTitle className="type-title-3">
+            Unsaved changes
+          </DialogTitle>
           <DialogDescription>
             {fileName} has unsaved changes. What would you like to do?
           </DialogDescription>

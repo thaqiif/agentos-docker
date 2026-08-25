@@ -30,34 +30,33 @@ export function UnifiedDiff({
   };
 
   return (
-    <div className="border-border overflow-hidden rounded-lg border">
+    <div className="border-[var(--fill-2)] overflow-hidden border">
       {/* File header */}
       <button
         onClick={handleToggle}
         className={cn(
-          "flex w-full items-center gap-2 px-3 py-2.5 text-sm",
-          "bg-muted/50 hover:bg-muted text-left transition-colors",
-          "min-h-[44px]" // Mobile touch target
+          "bg-surface hover:bg-[var(--fill-4)] flex w-full items-center gap-2 px-3 py-2 text-left transition-colors",
+          "min-h-[44px]"
         )}
       >
         {isExpanded ? (
-          <ChevronDown className="text-muted-foreground h-4 w-4 flex-shrink-0" />
+          <ChevronDown className="text-muted-foreground h-3.5 w-3.5 flex-shrink-0" />
         ) : (
-          <ChevronRight className="text-muted-foreground h-4 w-4 flex-shrink-0" />
+          <ChevronRight className="text-muted-foreground h-3.5 w-3.5 flex-shrink-0" />
         )}
 
-        <span className="flex-1 truncate font-mono text-xs">{fileName}</span>
+        <span className="ui-meta min-w-0 flex-1 truncate">{fileName}</span>
 
         {/* Stats */}
-        <span className="flex flex-shrink-0 items-center gap-2 text-xs">
+        <span className="flex flex-shrink-0 items-center gap-2 font-mono text-[0.6875rem] tabular-nums">
           {diff.additions > 0 && (
-            <span className="flex items-center gap-0.5 text-green-500">
+            <span className="flex items-center gap-0.5 text-status-running">
               <Plus className="h-3 w-3" />
               {diff.additions}
             </span>
           )}
           {diff.deletions > 0 && (
-            <span className="flex items-center gap-0.5 text-red-500">
+            <span className="flex items-center gap-0.5 text-status-error">
               <Minus className="h-3 w-3" />
               {diff.deletions}
             </span>
@@ -67,17 +66,19 @@ export function UnifiedDiff({
 
       {/* Diff content */}
       {isExpanded && (
-        <div className="overflow-x-auto">
+        <div className="scrollbar-thin overflow-x-auto">
           {diff.isBinary ? (
-            <div className="text-muted-foreground px-4 py-8 text-center text-sm">
-              Binary file not shown
+            <div className="px-4 py-6 text-center">
+              <p className="ui-label">Binary file</p>
+              <p className="ui-meta">binary file not shown</p>
             </div>
           ) : diff.hunks.length === 0 ? (
-            <div className="text-muted-foreground px-4 py-8 text-center text-sm">
-              No changes
+            <div className="px-4 py-6 text-center">
+              <p className="ui-label">No changes</p>
+              <p className="ui-meta">no changes</p>
             </div>
           ) : (
-            <div className="font-mono text-xs">
+            <div className="scrollbar-thin font-mono text-xs">
               {diff.hunks.map((hunk, index) => (
                 <Hunk key={index} hunk={hunk} />
               ))}
@@ -97,7 +98,7 @@ function Hunk({ hunk }: HunkProps) {
   return (
     <div>
       {/* Hunk header */}
-      <div className="border-border border-y bg-blue-500/10 px-3 py-1 text-xs text-blue-400">
+      <div className="border-[var(--fill-2)] bg-status-info/10 text-status-info border-y px-3 py-1 text-[11px]">
         {hunk.header}
       </div>
 
@@ -127,14 +128,14 @@ function DiffLineRow({ line }: DiffLineRowProps) {
   }
 
   return (
-    <tr className={cn("hover:bg-muted/30", bgColor)}>
+    <tr className={cn("hover:bg-[var(--fill-4)]", bgColor)}>
       {/* Old line number */}
-      <td className="text-muted-foreground border-border/50 w-12 border-r px-2 py-0.5 text-right tabular-nums select-none">
+      <td className="text-muted-foreground/70 border-[var(--fill-3)] w-12 border-r px-2 py-0.5 text-right tabular-nums select-none">
         {line.oldLineNumber || ""}
       </td>
 
       {/* New line number */}
-      <td className="text-muted-foreground border-border/50 w-12 border-r px-2 py-0.5 text-right tabular-nums select-none">
+      <td className="text-muted-foreground/70 border-[var(--fill-3)] w-12 border-r px-2 py-0.5 text-right tabular-nums select-none">
         {line.newLineNumber || ""}
       </td>
 
@@ -154,9 +155,9 @@ function DiffLineRow({ line }: DiffLineRowProps) {
 function getLineBgColor(type: DiffLine["type"]): string {
   switch (type) {
     case "addition":
-      return "bg-green-500/10";
+      return "bg-status-running/10";
     case "deletion":
-      return "bg-red-500/10";
+      return "bg-status-error/10";
     default:
       return "";
   }
@@ -165,9 +166,9 @@ function getLineBgColor(type: DiffLine["type"]): string {
 function getLineTextColor(type: DiffLine["type"]): string {
   switch (type) {
     case "addition":
-      return "text-green-400";
+      return "text-status-running";
     case "deletion":
-      return "text-red-400";
+      return "text-status-error";
     default:
       return "text-foreground";
   }

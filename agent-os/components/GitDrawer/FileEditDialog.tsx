@@ -7,10 +7,9 @@ import {
   Loader2,
   Copy,
   Check,
-  File,
   Plus,
   Minus,
-  Edit3,
+  ArrowRight,
 } from "lucide-react";
 import { DiffEditor, type Monaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
@@ -64,17 +63,35 @@ function getLanguageFromPath(path: string): string {
   return map[ext] || "plaintext";
 }
 
-function getStatusIcon(status: GitFile["status"]) {
+function getStatusGlyph(status: GitFile["status"]): string {
   switch (status) {
     case "modified":
-      return <Edit3 className="h-3 w-3 text-yellow-500" />;
+      return "M";
     case "added":
-    case "untracked":
-      return <Plus className="h-3 w-3 text-green-500" />;
+      return "A";
     case "deleted":
-      return <Minus className="h-3 w-3 text-red-500" />;
+      return "D";
+    case "untracked":
+      return "U";
     default:
-      return <File className="h-3 w-3" />;
+      return "·";
+  }
+}
+
+function getStatusColor(status: GitFile["status"]): string {
+  switch (status) {
+    case "modified":
+      return "text-status-waiting";
+    case "added":
+      return "text-status-running";
+    case "deleted":
+      return "text-status-error";
+    case "renamed":
+      return "text-status-info";
+    case "untracked":
+      return "text-muted-foreground";
+    default:
+      return "text-muted-foreground";
   }
 }
 
@@ -228,15 +245,16 @@ export function FileEditDialog({
       onClick={handleClose}
     >
       <div
-        className="bg-background m-auto flex h-[90vh] w-[95vw] max-w-7xl overflow-hidden rounded-lg shadow-2xl"
+        className="bg-background m-auto flex h-[90vh] w-[95vw] max-w-7xl overflow-hidden rounded-2xl shadow-[var(--elev-4)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Left sidebar - file list grouped by repo */}
-        <div className="flex w-[280px] flex-shrink-0 flex-col border-r">
-          <div className="text-muted-foreground border-b px-3 py-2 text-xs font-medium">
-            CHANGED FILES
+        <div className="border-[var(--fill-2)] flex w-[280px] flex-shrink-0 flex-col border-r">
+          <div className="glass glass-edge-bottom relative z-10 flex h-10 shrink-0 items-center gap-2 px-3">
+            <span className="ui-label">Changed files</span>
+            <span className="ui-meta ml-auto tabular-nums">{allFiles.length}</span>
           </div>
-          <div className="flex-1 overflow-y-auto">
+          <div className="scrollbar-thin flex-1 overflow-y-auto">
             {(() => {
               // Group files by repo
               const grouped = new Map<string, typeof allFiles>();
@@ -249,9 +267,9 @@ export function FileEditDialog({
 
               return Array.from(grouped.entries()).map(([repoKey, files]) => (
                 <div key={repoKey || "default"}>
-                  {repoKey && (
-                    <div className="bg-muted/50 text-muted-foreground px-3 py-1.5 text-xs font-medium">
-                      {repoKey}
+                  {(repoKey || repoName) && (
+                    <div className="bg-surface ui-meta border-b border-[var(--fill-2)] px-3 py-1">
+                      {repoKey || repoName}
                     </div>
                   )}
                   {files.map((f) => {
@@ -264,16 +282,26 @@ export function FileEditDialog({
                         key={`${"repoPath" in f ? f.repoPath : ""}-${f.path}`}
                         onClick={() => onFileSelect(f)}
                         className={cn(
-                          "hover:bg-accent/50 flex w-full items-center gap-2 px-3 py-2 text-left text-sm",
-                          isSelected && "bg-accent"
+                          "hover:bg-[var(--fill-4)] relative flex w-full items-center gap-2 px-3 py-1.5 text-left transition-colors",
+                          isSelected && "bg-[var(--fill-3)]"
                         )}
                       >
-                        {getStatusIcon(f.status)}
+                        {isSelected && (
+                          <span className="bg-primary absolute inset-y-0 left-0 w-0.5" />
+                        )}
+                        <span
+                          className={cn(
+                            "flex h-4 w-4 shrink-0 items-center justify-center text-[0.6875rem] font-medium",
+                            getStatusColor(f.status)
+                          )}
+                        >
+                          {getStatusGlyph(f.status)}
+                        </span>
                         <div className="min-w-0 flex-1">
-                          <div className="truncate">
+                          <div className="truncate text-xs text-foreground">
                             {f.path.split("/").pop()}
                           </div>
-                          <div className="text-muted-foreground truncate text-xs">
+                          <div className="ui-meta truncate">
                             {f.path.includes("/")
                               ? f.path.slice(0, f.path.lastIndexOf("/"))
                               : f.status}
@@ -291,34 +319,40 @@ export function FileEditDialog({
         {/* Right side - editor */}
         <div className="flex min-w-0 flex-1 flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between border-b px-4 py-2">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="truncate font-mono text-sm">{fileName}</span>
+          <div className="glass glass-edge-bottom relative z-10 flex h-10 shrink-0 items-center justify-between gap-2 px-3">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className="text-primary shrink-0 text-[0.625rem]">
+                02
+              </span>
+              <span className="ui-label shrink-0">Content</span>
+              <span className="ui-meta min-w-0 truncate">{fileName}</span>
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(file.path);
                   setCopied(true);
                   setTimeout(() => setCopied(false), 2000);
                 }}
-                className="text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground flex h-5 w-5 shrink-0 items-center justify-center transition-colors"
+                title="Copy path"
               >
                 {copied ? (
-                  <Check className="h-3.5 w-3.5 text-green-500" />
+                  <Check className="text-status-running h-3.5 w-3.5" />
                 ) : (
                   <Copy className="h-3.5 w-3.5" />
                 )}
               </button>
               {hasChanges && (
-                <span className="rounded bg-yellow-500/20 px-1.5 text-xs text-yellow-500">
+                <span className="bg-status-waiting/10 text-status-waiting shrink-0 px-1.5 py-0.5 text-[0.625rem] font-medium tracking-[0.045em] uppercase">
                   Unsaved
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-1.5">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => (file.staged ? onUnstage(file) : onStage(file))}
+                className=""
               >
                 {file.staged ? (
                   <>
@@ -336,22 +370,25 @@ export function FileEditDialog({
                 size="sm"
                 onClick={handleSave}
                 disabled={!hasChanges || saving}
+                className=""
               >
                 {saving ? (
-                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                  <Loader2 className="h-3 w-3 animate-spin" />
                 ) : (
-                  <Save className="mr-1 h-3 w-3" />
+                  <>
+                    Save
+                    <ArrowRight className="ml-1 h-3 w-3" />
+                  </>
                 )}
-                Save
               </Button>
-              <Button variant="ghost" size="icon" onClick={handleClose}>
+              <Button variant="ghost" size="icon-sm" onClick={handleClose}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
           {error && (
-            <div className="bg-red-500/10 px-4 py-2 text-sm text-red-500">
+            <div className="bg-status-error/10 text-status-error ui-meta border-status-error/20 border-b px-4 py-1.5">
               {error}
             </div>
           )}
@@ -360,7 +397,7 @@ export function FileEditDialog({
           <div className="flex-1 overflow-hidden">
             {loading ? (
               <div className="flex h-full items-center justify-center">
-                <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
+                <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
               </div>
             ) : (
               <DiffEditor

@@ -69,9 +69,9 @@ export function ADialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={cn(maxWidth, className)}>
         <DialogHeader>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             {icon && (
-              <span className="text-foreground [&>svg]:h-5 [&>svg]:w-5">
+              <span className="text-primary [&>svg]:h-5 [&>svg]:w-5">
                 {icon}
               </span>
             )}
@@ -80,10 +80,10 @@ export function ADialog({
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
 
-        <div className={cn("py-4", contentClassName)}>{children}</div>
+        <div className={cn("py-1", contentClassName)}>{children}</div>
 
         {footer && (
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
             {footer}
           </div>
         )}

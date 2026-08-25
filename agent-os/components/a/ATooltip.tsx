@@ -66,7 +66,7 @@ export function ATooltip({
         <div className="flex items-center gap-2">
           <span>{content}</span>
           {shortcut && (
-            <kbd className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px] font-medium">
+            <kbd className="text-muted-foreground rounded bg-[var(--fill-2)] px-1.5 py-0.5 text-[0.625rem] font-medium">
               {shortcut}
             </kbd>
           )}

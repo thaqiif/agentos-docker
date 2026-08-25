@@ -70,10 +70,12 @@ export interface AButtonProps extends Omit<
   className?: string;
 }
 
+/* Heights follow the iOS control scale, and the corner grows with the
+   control so the curvature stays optically constant. */
 const SIZE_CLASSES: Record<AButtonSize, { button: string; icon: string }> = {
-  sm: { button: "h-7 px-2 text-xs", icon: "h-3.5 w-3.5" },
-  md: { button: "h-8 px-3 text-sm", icon: "h-4 w-4" },
-  lg: { button: "h-10 px-4 text-base", icon: "h-5 w-5" },
+  sm: { button: "h-7 rounded-md px-2.5 text-[0.75rem]", icon: "h-3.5 w-3.5" },
+  md: { button: "h-9 rounded-lg px-3.5 text-[0.8125rem]", icon: "h-4 w-4" },
+  lg: { button: "h-11 rounded-xl px-5 text-[0.9375rem]", icon: "h-5 w-5" },
 };
 
 const VARIANT_MAP: Record<
@@ -119,14 +121,13 @@ export const AButton = forwardRef<HTMLButtonElement, AButtonProps>(
         className={cn(
           sizeClasses.button,
           fullWidth && "w-full",
-          variant === "ghost" &&
-            "border-0 shadow-none ring-0 focus:ring-0 focus-visible:ring-0",
+          variant === "ghost" && "border-0 shadow-none",
           className
         )}
         {...props}
       >
         {loading ? (
-          <Loader2 className={cn(sizeClasses.icon, "mr-2 animate-spin")} />
+          <Loader2 className={cn(sizeClasses.icon, children && "mr-2", "animate-spin")} />
         ) : Icon ? (
           <Icon
             className={cn(sizeClasses.icon, children && "mr-2", iconClassName)}

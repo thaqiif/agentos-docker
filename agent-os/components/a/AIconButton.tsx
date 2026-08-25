@@ -73,36 +73,35 @@ export interface AIconButtonProps extends Omit<
   "aria-label"?: string;
 }
 
+/* Icon buttons are capsules — a circular target is what a finger expects,
+   and it keeps them from reading as tiny windows on a glass bar. */
 const SIZE_CLASSES: Record<AIconButtonSize, { button: string; icon: string }> =
   {
     sm: { button: "h-7 w-7", icon: "h-3.5 w-3.5" },
     md: { button: "h-8 w-8", icon: "h-4 w-4" },
-    lg: { button: "h-9 w-9", icon: "h-5 w-5" },
+    lg: { button: "h-9 w-9", icon: "h-[1.125rem] w-[1.125rem]" },
   };
 
 const VARIANT_CLASSES = {
-  ghost: "bg-transparent hover:bg-muted/60",
+  ghost: "bg-transparent hover:bg-[var(--fill-4)]",
   default: "bg-primary text-primary-foreground hover:bg-primary/90",
-  muted: "bg-muted/40 hover:bg-muted/60",
+  muted: "bg-[var(--fill-3)] hover:bg-[var(--fill-2)]",
 };
 
 const HIGHLIGHT_CLASSES: Record<AIconButtonHighlight, string> = {
-  blue: "text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300",
-  green:
-    "text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300",
-  red: "text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300",
-  orange:
-    "text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300",
-  purple:
-    "text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300",
+  blue: "text-status-info hover:text-status-info/80",
+  green: "text-status-running hover:text-status-running/80",
+  red: "text-status-error hover:text-status-error/80",
+  orange: "text-status-waiting hover:text-status-waiting/80",
+  purple: "text-primary hover:text-primary/80",
 };
 
 const DOT_COLORS: Record<AIconButtonHighlight, string> = {
-  blue: "bg-blue-500 dark:bg-blue-400",
-  green: "bg-green-500 dark:bg-green-400",
-  red: "bg-red-500 dark:bg-red-400",
-  orange: "bg-orange-500 dark:bg-orange-400",
-  purple: "bg-purple-500 dark:bg-purple-400",
+  blue: "bg-status-info",
+  green: "bg-status-running",
+  red: "bg-status-error",
+  orange: "bg-status-waiting",
+  purple: "bg-primary",
 };
 
 export const AIconButton = forwardRef<HTMLButtonElement, AIconButtonProps>(
@@ -137,11 +136,11 @@ export const AIconButton = forwardRef<HTMLButtonElement, AIconButtonProps>(
         disabled={disabled}
         aria-label={ariaLabel || tooltip}
         className={cn(
-          "relative p-0",
+          "relative rounded-full p-0",
           sizeClasses.button,
           active ? VARIANT_CLASSES.default : VARIANT_CLASSES[variant],
           highlight && !active && HIGHLIGHT_CLASSES[highlight],
-          disabled && "cursor-not-allowed opacity-50",
+          disabled && "cursor-not-allowed opacity-40",
           className
         )}
         {...props}
@@ -152,7 +151,7 @@ export const AIconButton = forwardRef<HTMLButtonElement, AIconButtonProps>(
         {badge !== undefined && badge > 0 && (
           <Badge
             variant="destructive"
-            className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px] font-medium"
+            className="bg-destructive text-destructive-foreground absolute -top-1 -right-1 h-4 min-w-4 justify-center px-1 text-[0.625rem] font-semibold tabular-nums"
           >
             {badge > 99 ? "99+" : badge}
           </Badge>

@@ -52,15 +52,16 @@ export function CodeSearchResults({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+      <div className="flex items-center justify-center gap-2 p-8">
+        <Loader2 className="text-muted-foreground h-3.5 w-3.5 animate-spin" />
+        <span className="ui-label">Searching</span>
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="text-destructive p-4 text-sm">
+      <div className="text-destructive px-4 py-6 font-mono text-xs">
         {error instanceof Error ? error.message : "Failed to search code"}
       </div>
     );
@@ -68,24 +69,24 @@ export function CodeSearchResults({
 
   if (query.length < 3) {
     return (
-      <div className="text-muted-foreground flex flex-col items-center justify-center p-8">
-        <Search className="mb-2 h-8 w-8 opacity-50" />
-        <p className="text-sm">Type at least 3 characters to search</p>
+      <div className="flex flex-col items-center justify-center gap-2 p-8">
+        <Search className="text-muted-foreground/70 h-4 w-4" />
+        <p className="ui-meta">Type at least 3 characters to search</p>
       </div>
     );
   }
 
   if (!data?.results.length) {
     return (
-      <div className="text-muted-foreground flex flex-col items-center justify-center p-8">
-        <FileCode className="mb-2 h-8 w-8 opacity-50" />
-        <p className="text-sm">No matches found for &quot;{query}&quot;</p>
+      <div className="flex flex-col items-center justify-center gap-2 p-8">
+        <FileCode className="text-muted-foreground/70 h-4 w-4" />
+        <p className="ui-meta">No matches found for &quot;{query}&quot;</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col divide-y">
+    <div className="divide-[var(--fill-3)] flex flex-col divide-y">
       {data.results.map((result, index) => (
         <SearchResultItem
           key={`${result.file}:${result.line}`}
@@ -119,26 +120,29 @@ function SearchResultItem({
     <button
       onClick={onClick}
       className={cn(
-        "flex min-h-[44px] flex-col gap-2 p-3 text-left transition-colors",
-        "hover:bg-accent",
-        isSelected && "bg-accent"
+        "relative flex min-h-[44px] flex-col justify-center gap-1.5 px-4 py-2.5 text-left transition-colors",
+        isSelected ? "bg-[var(--fill-3)]" : "hover:bg-[var(--fill-4)]"
       )}
     >
-      <div className="flex items-center gap-2">
-        <FileCode className="text-muted-foreground h-4 w-4 flex-shrink-0" />
-        <div className="min-w-0 flex-1">
-          <span className="font-medium">{fileName}</span>
-          {filePath && (
-            <span className="text-muted-foreground text-xs"> · {filePath}</span>
-          )}
-          <span className="text-muted-foreground text-xs">
-            {" "}
-            · Line {result.line}
+      {isSelected && (
+        <span className="bg-primary absolute inset-y-0 left-0 w-0.5" />
+      )}
+
+      <div className="flex min-w-0 items-baseline gap-2">
+        <span className="shrink-0 font-mono text-xs text-foreground">
+          {fileName}
+        </span>
+        {filePath && (
+          <span className="truncate text-[0.6875rem] text-muted-foreground">
+            {filePath}
           </span>
-        </div>
+        )}
+        <span className="ml-auto shrink-0 text-[0.625rem] text-muted-foreground/70">
+          :{result.line}
+        </span>
       </div>
 
-      <div className="bg-muted/50 rounded p-2 font-mono text-xs">
+      <div className="border-[var(--fill-2)] overflow-hidden border-l pl-2">
         <SyntaxHighlighter
           language={language}
           style={vscDarkPlus}
@@ -146,6 +150,8 @@ function SearchResultItem({
             background: "transparent",
             padding: 0,
             margin: 0,
+            fontSize: "11px",
+            lineHeight: 1.5,
           }}
           wrapLines
           showLineNumbers={false}

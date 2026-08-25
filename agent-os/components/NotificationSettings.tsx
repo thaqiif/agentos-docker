@@ -2,6 +2,7 @@
 
 import { Bell, Volume2, VolumeX, AlertCircle } from "lucide-react";
 import { Button } from "./ui/button";
+import { Switch } from "./ui/switch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,74 +53,70 @@ export function NotificationSettings({
             )}
           />
           {waitingCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-yellow-500 text-[10px] font-bold text-yellow-950">
+            <span className="bg-status-waiting absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[0.6875rem] font-bold text-background">
               {waitingCount}
             </span>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuContent align="end" className="w-56">
         {/* Waiting sessions section */}
         {waitingCount > 0 && (
           <>
-            <DropdownMenuLabel className="flex items-center gap-2 text-xs text-yellow-500">
+            <DropdownMenuLabel className="ui-label flex items-center gap-2 text-status-waiting">
               <AlertCircle className="h-3 w-3" />
               Waiting for input
             </DropdownMenuLabel>
-            {waitingSessions.map((session) => (
-              <DropdownMenuItem
-                key={session.id}
-                onClick={() => {
-                  onSelectSession?.(session.id);
-                  onOpenChange(false);
-                }}
-                className="text-sm"
-              >
-                {session.name}
-              </DropdownMenuItem>
-            ))}
+            <div className="divide-y divide-[var(--fill-3)]">
+              {waitingSessions.map((session) => (
+                <DropdownMenuItem
+                  key={session.id}
+                  onClick={() => {
+                    onSelectSession?.(session.id);
+                    onOpenChange(false);
+                  }}
+                >
+                  <span className="h-1.5 w-1.5 shrink-0 animate-status-pulse bg-status-waiting" />
+                  <span className="truncate font-mono text-xs">
+                    {session.name}
+                  </span>
+                </DropdownMenuItem>
+              ))}
+            </div>
             <DropdownMenuSeparator />
           </>
         )}
 
         {/* Sound toggle */}
-        <DropdownMenuItem
-          onClick={() => onUpdateSettings({ sound: !settings.sound })}
-          className="flex items-center justify-between"
-        >
-          <span className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-3 px-2 py-1.5">
+          <span className="flex items-center gap-2 text-sm">
             {settings.sound ? (
-              <Volume2 className="h-3 w-3" />
+              <Volume2 className="h-4 w-4" />
             ) : (
-              <VolumeX className="text-muted-foreground h-3 w-3" />
+              <VolumeX className="text-muted-foreground h-4 w-4" />
             )}
             Sound
           </span>
-          <span
-            className={cn(
-              "relative h-4 w-8 rounded-full transition-colors",
-              settings.sound ? "bg-primary" : "bg-muted"
-            )}
-          >
-            <span
-              className={cn(
-                "bg-background absolute top-0.5 h-3 w-3 rounded-full transition-transform",
-                settings.sound ? "translate-x-4" : "translate-x-0.5"
-              )}
-            />
-          </span>
-        </DropdownMenuItem>
+          <Switch
+            checked={settings.sound}
+            onCheckedChange={(checked) => onUpdateSettings({ sound: checked })}
+            aria-label="Toggle notification sound"
+          />
+        </div>
 
         {/* Browser notifications - only show if not granted */}
         {!permissionGranted && (
-          <DropdownMenuItem
-            onClick={async () => {
-              await onRequestPermission();
-            }}
-          >
-            <Bell className="mr-2 h-3 w-3" />
-            <span className="text-xs">Enable browser alerts</span>
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={async () => {
+                await onRequestPermission();
+              }}
+            >
+              <Bell className="h-4 w-4" />
+              <span>Enable browser alerts</span>
+            </DropdownMenuItem>
+          </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

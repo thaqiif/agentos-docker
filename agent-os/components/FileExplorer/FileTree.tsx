@@ -16,18 +16,15 @@ interface FileTreeProps {
   nodes: FileNode[];
   basePath: string;
   onFileClick: (path: string) => void;
+  activePath?: string;
   depth?: number;
 }
 
-/**
- * Recursive file tree component
- * Mobile-optimized with larger touch targets
- * Lazily loads directory contents when expanded
- */
 export function FileTree({
   nodes,
   basePath,
   onFileClick,
+  activePath,
   depth = 0,
 }: FileTreeProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -76,7 +73,6 @@ export function FileTree({
         return next;
       });
 
-      // Fetch children if expanding and not already loaded
       if (!isCurrentlyExpanded && !loadedChildren.has(path)) {
         await fetchChildren(path);
       }
@@ -85,16 +81,16 @@ export function FileTree({
   );
 
   return (
-    <div className="w-full">
+    <div className={cn("w-full", depth > 0 && "border-[var(--fill-2)] ml-3 border-l")}>
       {nodes.map((node) => {
         const isExpanded = expanded.has(node.path);
         const isDirectory = node.type === "directory";
         const isLoading = loadingDirs.has(node.path);
         const children = loadedChildren.get(node.path) || node.children;
+        const isActive = activePath === node.path;
 
         return (
           <div key={node.path}>
-            {/* File/Directory item */}
             <button
               onClick={() => {
                 if (isDirectory) {
@@ -104,62 +100,62 @@ export function FileTree({
                 }
               }}
               className={cn(
-                "hover:bg-accent flex w-full items-center gap-2 px-2 py-2 text-left transition-colors",
-                "min-h-[40px] md:min-h-[32px]", // Touch target
-                "text-sm"
+                "group relative flex h-10 w-full items-center gap-1.5 pr-2 pl-2 text-left transition-colors hover:bg-[var(--fill-4)] md:h-7",
+                isActive && "bg-[var(--fill-3)]"
               )}
-              style={{ paddingLeft: `${depth * 12 + 8}px` }}
             >
-              {/* Expand/collapse icon */}
-              {isDirectory && (
-                <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center">
+              {isActive && (
+                <span className="bg-primary absolute inset-y-0 left-0 w-0.5" />
+              )}
+
+              {isDirectory ? (
+                <span className="flex h-3 w-3 flex-shrink-0 items-center justify-center">
                   {isLoading ? (
                     <Loader2 className="text-muted-foreground h-3 w-3 animate-spin" />
                   ) : isExpanded ? (
-                    <ChevronDown className="text-muted-foreground h-4 w-4" />
+                    <ChevronDown className="text-muted-foreground h-3 w-3" />
                   ) : (
-                    <ChevronRight className="text-muted-foreground h-4 w-4" />
+                    <ChevronRight className="text-muted-foreground h-3 w-3" />
                   )}
                 </span>
+              ) : (
+                <span className="h-3 w-3 flex-shrink-0" />
               )}
 
-              {/* Icon */}
               <span className="flex-shrink-0">
                 {isDirectory ? (
                   isExpanded ? (
-                    <FolderOpen className="h-4 w-4 text-blue-400" />
+                    <FolderOpen className="text-muted-foreground h-3.5 w-3.5" />
                   ) : (
-                    <Folder className="h-4 w-4 text-blue-400" />
+                    <Folder className="text-muted-foreground h-3.5 w-3.5" />
                   )
                 ) : (
                   <FileIcon extension={node.extension || ""} />
                 )}
               </span>
 
-              {/* Name */}
               <span
                 className={cn(
-                  "flex-1 truncate",
-                  isDirectory ? "font-medium" : "text-muted-foreground"
+                  "flex-1 truncate font-mono text-xs",
+                  isDirectory ? "text-foreground" : "text-muted-foreground"
                 )}
               >
                 {node.name}
               </span>
 
-              {/* Size (files only, on desktop) */}
               {!isDirectory && node.size !== undefined && (
-                <span className="text-muted-foreground hidden flex-shrink-0 text-xs md:block">
+                <span className="ui-meta hidden flex-shrink-0 text-[10px] md:block">
                   {formatFileSize(node.size)}
                 </span>
               )}
             </button>
 
-            {/* Children (if expanded) */}
             {isDirectory && isExpanded && children && children.length > 0 && (
               <FileTree
                 nodes={children}
                 basePath={basePath}
                 onFileClick={onFileClick}
+                activePath={activePath}
                 depth={depth + 1}
               />
             )}
@@ -170,43 +166,12 @@ export function FileTree({
   );
 }
 
-/**
- * File icon based on extension
- */
 function FileIcon({ extension }: { extension: string }) {
-  const ext = extension.toLowerCase();
-
-  // Color coding by file type
-  const colorMap: Record<string, string> = {
-    // JavaScript/TypeScript
-    js: "text-yellow-400",
-    jsx: "text-yellow-400",
-    ts: "text-blue-400",
-    tsx: "text-blue-400",
-    // Styles
-    css: "text-pink-400",
-    scss: "text-pink-400",
-    // Markup
-    html: "text-orange-400",
-    xml: "text-orange-400",
-    // Data
-    json: "text-green-400",
-    yaml: "text-purple-400",
-    yml: "text-purple-400",
-    // Config
-    md: "text-blue-300",
-    toml: "text-gray-400",
-    env: "text-yellow-300",
-  };
-
-  const color = colorMap[ext] || "text-muted-foreground";
-
-  return <File className={cn("h-4 w-4", color)} />;
+  return (
+    <File className="text-muted-foreground h-3.5 w-3.5 opacity-70" />
+  );
 }
 
-/**
- * Format file size for display
- */
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes}B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
