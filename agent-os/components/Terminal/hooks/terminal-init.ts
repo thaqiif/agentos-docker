@@ -6,6 +6,8 @@ import { WebLinksAddon } from "@xterm/addon-web-links";
 import { SearchAddon } from "@xterm/addon-search";
 import { CanvasAddon } from "@xterm/addon-canvas";
 import { getTerminalThemeForApp } from "../constants";
+import { DEFAULT_FONT_SCALE } from "../../../lib/font-scale";
+import { getTerminalFontSize } from "./terminal-font-size";
 
 export interface TerminalInstance {
   term: XTerm;
@@ -17,9 +19,10 @@ export interface TerminalInstance {
 export function createTerminal(
   container: HTMLElement,
   isMobile: boolean,
-  theme: string
+  theme: string,
+  fontScale = DEFAULT_FONT_SCALE
 ): TerminalInstance {
-  const fontSize = isMobile ? 13 : 16;
+  const fontSize = getTerminalFontSize(isMobile, fontScale);
   const terminalTheme = getTerminalThemeForApp(theme || "dark");
 
   const term = new XTerm({
@@ -134,12 +137,16 @@ export function updateTerminalForMobile(
   term: XTerm,
   fitAddon: FitAddon,
   isMobile: boolean,
-  sendResize: (cols: number, rows: number) => void
+  sendResize: (cols: number, rows: number) => void,
+  fontScale = DEFAULT_FONT_SCALE
 ): void {
-  const newFontSize = isMobile ? 13 : 16;
+  const newFontSize = getTerminalFontSize(isMobile, fontScale);
   const newLineHeight = isMobile ? 1.15 : 1.2;
 
-  if (term.options.fontSize !== newFontSize) {
+  if (
+    term.options.fontSize !== newFontSize ||
+    term.options.lineHeight !== newLineHeight
+  ) {
     term.options.fontSize = newFontSize;
     term.options.lineHeight = newLineHeight;
     term.refresh(0, term.rows - 1);

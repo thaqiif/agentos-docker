@@ -8,7 +8,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -17,6 +16,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Check } from "lucide-react";
+import { useFontScale } from "@/contexts/FontScaleContext";
+import { normalizeFontScale } from "@/lib/font-scale";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -30,8 +31,6 @@ const FONT_FAMILIES = [
   { value: "open-sans", label: "Open Sans", css: '"Open Sans", sans-serif' },
   { value: "lato", label: "Lato", css: "Lato, sans-serif" },
 ];
-
-const DEFAULT_FONT_SCALE = "1";
 
 /** Persist one setting to the backing store, showing brief feedback. */
 function saveSetting(key: string, value: string) {
@@ -51,11 +50,6 @@ function saveSetting(key: string, value: string) {
     });
 }
 
-/** Apply font scale/family to the document root so it takes effect live. */
-function applyFontScale(scale: number) {
-  document.documentElement.style.fontSize = `${scale * 100}%`;
-}
-
 function applyFontFamily(familyKey: string) {
   const match = FONT_FAMILIES.find((f) => f.value === familyKey);
   if (match && match.css) {
@@ -66,19 +60,15 @@ function applyFontFamily(familyKey: string) {
 }
 
 /**
- * Appearance and notification preferences.
+ * Appearance preferences.
  *
  * Same no-scrim, top-right-anchored pattern as the theme picker: settings
  * are pointless to change if the thing they affect is dimmed out behind
  * the dialog.
  */
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
-  const [fontScale, setFontScale] = useState(DEFAULT_FONT_SCALE);
+  const { fontScale, setFontScale } = useFontScale();
   const [fontFamily, setFontFamily] = useState("default");
-  const [notifyEnabled, setNotifyEnabled] = useState(false);
-  const [keepServerAlive, setKeepServerAlive] = useState(false);
-  const [botToken, setBotToken] = useState("");
-  const [chatId, setChatId] = useState("");
   const [loaded, setLoaded] = useState(false);
 
   // Load persisted settings once on mount.
@@ -86,20 +76,15 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     fetch("/api/settings")
       .then((r) => r.json())
       .then(({ settings }: { settings: Record<string, string> }) => {
-        const scale = settings.fontScale || DEFAULT_FONT_SCALE;
+        const scale = normalizeFontScale(parseFloat(settings.fontScale || ""));
         const family = settings.fontFamily || "default";
         setFontScale(scale);
         setFontFamily(family);
-        setNotifyEnabled(settings.notifyTerminalCompletion === "true");
-        setKeepServerAlive(settings.notifyKeepServerAlive === "true");
-        setBotToken(settings.telegramBotToken || "");
-        setChatId(settings.telegramChatId || "");
-        applyFontScale(parseFloat(scale));
         applyFontFamily(family);
         setLoaded(true);
       })
       .catch(() => setLoaded(true));
-  }, []);
+  }, [setFontScale]);
 
   if (!loaded) return null;
 
@@ -107,7 +92,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         overlayClassName="bg-transparent"
-        className="glass-thick glass-float max-h-[90vh] grid-rows-[auto_1fr_auto] gap-0 overflow-hidden border-0 shadow-[var(--elev-glass)] sm:top-4 sm:bottom-4 sm:left-auto sm:right-4 sm:translate-x-0 sm:translate-y-0 sm:max-w-sm"
+        className="glass-thick glass-float max-h-[90vh] grid-rows-[auto_1fr_auto] gap-0 overflow-hidden border-0 shadow-[var(--elev-glass)] sm:top-4 sm:right-4 sm:bottom-4 sm:left-auto sm:max-w-sm sm:translate-x-0 sm:translate-y-0"
       >
         <DialogHeader className="edge-fade-bottom flex h-10 shrink-0 flex-row items-center px-5 pt-4 pb-3">
           <DialogTitle className="type-headline">Settings</DialogTitle>
@@ -123,7 +108,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   Font scale
                 </label>
                 <span className="ui-meta tabular-nums">
-                  {parseFloat(fontScale).toFixed(2)}x
+                  {fontScale.toFixed(2)}x
                 </span>
               </div>
               <input
@@ -133,10 +118,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 step={0.05}
                 value={fontScale}
                 onChange={(e) => {
-                  const value = e.target.value;
+                  const value = e.target.valueAsNumber;
                   setFontScale(value);
-                  applyFontScale(parseFloat(value));
-                  saveSetting("fontScale", value);
+                  saveSetting("fontScale", String(value));
                 }}
                 className="w-full accent-[var(--primary)]"
               />
@@ -166,90 +150,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 </SelectContent>
               </Select>
             </div>
-          </section>
-
-          <section>
-            <h3 className="ui-label mb-3">Notifications</h3>
-
-            <label className="flex items-start gap-2.5 text-[0.8125rem]">
-              <input
-                type="checkbox"
-                checked={notifyEnabled}
-                onChange={(e) => {
-                  const value = e.target.checked;
-                  setNotifyEnabled(value);
-                  saveSetting("notifyTerminalCompletion", String(value));
-                }}
-                className="mt-0.5 h-4 w-4 accent-[var(--primary)]"
-              />
-              <span className="font-medium">
-                Send Telegram notifications on terminal completion
-              </span>
-            </label>
-
-            {notifyEnabled && (
-              <div className="mt-3 space-y-3 pl-[1.625rem]">
-                <div>
-                  <label className="mb-1.5 block text-[0.75rem] font-medium">
-                    Bot Token
-                  </label>
-                  <Input
-                    type="password"
-                    value={botToken}
-                    onChange={(e) => setBotToken(e.target.value)}
-                    onBlur={() => saveSetting("telegramBotToken", botToken)}
-                    placeholder="123456789:AA..."
-                    className="h-8 text-[0.8125rem]"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-[0.75rem] font-medium">
-                    Chat ID
-                  </label>
-                  <Input
-                    type="text"
-                    value={chatId}
-                    onChange={(e) => setChatId(e.target.value)}
-                    onBlur={() => saveSetting("telegramChatId", chatId)}
-                    placeholder="123456789"
-                    className="h-8 text-[0.8125rem]"
-                  />
-                </div>
-                <p className="ui-meta">
-                  Create a bot via @BotFather on Telegram, then get your chat
-                  ID via @userinfobot.
-                </p>
-                <p className="ui-meta mt-2 rounded-lg bg-[var(--fill-5)] px-2.5 py-2 text-[0.7rem]">
-                  <strong>Note:</strong> Plain shell terminals (cmd, bash, zsh)
-                  won&apos;t trigger notifications. Only AI agent terminals
-                  (Claude, Command Code, etc.) report completion status.
-                </p>
-
-                <label className="flex items-start gap-2.5 pt-1 text-[0.8125rem]">
-                  <input
-                    type="checkbox"
-                    checked={keepServerAlive}
-                    onChange={(e) => {
-                      const value = e.target.checked;
-                      setKeepServerAlive(value);
-                      saveSetting("notifyKeepServerAlive", String(value));
-                    }}
-                    className="mt-0.5 h-4 w-4 accent-[var(--primary)]"
-                  />
-                  <span>
-                    <span className="font-medium">
-                      Keep watching with no browser open
-                    </span>
-                    <p className="ui-meta mt-0.5">
-                      Notifications normally stop 30s after you close every
-                      tab. Enable this to have the server keep polling tmux
-                      in the background so alerts still fire — small
-                      constant cost, but works with the app fully closed.
-                    </p>
-                  </span>
-                </label>
-              </div>
-            )}
           </section>
         </div>
 

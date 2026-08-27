@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { removeLegacyNotificationSettings } from "../settings";
 
 interface Migration {
   id: number;
@@ -188,9 +189,9 @@ const migrations: Migration[] = [
       // up alongside it as a second entry. Point them at the name tmux
       // would have chosen, dropping the row if that name is already taken —
       // that is the live entry, and it is the one worth keeping.
-      const rows = db
-        .prepare(`SELECT name FROM terminals`)
-        .all() as { name: string }[];
+      const rows = db.prepare(`SELECT name FROM terminals`).all() as {
+        name: string;
+      }[];
 
       const taken = new Set(rows.map((r) => r.name));
       const rename = db.prepare(`UPDATE terminals SET name = ? WHERE name = ?`);
@@ -209,6 +210,11 @@ const migrations: Migration[] = [
         taken.delete(name);
       }
     },
+  },
+  {
+    id: 17,
+    name: "remove_legacy_notification_settings",
+    up: removeLegacyNotificationSettings,
   },
 ];
 

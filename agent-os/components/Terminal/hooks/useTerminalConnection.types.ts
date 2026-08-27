@@ -17,6 +17,7 @@ export interface UseTerminalConnectionProps {
   onBeforeUnmount?: (scrollState: TerminalScrollState) => void;
   initialScrollState?: TerminalScrollState;
   isMobile?: boolean;
+  fontScale?: number;
   theme?: string;
   selectMode?: boolean;
 }

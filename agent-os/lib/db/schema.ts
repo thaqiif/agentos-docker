@@ -71,8 +71,7 @@ export function createSchema(db: Database.Database): void {
       FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
     );
 
-    -- App settings (key/value): font scale, font family, Telegram
-    -- notification config, etc.
+    -- App settings (key/value): font scale and font family.
     CREATE TABLE IF NOT EXISTS settings (
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL,

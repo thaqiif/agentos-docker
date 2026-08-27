@@ -3,8 +3,6 @@ import { parse } from "url";
 import next from "next";
 import { WebSocketServer, WebSocket } from "ws";
 import * as pty from "node-pty";
-import { getDb, queries } from "./lib/db";
-import { statusStream } from "./lib/status-stream";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "0.0.0.0";
@@ -121,17 +119,5 @@ app.prepare().then(() => {
 
   server.listen(port, () => {
     console.log(`> Agent-OS ready on http://${hostname}:${port}`);
-
-    // If "keep watching with no browser open" was left on from a previous
-    // run, start the status ticker now rather than waiting for a tab.
-    try {
-      const db = getDb();
-      const row = queries.getSetting(db).get("notifyKeepServerAlive") as
-        | { value: string }
-        | undefined;
-      if (row?.value === "true") statusStream.ensureRunning();
-    } catch (err) {
-      console.error("Failed to check keep-alive setting on boot:", err);
-    }
   });
 });

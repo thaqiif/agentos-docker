@@ -6,6 +6,7 @@ import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { createQueryClient } from "@/lib/query-client";
 import { parseTheme, getAllThemes } from "@/lib/theme-config";
+import { FontScaleProvider } from "@/contexts/FontScaleContext";
 
 function ThemeClassHandler({ children }: { children: React.ReactNode }) {
   const { theme, systemTheme } = useTheme();
@@ -59,9 +60,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
         disableTransitionOnChange
         themes={getAllThemes()}
       >
-        <ThemeClassHandler>
-          <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
-        </ThemeClassHandler>
+        <FontScaleProvider>
+          <ThemeClassHandler>
+            <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
+          </ThemeClassHandler>
+        </FontScaleProvider>
       </NextThemesProvider>
     </QueryClientProvider>
   );

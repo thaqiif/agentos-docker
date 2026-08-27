@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-27
+
+### Changed
+
+- Made the Settings font scale apply to xterm TUI text on desktop and mobile,
+  including live refitting and PTY resizing.
+
+### Removed
+
+- Removed Telegram completion notifications, their Settings controls, server
+  delivery and keep-alive polling, and persisted legacy credentials/configuration.
+
 ## 2026-08-24
 
 ### Changed

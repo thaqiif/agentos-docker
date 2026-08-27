@@ -30,6 +30,7 @@
     "dev": "tsx server.ts",
     "build": "next build",
     "start": "NODE_ENV=production tsx server.ts",
+    "test": "tsx --test components/Terminal/hooks/*.test.ts lib/*.test.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",

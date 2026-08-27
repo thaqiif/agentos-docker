@@ -17,7 +17,6 @@ import {
   clearTabNotifications,
 } from "@/lib/notifications";
 
-
 type SessionStatus = "idle" | "running" | "waiting" | "done" | "error" | "dead";
 
 interface SessionState {
@@ -60,7 +59,9 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
         });
         sendBrowserNotification(
           "AgentOS alerts are on",
-          { body: "You'll be notified when a session needs input or finishes." },
+          {
+            body: "You'll be notified when a session needs input or finishes.",
+          },
           undefined,
           true
         );
@@ -234,10 +235,6 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
               session.id,
               session.name
             );
-            // Telegram completion alerts fire from the server-side status
-            // ticker (lib/status-stream.ts), not from here — tmux sessions
-            // outlive every browser tab, so that's the only place a "done"
-            // transition can be relied on to still be watched.
           }
         }
 
