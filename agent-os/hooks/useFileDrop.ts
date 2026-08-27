@@ -30,9 +30,10 @@ export function useFileDrop(
 
   // Reset drag state when disabled
   useEffect(() => {
-    if (options?.disabled) {
-      setIsDragging(false);
-    }
+    if (!options?.disabled) return;
+
+    const frame = requestAnimationFrame(() => setIsDragging(false));
+    return () => cancelAnimationFrame(frame);
   }, [options?.disabled]);
 
   const handleDragOver = useCallback(

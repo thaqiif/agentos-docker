@@ -15,13 +15,19 @@ export function useViewport() {
       setIsMobile(window.innerWidth < 768);
     };
 
-    // Initial check
-    checkViewport();
-    setIsHydrated(true);
+    // Initial check after mount, so the browser-only measurement does not
+    // cascade another render from inside the effect body.
+    const frame = requestAnimationFrame(() => {
+      checkViewport();
+      setIsHydrated(true);
+    });
 
     // Listen for resize
     window.addEventListener("resize", checkViewport);
-    return () => window.removeEventListener("resize", checkViewport);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", checkViewport);
+    };
   }, []);
 
   return {

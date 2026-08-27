@@ -86,25 +86,28 @@ export function QuickSwitcher({
 
   // Reset state when dialog opens
   useEffect(() => {
-    if (open) {
+    if (!open) return;
+
+    const frame = requestAnimationFrame(() => {
       setMode("sessions");
       setQuery("");
       setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
+    });
+    const focusTimeout = setTimeout(() => inputRef.current?.focus(), 50);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(focusTimeout);
+    };
   }, [open]);
 
   // Force sessions mode if ripgrep is not available
   useEffect(() => {
-    if (ripgrepAvailable === false && mode === "code") {
-      setMode("sessions");
-    }
-  }, [ripgrepAvailable, mode]);
+    if (ripgrepAvailable !== false || mode !== "code") return;
 
-  // Reset selected index when filtered results change
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [query]);
+    const frame = requestAnimationFrame(() => setMode("sessions"));
+    return () => cancelAnimationFrame(frame);
+  }, [ripgrepAvailable, mode]);
 
   // Handle keyboard navigation
   const handleKeyDown = useCallback(
@@ -203,7 +206,10 @@ export function QuickSwitcher({
                   : "Search code (min 3 characters)"
               }
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setSelectedIndex(0);
+              }}
               onKeyDown={mode === "sessions" ? handleKeyDown : undefined}
               className="h-10 rounded-xl pl-9 text-[0.875rem] md:text-[0.875rem]"
             />

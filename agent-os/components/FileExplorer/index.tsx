@@ -266,7 +266,9 @@ function DesktopFileExplorer({
             </div>
           ) : error ? (
             <div className="flex h-32 flex-col items-center justify-center gap-2 p-4">
-              <span className="text-destructive ui-label">Couldn't load</span>
+              <span className="text-destructive ui-label">
+                Couldn&apos;t load
+              </span>
               <p className="ui-meta text-center">{error}</p>
             </div>
           ) : files.length === 0 ? (
@@ -463,7 +465,9 @@ function MobileFileExplorer({
           </div>
         ) : error ? (
           <div className="flex h-32 flex-col items-center justify-center gap-2 p-4">
-            <span className="text-destructive ui-label">Couldn't load</span>
+            <span className="text-destructive ui-label">
+              Couldn&apos;t load
+            </span>
             <p className="ui-meta text-center">{error}</p>
           </div>
         ) : files.length === 0 ? (

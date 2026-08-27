@@ -48,8 +48,12 @@ export function PaneProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const saved = loadWorkbenchState();
-    if (saved) setState(saved);
-    setHydrated(true);
+    const frame = requestAnimationFrame(() => {
+      if (saved) setState(saved);
+      setHydrated(true);
+    });
+
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {

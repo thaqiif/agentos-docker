@@ -39,7 +39,9 @@ import { MobileView } from "@/components/views/MobileView";
 
 function HomeContent() {
   // UI State
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpenState, setSidebarOpenState] = useState<boolean | null>(
+    null
+  );
   const [showNotificationSettings, setShowNotificationSettings] =
     useState(false);
   const [showQuickSwitcher, setShowQuickSwitcher] = useState(false);
@@ -172,10 +174,13 @@ function HomeContent() {
     checkStateChanges,
   });
 
-  // Set initial sidebar state based on viewport (only after hydration)
-  useEffect(() => {
-    if (isHydrated && !isMobile) setSidebarOpen(true);
-  }, [isMobile, isHydrated]);
+  // Keep the desktop sidebar open by default without synchronizing derived
+  // viewport state through an effect. Once the user explicitly changes it,
+  // that choice wins on both viewport sizes.
+  const sidebarOpen = sidebarOpenState ?? (isHydrated && !isMobile);
+  const setSidebarOpen = useCallback((open: boolean) => {
+    setSidebarOpenState(open);
+  }, []);
 
   // Keyboard shortcut: Cmd+K to open quick switcher
   useEffect(() => {
@@ -248,6 +253,7 @@ function HomeContent() {
       projects,
       registerTerminalRef,
       isMobile,
+      setSidebarOpen,
       handleSelectTerminal,
       handleNewTerminal,
     ]

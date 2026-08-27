@@ -146,7 +146,9 @@ export function PRCreationModal({
         </div>
       ) : error && !prData ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 p-4">
-          <p className="text-[0.8125rem] font-medium text-status-error">Couldn't create the pull request</p>
+          <p className="text-[0.8125rem] font-medium text-status-error">
+            Couldn&apos;t create the pull request
+          </p>
           <p className="text-status-error ui-meta">{error}</p>
           <Button
             variant="outline"

@@ -18,6 +18,7 @@ import {
 import { setupTouchScroll } from "./touch-scroll";
 import { createWebSocketConnection } from "./websocket-connection";
 import { setupResizeHandlers } from "./resize-handlers";
+import { DEFAULT_FONT_SCALE } from "../../../lib/font-scale";
 
 export type { TerminalScrollState } from "./useTerminalConnection.types";
 
@@ -28,6 +29,7 @@ export function useTerminalConnection({
   onBeforeUnmount,
   initialScrollState,
   isMobile = false,
+  fontScale = DEFAULT_FONT_SCALE,
   theme = "dark",
   selectMode = false,
 }: UseTerminalConnectionProps): UseTerminalConnectionReturn {
@@ -47,13 +49,24 @@ export function useTerminalConnection({
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectDelayRef = useRef<number>(WS_RECONNECT_BASE_DELAY);
   const intentionalCloseRef = useRef<boolean>(false);
-
-  // Store callbacks and state in refs
+  const fontScaleRef = useRef(fontScale);
   const callbacksRef = useRef({ onConnected, onDisconnected, onBeforeUnmount });
-  callbacksRef.current = { onConnected, onDisconnected, onBeforeUnmount };
   const initialScrollStateRef = useRef(initialScrollState);
   const selectModeRef = useRef(selectMode);
-  selectModeRef.current = selectMode;
+
+  useEffect(() => {
+    fontScaleRef.current = fontScale;
+  }, [fontScale]);
+
+  // Store callbacks and state in refs so connection handlers always see the
+  // latest props without rebuilding the terminal connection.
+  useEffect(() => {
+    callbacksRef.current = { onConnected, onDisconnected, onBeforeUnmount };
+  }, [onConnected, onDisconnected, onBeforeUnmount]);
+
+  useEffect(() => {
+    selectModeRef.current = selectMode;
+  }, [selectMode]);
 
   // Simple callbacks
   const scrollToBottom = useCallback(
@@ -129,7 +142,8 @@ export function useTerminalConnection({
 
   // Main setup effect
   useEffect(() => {
-    if (!terminalRef.current) return;
+    const terminalElement = terminalRef.current;
+    if (!terminalElement) return;
 
     let cancelled = false;
     // Reset intentional close flag (may be true from previous cleanup)
@@ -140,13 +154,14 @@ export function useTerminalConnection({
     let cleanupTerminal: (() => void) | null = null;
 
     const connectTimeout = setTimeout(() => {
-      if (cancelled || !terminalRef.current) return;
+      if (cancelled) return;
 
       // Initialize terminal
       const { term, fitAddon, searchAddon, cleanup } = createTerminal(
-        terminalRef.current,
+        terminalElement,
         isMobile,
-        theme
+        theme,
+        fontScaleRef.current
       );
       xtermRef.current = term;
       fitAddonRef.current = fitAddon;
@@ -208,9 +223,9 @@ export function useTerminalConnection({
 
       // Save scroll state before unmount
       const term = xtermRef.current;
-      if (term && callbacksRef.current.onBeforeUnmount && terminalRef.current) {
+      if (term && callbacksRef.current.onBeforeUnmount) {
         const buffer = term.buffer.active;
-        const viewport = terminalRef.current.querySelector(
+        const viewport = terminalElement.querySelector(
           ".xterm-viewport"
         ) as HTMLElement;
         callbacksRef.current.onBeforeUnmount({
@@ -249,12 +264,18 @@ export function useTerminalConnection({
     const fitAddon = fitAddonRef.current;
     if (!term || !fitAddon) return;
 
-    updateTerminalForMobile(term, fitAddon, isMobile, (cols, rows) => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({ type: "resize", cols, rows }));
-      }
-    });
-  }, [isMobile]);
+    updateTerminalForMobile(
+      term,
+      fitAddon,
+      isMobile,
+      (cols, rows) => {
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({ type: "resize", cols, rows }));
+        }
+      },
+      fontScale
+    );
+  }, [isMobile, fontScale]);
 
   // Handle theme changes dynamically
   useEffect(() => {

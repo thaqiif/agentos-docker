@@ -16,7 +16,8 @@ export function useKeybarVisibility() {
     if (typeof window === "undefined") return;
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === "true") {
-      setIsVisible(true);
+      const frame = requestAnimationFrame(() => setIsVisible(true));
+      return () => cancelAnimationFrame(frame);
     }
   }, []);
 

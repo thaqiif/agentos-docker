@@ -51,7 +51,7 @@ export function CommitHistory({ workingDirectory }: CommitHistoryProps) {
   if (error) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-2 p-4">
-        <p className="ui-label">Couldn't load history</p>
+        <p className="ui-label">Couldn&apos;t load history</p>
         <p className="ui-meta">failed to load commit history</p>
       </div>
     );

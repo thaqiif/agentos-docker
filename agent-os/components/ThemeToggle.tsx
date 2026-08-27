@@ -60,7 +60,7 @@ export function ThemeToggle() {
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="scrollbar-thin max-h-[50vh] w-56 overflow-y-auto">
             <DropdownMenuLabel className="ui-label">
-              //light themes
+              {"//light themes"}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             {LIGHT_THEMES.map((lightTheme) => {
@@ -101,7 +101,7 @@ export function ThemeToggle() {
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="scrollbar-thin max-h-[50vh] w-56 overflow-y-auto">
             <DropdownMenuLabel className="ui-label">
-              //dark themes
+              {"//dark themes"}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             {DARK_THEMES.map((darkTheme) => {

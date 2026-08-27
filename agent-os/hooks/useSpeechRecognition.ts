@@ -58,7 +58,9 @@ export function useSpeechRecognition(
     // Check for browser support
     const SpeechRecognitionAPI =
       window.SpeechRecognition || window.webkitSpeechRecognition;
-    setIsSupported(!!SpeechRecognitionAPI);
+    const supportFrame = requestAnimationFrame(() =>
+      setIsSupported(!!SpeechRecognitionAPI)
+    );
 
     if (SpeechRecognitionAPI) {
       const recognition = new SpeechRecognitionAPI();
@@ -100,6 +102,7 @@ export function useSpeechRecognition(
     }
 
     return () => {
+      cancelAnimationFrame(supportFrame);
       if (recognitionRef.current) {
         recognitionRef.current.abort();
       }

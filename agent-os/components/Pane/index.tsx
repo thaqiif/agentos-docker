@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { usePanes } from "@/contexts/PaneContext";
 import { useViewport } from "@/hooks/useViewport";
 import type { TerminalHandle } from "@/components/Terminal";
-import type { Project } from "@/lib/db";
+import type { ProjectWithRepositories } from "@/lib/projects";
 import type { TerminalRecord } from "@/lib/terminals";
 import { sessionRegistry } from "@/lib/client/session-registry";
 import { cn } from "@/lib/utils";
@@ -46,7 +46,7 @@ const GitPanel = dynamic(
 
 interface PaneProps {
   terminals: TerminalRecord[];
-  projects: Project[];
+  projects: ProjectWithRepositories[];
   onRegisterTerminal: (ref: TerminalHandle | null) => void;
   onMenuClick?: () => void;
   onSelectTerminal?: (name: string) => void;
@@ -98,12 +98,11 @@ export const Pane = memo(function Pane({
   const currentProject = useMemo(() => {
     if (!session?.project_id) return null;
     return projects.find((p) => p.id === session.project_id) || null;
-  }, [session?.project_id, projects]);
+  }, [session, projects]);
 
   const projectRepositories = useMemo(() => {
     if (!currentProject) return [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (currentProject as any).repositories || [];
+    return currentProject.repositories;
   }, [currentProject]);
 
   const { request: fileOpenRequest } = useSnapshot(fileOpenStore);

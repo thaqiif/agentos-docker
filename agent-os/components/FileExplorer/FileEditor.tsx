@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { EditorView, keymap } from "@codemirror/view";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
@@ -175,13 +175,7 @@ export function FileEditor({
   onChange,
   onSave,
 }: FileEditorProps) {
-  const [extensions, setExtensions] = useState<Extension[]>([]);
-  const [previewMode, setPreviewMode] = useState(false);
-  const isMarkdown = language === "markdown";
-  const isHtml = language === "html";
-  const hasPreview = isMarkdown || isHtml;
-
-  useEffect(() => {
+  const extensions = useMemo(() => {
     const langExt = getLanguageExtension(language);
     const baseExtensions: Extension[] = [
       editorTheme,
@@ -207,11 +201,18 @@ export function FileEditor({
       baseExtensions.push(langExt);
     }
 
-    setExtensions(baseExtensions);
+    return baseExtensions;
   }, [language, onSave]);
+  const [previewMode, setPreviewMode] = useState(false);
+  const isMarkdown = language === "markdown";
+  const isHtml = language === "html";
+  const hasPreview = isMarkdown || isHtml;
 
   useEffect(() => {
-    if (!hasPreview) setPreviewMode(false);
+    if (!hasPreview) {
+      const frame = requestAnimationFrame(() => setPreviewMode(false));
+      return () => cancelAnimationFrame(frame);
+    }
   }, [hasPreview]);
 
   if (isBinary) {
@@ -228,7 +229,10 @@ export function FileEditor({
     <div className="bg-background flex h-full w-full flex-col overflow-hidden">
       <div className="glass glass-edge-bottom relative z-10 flex h-8 shrink-0 items-stretch justify-between">
         <div className="flex items-center px-2.5">
-          <span className="ui-label">//{language || "plaintext"}</span>
+          <span className="ui-label">
+            {"//"}
+            {language || "plaintext"}
+          </span>
         </div>
         <div className="flex items-stretch">
           {hasPreview && (

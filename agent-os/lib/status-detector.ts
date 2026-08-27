@@ -118,9 +118,7 @@ interface SessionCache {
  */
 function normalizePane(raw: string): string {
   return raw
-    // eslint-disable-next-line no-control-regex
     .replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, "")
-    // eslint-disable-next-line no-control-regex
     .replace(/\x1b\][^\x07]*\x07/g, "")
     .replace(/[⠀-⣿]/g, "") // spinner frames
     .replace(/[─-╿]/g, "") // box drawing

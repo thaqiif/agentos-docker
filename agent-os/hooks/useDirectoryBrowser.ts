@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useDirectoryFilesQuery } from "@/data/files";
 import type { FileNode } from "@/lib/file-utils";
 
@@ -20,8 +20,6 @@ function sortFiles(files: FileNode[]): FileNode[] {
 
 export function useDirectoryBrowser(options: UseDirectoryBrowserOptions = {}) {
   const { initialPath = "~", filter } = options;
-  const filterRef = useRef(filter);
-  filterRef.current = filter;
 
   const [requestedPath, setRequestedPath] = useState(initialPath);
   const [search, setSearch] = useState("");
@@ -30,15 +28,16 @@ export function useDirectoryBrowser(options: UseDirectoryBrowserOptions = {}) {
 
   // Resolved path for display/navigation (e.g., "~" → "/Users/saad")
   const currentPath = data?.resolvedPath || requestedPath;
+  const filesData = data?.files;
 
   // Filter and sort files from query data
   const files = useMemo(() => {
-    if (!data?.files) return [];
-    const items = filterRef.current
-      ? data.files.filter(filterRef.current)
-      : data.files;
+    if (!filesData) return [];
+    const items = filter
+      ? filesData.filter(filter)
+      : filesData;
     return sortFiles(items);
-  }, [data?.files]);
+  }, [filesData, filter]);
 
   const filteredFiles = useMemo(
     () =>

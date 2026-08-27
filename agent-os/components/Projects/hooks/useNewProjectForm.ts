@@ -50,14 +50,24 @@ export function useNewProjectForm(
 
   // Load recent directories
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let frame: number | null = null;
     try {
       const saved = localStorage.getItem(RECENT_DIRS_KEY);
       if (saved) {
-        setRecentDirs(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          frame = requestAnimationFrame(() => setRecentDirs(parsed));
+        }
       }
     } catch {
       // Ignore
     }
+
+    return () => {
+      if (frame !== null) cancelAnimationFrame(frame);
+    };
   }, []);
 
   // Save recent directory

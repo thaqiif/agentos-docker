@@ -80,7 +80,6 @@ function MobileTerminalTitle({
   useEffect(() => {
     if (!isEditing) return;
     committedRef.current = false;
-    setDraft(name);
 
     const frame = requestAnimationFrame(() => {
       inputRef.current?.focus();
@@ -88,6 +87,11 @@ function MobileTerminalTitle({
     });
     return () => cancelAnimationFrame(frame);
   }, [isEditing, name]);
+
+  const startEditing = () => {
+    setDraft(name);
+    setIsEditing(true);
+  };
 
   const commit = () => {
     if (committedRef.current) return;
@@ -131,7 +135,7 @@ function MobileTerminalTitle({
   return (
     <button
       type="button"
-      onDoubleClick={() => setIsEditing(true)}
+      onDoubleClick={startEditing}
       title="Double-click to rename"
       className="press focus-ring flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full px-3 transition-colors hover:bg-[var(--fill-4)]"
     >

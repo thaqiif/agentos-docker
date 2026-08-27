@@ -11,15 +11,23 @@ export function useDrawerAnimation(open: boolean) {
   useEffect(() => {
     if (open && !hasAnimated.current) {
       hasAnimated.current = true;
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
+      let secondFrame: number | null = null;
+      const firstFrame = requestAnimationFrame(() => {
+        secondFrame = requestAnimationFrame(() => {
           setIsAnimatingIn(true);
         });
       });
+
+      return () => {
+        cancelAnimationFrame(firstFrame);
+        if (secondFrame !== null) cancelAnimationFrame(secondFrame);
+      };
     }
+
     if (!open) {
       hasAnimated.current = false;
-      setIsAnimatingIn(false);
+      const frame = requestAnimationFrame(() => setIsAnimatingIn(false));
+      return () => cancelAnimationFrame(frame);
     }
   }, [open]);
 

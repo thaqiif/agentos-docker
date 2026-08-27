@@ -123,7 +123,6 @@ interface FileRowProps {
 }
 
 function FileRow({ file, isSelected, onClick }: FileRowProps) {
-  const StatusIcon = getStatusIcon(file.status);
   const statusColor = getStatusColor(file.status);
 
   return (
@@ -137,9 +136,10 @@ function FileRow({ file, isSelected, onClick }: FileRowProps) {
       {isSelected && (
         <span className="bg-primary absolute inset-y-0 left-0 w-0.5" />
       )}
-      <StatusIcon
-        className={cn("h-3.5 w-3.5 flex-shrink-0", statusColor)}
-      />
+      {renderStatusIcon(
+        file.status,
+        cn("h-3.5 w-3.5 flex-shrink-0", statusColor)
+      )}
       <span className="min-w-0 flex-1 truncate font-mono text-[0.6875rem]">
         {file.oldPath ? (
           <span className="flex items-center gap-1">
@@ -163,16 +163,16 @@ function FileRow({ file, isSelected, onClick }: FileRowProps) {
   );
 }
 
-function getStatusIcon(status: CommitFile["status"]) {
+function renderStatusIcon(status: CommitFile["status"], className: string) {
   switch (status) {
     case "added":
-      return FilePlus;
+      return <FilePlus className={className} />;
     case "deleted":
-      return FileX;
+      return <FileX className={className} />;
     case "renamed":
-      return ArrowRight;
+      return <ArrowRight className={className} />;
     default:
-      return FileText;
+      return <FileText className={className} />;
   }
 }
 

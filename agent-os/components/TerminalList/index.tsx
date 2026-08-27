@@ -59,7 +59,10 @@ export function TerminalList({
   const isInitialLoading = isTerminalsPending || isProjectsPending;
   const hasError = isTerminalsError || isProjectsError;
 
-  const sessions: TerminalRecord[] = terminalsData ?? [];
+  const sessions = useMemo<TerminalRecord[]>(
+    () => terminalsData ?? [],
+    [terminalsData]
+  );
 
   // All mutations via custom hook
   const mutations = useTerminalListMutations();

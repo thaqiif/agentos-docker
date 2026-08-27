@@ -18,7 +18,8 @@ export function useSidebarPinned() {
     if (typeof window === "undefined") return;
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === "false") {
-      setIsPinned(false);
+      const frame = requestAnimationFrame(() => setIsPinned(false));
+      return () => cancelAnimationFrame(frame);
     }
   }, []);
 

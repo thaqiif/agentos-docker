@@ -76,9 +76,6 @@ export function ProjectCard({
   useEffect(() => {
     if (!isEditing) return;
     committedRef.current = false;
-    // Always start from the project's current name, so a cancelled edit
-    // does not leak into the next one.
-    setEditName(project.name);
 
     // rAF rather than a timeout race: by the next frame Radix has finished
     // unmounting the menu, so nothing steals focus back off the input.
@@ -87,7 +84,14 @@ export function ProjectCard({
       inputRef.current?.select();
     });
     return () => cancelAnimationFrame(frame);
-  }, [isEditing, project.name]);
+  }, [isEditing]);
+
+  const startRename = () => {
+    // Always start from the project's current name, so a cancelled edit
+    // does not leak into the next one.
+    setEditName(project.name);
+    setIsEditing(true);
+  };
 
   const commitRename = () => {
     if (committedRef.current) return;
@@ -125,7 +129,7 @@ export function ProjectCard({
           </MenuItem>
         )}
         {onRename && (
-          <MenuItem onClick={() => setIsEditing(true)}>
+          <MenuItem onClick={startRename}>
             <Pencil className="h-4 w-4" />
             Rename
           </MenuItem>

@@ -23,7 +23,6 @@ export function WorkbenchTitle({ name, onRename }: WorkbenchTitleProps) {
   useEffect(() => {
     if (!isEditing) return;
     committedRef.current = false;
-    setDraft(name);
 
     const frame = requestAnimationFrame(() => {
       inputRef.current?.focus();
@@ -31,6 +30,11 @@ export function WorkbenchTitle({ name, onRename }: WorkbenchTitleProps) {
     });
     return () => cancelAnimationFrame(frame);
   }, [isEditing, name]);
+
+  const startEditing = () => {
+    setDraft(name);
+    setIsEditing(true);
+  };
 
   const commit = () => {
     if (committedRef.current) return;
@@ -73,7 +77,7 @@ export function WorkbenchTitle({ name, onRename }: WorkbenchTitleProps) {
 
   return (
     <span
-      onDoubleClick={() => setIsEditing(true)}
+      onDoubleClick={startEditing}
       title="Double-click to rename"
       className="cursor-text truncate text-[0.8125rem] font-medium tracking-[-0.006em]"
     >
