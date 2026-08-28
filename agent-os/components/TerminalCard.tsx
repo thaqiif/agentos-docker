@@ -7,7 +7,6 @@ import {
   GitBranch,
   GitPullRequest,
   Check,
-  AlertCircle,
   Loader2,
   MoreHorizontal,
   FolderInput,
@@ -42,12 +41,9 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import type { TerminalRecord } from "@/lib/terminals";
 
-type TmuxStatus = "idle" | "running" | "waiting" | "done" | "error" | "dead";
-
 export interface TerminalCardProps {
   terminal: TerminalRecord;
   isActive?: boolean;
-  tmuxStatus?: TmuxStatus;
   // Selection props
   isSelected?: boolean;
   isInSelectMode?: boolean;
@@ -61,9 +57,8 @@ export interface TerminalCardProps {
 }
 
 export function TerminalCard({
-  terminal: session,
+  terminal,
   isActive,
-  tmuxStatus,
   isSelected,
   isInSelectMode,
   onToggleSelect,
@@ -74,10 +69,9 @@ export function TerminalCard({
   onHoverEnd,
 }: TerminalCardProps) {
   // tmux reports last activity in seconds since the epoch.
-  const timeAgo = getTimeAgo(session.activity);
-  const status = tmuxStatus || "dead";
+  const timeAgo = getTimeAgo(terminal.activity);
   const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState(session.name);
+  const [editName, setEditName] = useState(terminal.name);
   const [menuOpen, setMenuOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -135,14 +129,13 @@ export function TerminalCard({
     // Ignore blur events that happen immediately after starting to edit
     if (justStartedEditingRef.current) return;
 
-    if (editName.trim() && editName !== session.name && onRename) {
+    if (editName.trim() && editName !== terminal.name && onRename) {
       onRename(editName.trim());
     }
     setIsEditing(false);
   };
 
-  const hasActions =
-    onDelete || onRename;
+  const hasActions = onDelete || onRename;
 
   // Handle card click - coordinates selection with navigation
   const handleCardClick = (e: React.MouseEvent) => {
@@ -164,7 +157,7 @@ export function TerminalCard({
       return;
     }
 
-    // Normal click - navigate to session
+    // Normal click - navigate to terminal
     onClick?.();
   };
 
@@ -204,7 +197,7 @@ export function TerminalCard({
               className="text-destructive focus:text-destructive"
             >
               <Trash2 className="h-4 w-4" />
-              Delete session
+              Delete terminal
             </MenuItem>
           </>
         )}
@@ -226,11 +219,7 @@ export function TerminalCard({
           ? "bg-primary/16 text-foreground"
           : isActive
             ? "bg-primary/12 text-foreground"
-            : "hover:bg-[var(--fill-4)]",
-        status === "waiting" &&
-          !isActive &&
-          !isSelected &&
-          "bg-status-waiting/8"
+            : "hover:bg-[var(--fill-4)]"
       )}
     >
       {/* Selection checkbox - visible when in select mode */}
@@ -260,12 +249,12 @@ export function TerminalCard({
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleRename();
                 if (e.key === "Escape") {
-                  setEditName(session.name);
+                  setEditName(terminal.name);
                   setIsEditing(false);
                 }
               }}
               onClick={(e) => e.stopPropagation()}
-              className="ring-primary/50 min-w-0 flex-1 rounded-md bg-[var(--fill-3)] px-1.5 py-0.5 text-[0.8125rem] outline-none ring-2"
+              className="ring-primary/50 min-w-0 flex-1 rounded-md bg-[var(--fill-3)] px-1.5 py-0.5 text-[0.8125rem] ring-2 outline-none"
             />
           ) : (
             <span
@@ -273,22 +262,22 @@ export function TerminalCard({
               onDoubleClick={(e) => {
                 if (!onRename) return;
                 e.stopPropagation();
-                setEditName(session.name);
+                setEditName(terminal.name);
                 setIsEditing(true);
               }}
               className="min-w-0 flex-1 truncate text-[0.8125rem] leading-tight tracking-[-0.006em]"
             >
-              {session.name}
+              {terminal.name}
             </span>
           )}
 
           {/* Split indicator: a terminal tmux has split into panes. */}
-          {session.panes > 1 && (
+          {terminal.panes > 1 && (
             <span
               className="text-muted-foreground flex-shrink-0 rounded-full bg-[var(--fill-2)] px-1.5 text-[0.625rem] leading-4 tabular-nums"
-              title={session.panes + " tmux panes"}
+              title={terminal.panes + " tmux panes"}
             >
-              {session.panes}
+              {terminal.panes}
             </span>
           )}
 
@@ -313,13 +302,16 @@ export function TerminalCard({
                   <MoreHorizontal className="h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" onCloseAutoFocus={(e) => e.preventDefault()} onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuContent
+                align="end"
+                onCloseAutoFocus={(e) => e.preventDefault()}
+                onClick={(e) => e.stopPropagation()}
+              >
                 {renderMenuItems(false)}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
         </div>
-
       </div>
     </div>
   );
@@ -329,7 +321,9 @@ export function TerminalCard({
     return (
       <ContextMenu>
         <ContextMenuTrigger asChild>{cardContent}</ContextMenuTrigger>
-        <ContextMenuContent onCloseAutoFocus={(e) => e.preventDefault()}>{renderMenuItems(true)}</ContextMenuContent>
+        <ContextMenuContent onCloseAutoFocus={(e) => e.preventDefault()}>
+          {renderMenuItems(true)}
+        </ContextMenuContent>
       </ContextMenu>
     );
   }

@@ -6,7 +6,7 @@ export function createSchema(db: Database.Database): void {
     --
     -- tmux remains the source of truth for what is *running*. This table
     -- only remembers that a terminal exists and where it lives, so killing
-    -- its tmux session leaves the entry in the sidebar to be restarted
+    -- its tmux terminal leaves the entry in the sidebar to be restarted
     -- rather than making it vanish.
     CREATE TABLE IF NOT EXISTS terminals (
       name TEXT PRIMARY KEY,

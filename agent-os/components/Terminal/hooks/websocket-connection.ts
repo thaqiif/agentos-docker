@@ -141,7 +141,7 @@ export function createWebSocketConnection(
           }
         });
       } else if (msg.type === "exit") {
-        term.write("\r\n\x1b[33m[Session ended]\x1b[0m\r\n");
+        term.write("\r\n\x1b[33m[Terminal ended]\x1b[0m\r\n");
       }
     } catch {
       term.write(event.data);

@@ -19,7 +19,7 @@ export function KillAllConfirm({ onCancel, onComplete }: KillAllConfirmProps) {
       await queryClient.invalidateQueries({ queryKey: terminalKeys.all });
       onComplete();
     } catch (error) {
-      console.error("Failed to kill sessions:", error);
+      console.error("Failed to kill terminals:", error);
     } finally {
       setKilling(false);
     }
@@ -28,7 +28,7 @@ export function KillAllConfirm({ onCancel, onComplete }: KillAllConfirmProps) {
   return (
     <div className="bg-destructive/8 mx-3 mb-2 rounded-xl p-3">
       <p className="text-[0.8125rem] font-medium tracking-[-0.006em]">
-        Close every tmux session?
+        Close every tmux terminal?
       </p>
       <p className="text-muted-foreground mt-0.5 mb-2.5 text-[0.75rem] leading-relaxed">
         Anything still running in them stops.

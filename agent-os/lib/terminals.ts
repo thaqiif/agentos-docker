@@ -1,13 +1,13 @@
 /**
  * Terminals.
  *
- * A terminal is a tmux session, and tmux is the only place its existence is
+ * A terminal is backed by tmux, and tmux is the only place its existence is
  * recorded. There used to be a `sessions` row mirroring each one, which
- * meant two sources of truth that drifted the moment anybody ran `tmux new`
- * in a shell, killed a session from the CLI, or restarted the server.
+ * meant two sources of truth that drifted whenever a terminal was started
+ * outside the app, killed from the CLI, or lost during a server restart.
  *
- * Provider detection reads the running process rather than the session
- * name. A session called `shell-b7d16e2d-…` may well have Claude running in
+ * Provider detection reads the running process rather than the tmux name. A
+ * terminal called `shell-b7d16e2d-…` may well have Claude running in
  * it — that is the normal case now that terminals start as plain shells and
  * the user picks their harness by typing its name — so a name prefix says
  * nothing useful. `pane_current_command` says what is actually running,
@@ -23,15 +23,15 @@ const execFileAsync = promisify(execFile);
 
 /**
  * tmux mangles "\t" into "_" when the server runs without a UTF-8 locale,
- * which is how session listing silently came back empty once before. A
+ * which is how terminal listing silently came back empty once before. A
  * literal two-character separator survives any locale.
  */
 const SEP = "%%";
 
 export interface Terminal {
-  /** tmux session name; the terminal's identity. */
+  /** tmux name; the terminal's identity. */
   name: string;
-  /** Working directory of the session. */
+  /** Working directory of the terminal. */
   path: string;
   /** tmux's last-activity stamp, in seconds. */
   activity: number;
@@ -39,7 +39,7 @@ export interface Terminal {
   attached: boolean;
   /** Harness detected from the running process, or null for a plain shell. */
   provider: ProviderId | null;
-  /** Number of tmux panes, so the UI can show that a session is split. */
+  /** Number of tmux panes, so the UI can show that a terminal is split. */
   panes: number;
 }
 
@@ -70,17 +70,17 @@ async function tmux(args: string[]): Promise<string> {
     const { stdout } = await execFileAsync("tmux", args);
     return stdout;
   } catch {
-    // No server running, or the session vanished between calls. Both are
+    // No server running, or the terminal vanished between calls. Both are
     // ordinary states, not errors.
     return "";
   }
 }
 
 /**
- * Which harness is running in each session, and how many panes it has.
+ * Which harness is running in each terminal, and how many panes it has.
  *
- * One `list-panes -a` covers every session, so this stays a single tmux
- * call however many terminals are open. A split session can have a harness
+ * One `list-panes -a` covers every terminal, so this stays a single tmux
+ * call however many terminals are open. A split terminal can have a harness
  * in one pane and a shell in another; the harness wins, because that is
  * what the user wants to see the status of.
  */
@@ -94,7 +94,10 @@ async function paneInfo(): Promise<
     `#{session_name}${SEP}#{pane_current_command}`,
   ]);
 
-  const info = new Map<string, { provider: ProviderId | null; panes: number }>();
+  const info = new Map<
+    string,
+    { provider: ProviderId | null; panes: number }
+  >();
 
   for (const line of out.split("\n")) {
     if (!line.trim()) continue;
@@ -128,7 +131,7 @@ export async function listTerminals(): Promise<Terminal[]> {
   for (const line of out.split("\n")) {
     if (!line.trim()) continue;
 
-    // Split from the right: a session name may contain the separator, a
+    // Split from the right: a terminal name may contain the separator, a
     // path is far less likely to and the trailing fields never do.
     const parts = line.split(SEP);
     if (parts.length < 4) continue;
@@ -154,15 +157,15 @@ export async function listTerminals(): Promise<Terminal[]> {
 }
 
 /**
- * Whether a session by exactly this name exists.
+ * Whether a terminal by exactly this name exists.
  *
  * Deliberately not `has-session`: tmux target names are prefix- and
- * pattern-matched, so `has-session -t v1` answers yes for a session called
+ * pattern-matched, so `has-session -t v1` answers yes for a terminal called
  * `v1_2_0`. A rename collision check that loose would refuse valid names
- * and, worse, `sessionId` would hand back the wrong session to rename.
+ * and, worse, a tmux target lookup would hand back the wrong terminal.
  */
 export async function terminalExists(name: string): Promise<boolean> {
-  return (await sessionId(name)) !== null;
+  return (await tmuxTerminalId(name)) !== null;
 }
 
 /**
@@ -181,7 +184,7 @@ export async function createTerminal(cwd: string): Promise<Terminal> {
   await tmux(["set-option", "-t", name, "mouse", "on"]);
 
   // The status bar duplicates what the workbench already shows, and eats a
-  // row of the harness's TUI. Global, so hand-started sessions lose it too.
+  // row of the harness's TUI. Global, so hand-started terminals lose it too.
   await tmux(["set-option", "-g", "status", "off"]);
 
   return {
@@ -199,7 +202,7 @@ export async function createTerminal(cwd: string): Promise<Terminal> {
  *
  * Field names deliberately mirror what the sidebar and cards already read,
  * so the list UI did not have to be rewritten alongside the data source.
- * `id` is the tmux session name: a terminal has no other identity.
+ * `id` is the tmux name: a terminal has no other identity.
  */
 export interface TerminalRecord {
   id: string;
@@ -211,7 +214,7 @@ export interface TerminalRecord {
   panes: number;
   attached: boolean;
   activity: number;
-  /** False when the tmux session is gone; selecting it starts one again. */
+  /** False when the tmux terminal is gone; selecting it starts one again. */
   alive: boolean;
 }
 
@@ -239,30 +242,30 @@ export async function killTerminal(name: string): Promise<void> {
 }
 
 /**
- * A session name tmux will accept unchanged.
+ * A terminal name tmux will accept unchanged.
  *
  * tmux uses "." and ":" to address windows and panes, so it rewrites both
- * to "_" in a session name — silently, with a zero exit code. Renaming a
+ * to "_" in a terminal name — silently, with a zero exit code. Renaming a
  * terminal to "v1.2.0" therefore left tmux holding "v1_2_0" while we
- * recorded "v1.2.0": the entry went stale, and the real session came back
+ * recorded "v1.2.0": the entry went stale, and the real terminal came back
  * on the next listing as a second, unexplained terminal.
  *
  * Applying the same rule up front means the name we show is the name that
  * exists. `renameTerminal` still reads the result back from tmux, so we
  * stay correct even if this rule and tmux's ever diverge.
  */
-export function sanitizeSessionName(name: string): string {
+export function sanitizeTerminalName(name: string): string {
   return name.trim().replace(/[.:]/g, "_");
 }
 
 /**
- * tmux's own id for a session (`$3`), which survives a rename.
+ * tmux's own id for a terminal (`$3`), which survives a rename.
  *
  * Renaming by name is a race with itself: once tmux has rewritten the name,
- * neither the old nor the requested name addresses the session any more.
+ * neither the old nor the requested name addresses the terminal any more.
  * Resolved from the listing rather than a target, so the match is exact.
  */
-async function sessionId(name: string): Promise<string | null> {
+async function tmuxTerminalId(name: string): Promise<string | null> {
   const out = await tmux([
     "list-sessions",
     "-F",
@@ -279,17 +282,17 @@ async function sessionId(name: string): Promise<string | null> {
 }
 
 /**
- * Rename a live session, returning the name tmux actually gave it.
+ * Rename a live terminal, returning the name tmux actually gave it.
  *
- * Throws if the session is gone or tmux refuses the name — the caller must
+ * Throws if the terminal is gone or tmux refuses the name — the caller must
  * not update its own records unless this succeeds.
  */
 export async function renameTerminal(
   name: string,
   newName: string
 ): Promise<string> {
-  const id = await sessionId(name);
-  if (!id) throw new Error(`No tmux session named "${name}"`);
+  const id = await tmuxTerminalId(name);
+  if (!id) throw new Error(`No tmux terminal named "${name}"`);
 
   await execFileAsync("tmux", ["rename-session", "-t", id, newName]);
 

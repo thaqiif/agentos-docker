@@ -5,12 +5,12 @@
 
 ## Problem
 
-When AgentOS is running on a VM as root (common for self-hosted setups), sessions using Claude Code with auto-approve enabled would immediately exit. The tmux session would flash the banner and die — no error visible to the user.
+When AgentOS is running on a VM as root (common for self-hosted setups), terminals using Claude Code with auto-approve enabled would immediately exit. The tmux terminal would flash the banner and die — no error visible to the user.
 
 ## Symptoms
 
-- Tmux session shows `[exited]` immediately after attaching
-- The AgentOS UI shows the session but the terminal is dead
+- Tmux terminal shows `[exited]` immediately after attaching
+- The AgentOS UI shows the terminal but it is dead
 - Other providers (Codex, Aider, etc.) are unaffected
 
 ## Root Cause
@@ -21,14 +21,14 @@ Claude Code explicitly blocks `--dangerously-skip-permissions` when running as r
 --dangerously-skip-permissions cannot be used with root/sudo privileges for security reasons
 ```
 
-The init script (`/api/sessions/init-script`) generates a shell script that runs `exec claude --dangerously-skip-permissions`. When running as root, Claude exits with this error, and since `exec` replaces the shell process, the tmux session dies instantly.
+The init script (`/api/sessions/init-script`) generates a shell script that runs `exec claude --dangerously-skip-permissions`. When running as root, Claude exits with this error, and since `exec` replaces the shell process, the tmux terminal dies instantly.
 
 ## How We Debugged It
 
 1. Checked if the init script file existed in `/tmp` — it did
 2. Checked if the project directory existed — it did
 3. Checked if `claude` was in PATH and working — it was
-4. Reproduced by running the init script inside a test tmux session with `sleep 30` after it to capture the output:
+4. Reproduced by running the init script inside a test tmux terminal with `sleep 30` after it to capture the output:
    ```bash
    tmux new-session -d -s test "bash /tmp/agent-os-init-*.sh; echo EXIT: $?; sleep 30"
    tmux capture-pane -t test -p
@@ -54,4 +54,4 @@ const envPrefix = isRoot ? "IS_SANDBOX=1 " : "";
 
 ## Lesson
 
-When sessions die immediately with no visible error, run the init script manually with a trailing `sleep` to capture output before the tmux pane closes. The `exec` in the script replaces the shell, so any error from the agent command kills the session silently.
+When terminals die immediately with no visible error, run the init script manually with a trailing `sleep` to capture output before the tmux pane closes. The `exec` in the script replaces the shell, so any error from the agent command kills the terminal silently.

@@ -10,8 +10,8 @@ import { usePanes } from "@/contexts/PaneContext";
  *
  * Shared by the sidebar's inline rename and the workbench title, so both
  * handle the same two facts the same way: tmux may hand back a different
- * name than the one asked for, and the workbench's pointer at the attached
- * session is the session's *name*, so it has to move with it.
+ * name than the one asked for, and the workbench's pointer is the terminal's
+ * tmux name, so it has to move with it.
  */
 export function useTerminalRename() {
   const renameTerminalMutation = useRenameTerminal();
@@ -27,18 +27,18 @@ export function useTerminalRename() {
           newName,
         });
 
-        // tmux rewrites "." and ":" in session names. Say so rather than
+        // tmux rewrites "." and ":" in terminal names. Say so rather than
         // letting the name quietly come back different from what was typed.
         if (result.name !== result.requested) {
           toast.info(`Renamed to "${result.name}"`, {
-            description: "tmux session names cannot contain . or :",
+            description: "tmux terminal names cannot contain . or :",
           });
         }
 
-        // A terminal is identified by its tmux session name, so renaming
+        // A terminal is identified by its tmux name, so renaming
         // the attached one leaves the workbench pointing at a name that no
         // longer exists. The tmux client is still attached to the same
-        // session — only the pointer needs moving.
+        // terminal — only the pointer needs moving.
         if (attachedTmux === name) attach(result.name);
       } catch (error) {
         toast.error(

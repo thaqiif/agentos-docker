@@ -24,13 +24,11 @@ if (typeof window !== "undefined") {
 }
 import { PaneProvider, usePanes } from "@/contexts/PaneContext";
 import { Pane } from "@/components/Pane";
-import { useNotifications } from "@/hooks/useNotifications";
 import { useViewport } from "@/hooks/useViewport";
 import { useViewportHeight } from "@/hooks/useViewportHeight";
 import { useTerminals } from "@/hooks/useTerminals";
 import { useProjects } from "@/hooks/useProjects";
 import { useDevServersManager } from "@/hooks/useDevServersManager";
-import { useTerminalStatuses } from "@/hooks/useTerminalStatuses";
 import type { TerminalRecord } from "@/lib/terminals";
 import { tmuxAttachCommand } from "@/lib/tmux-attach";
 import type { TerminalHandle } from "@/components/Terminal";
@@ -42,10 +40,8 @@ function HomeContent() {
   const [sidebarOpenState, setSidebarOpenState] = useState<boolean | null>(
     null
   );
-  const [showNotificationSettings, setShowNotificationSettings] =
-    useState(false);
   const [showQuickSwitcher, setShowQuickSwitcher] = useState(false);
-  const [copiedSessionId, setCopiedSessionId] = useState(false);
+  const [copiedTerminalId, setCopiedTerminalId] = useState(false);
   const terminalRef = useRef<TerminalHandle | null>(null);
 
   // Pane context
@@ -82,7 +78,7 @@ function HomeContent() {
   }, []);
 
   /**
-   * Point the workbench at a tmux session.
+   * Point the workbench at a tmux terminal.
    *
    * The pty behind the terminal is a plain shell, so "attaching" means
    * running `tmux attach` in it. If it is already inside tmux we detach
@@ -99,7 +95,7 @@ function HomeContent() {
 
       // Already looking at it. Re-running the attach would detach the
       // client and immediately reattach, which throws away the redraw and
-      // leaves whatever tmux was drawing half on screen. A stopped session
+      // leaves whatever tmux was drawing half on screen. A stopped terminal
       // is the exception: clicking it is a request to start it again.
       if (terminal && attachedTmux === name && record?.alive !== false) {
         terminal.focus();
@@ -139,7 +135,7 @@ function HomeContent() {
   /**
    * Stop looking at a terminal without killing it.
    *
-   * Detaching leaves the tmux session and everything running in it exactly
+   * Detaching leaves the tmux terminal and everything running in it exactly
    * where it was; the workbench just stops pointing at it and falls back to
    * the welcome screen. Unmounting the terminal drops the pty, which tmux
    * sees as a detached client, so the Ctrl-B d is belt and braces.
@@ -149,30 +145,8 @@ function HomeContent() {
     detach();
   }, [getTerminal, detach]);
 
-  // The attached tmux session is what the workbench is looking at.
-  const activeSession = terminals.find((t) => t.tmux_name === attachedTmux);
-
-  // Notification click handler
-  const handleNotificationClick = useCallback(
-    (name: string) => attachToTerminal(name),
-    [attachToTerminal]
-  );
-
-  // Notifications
-  const {
-    settings: notificationSettings,
-    checkStateChanges,
-    updateSettings,
-    requestPermission,
-    permissionGranted,
-  } = useNotifications({ onSessionClick: handleNotificationClick });
-
-  // Terminal statuses
-  const { terminalStatuses } = useTerminalStatuses({
-    terminals,
-    activeTerminal: activeSession?.id,
-    checkStateChanges,
-  });
+  // The attached tmux terminal is what the workbench is looking at.
+  const activeTerminal = terminals.find((t) => t.tmux_name === attachedTmux);
 
   // Keep the desktop sidebar open by default without synchronizing derived
   // viewport state through an effect. Once the user explicitly changes it,
@@ -207,7 +181,7 @@ function HomeContent() {
    *
    * It is a plain shell in a working directory — no harness is chosen here.
    * Starting Claude, Codex, OpenCode or Command Code is done by typing its
-   * name, and the status detector picks that up from the running process.
+   * name, and tmux keeps the terminal's process and layout alive.
    */
   const handleNewTerminal = useCallback(
     async (projectId?: string) => {
@@ -289,20 +263,13 @@ function HomeContent() {
   const viewProps = {
     terminals,
     projects,
-    terminalStatuses,
     sidebarOpen,
     setSidebarOpen,
-    activeSession: activeSession as TerminalRecord | undefined,
-    copiedSessionId,
-    setCopiedSessionId,
-    showNotificationSettings,
-    setShowNotificationSettings,
+    activeTerminal: activeTerminal as TerminalRecord | undefined,
+    copiedTerminalId,
+    setCopiedTerminalId,
     showQuickSwitcher,
     setShowQuickSwitcher,
-    notificationSettings,
-    permissionGranted,
-    updateSettings,
-    requestPermission,
     attachToTerminal,
     handleNewTerminal,
     handleCloseTerminal,

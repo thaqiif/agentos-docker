@@ -6,23 +6,23 @@ import { Badge } from "./ui/badge";
 import { RefreshCw, Terminal, MonitorUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface TmuxSession {
+interface TmuxTerminal {
   name: string;
   windows: number;
   created: string;
   attached: boolean;
 }
 
-interface TmuxSessionsProps {
-  onAttach: (sessionName: string) => void;
+interface TmuxTerminalsProps {
+  onAttach: (terminalName: string) => void;
 }
 
-export function TmuxSessions({ onAttach }: TmuxSessionsProps) {
-  const [sessions, setSessions] = useState<TmuxSession[]>([]);
+export function TmuxTerminals({ onAttach }: TmuxTerminalsProps) {
+  const [terminals, setTerminals] = useState<TmuxTerminal[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSessions = useCallback(async () => {
+  const fetchTerminals = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -50,28 +50,28 @@ export function TmuxSessions({ onAttach }: TmuxSessionsProps) {
               attached: attached === "1",
             };
           });
-        setSessions(parsed);
+        setTerminals(parsed);
       } else {
-        setSessions([]);
+        setTerminals([]);
       }
     } catch (err) {
-      console.error("Failed to fetch tmux sessions:", err);
+      console.error("Failed to fetch tmux terminals:", err);
       setError("Failed to load");
-      setSessions([]);
+      setTerminals([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchSessions();
+    fetchTerminals();
     // Refresh every 30 seconds
-    const interval = setInterval(fetchSessions, 30000);
+    const interval = setInterval(fetchTerminals, 30000);
     return () => clearInterval(interval);
-  }, [fetchSessions]);
+  }, [fetchTerminals]);
 
-  if (sessions.length === 0 && !loading && !error) {
-    return null; // Don't show section if no tmux sessions
+  if (terminals.length === 0 && !loading && !error) {
+    return null; // Don't show section if no tmux terminals
   }
 
   return (
@@ -80,13 +80,13 @@ export function TmuxSessions({ onAttach }: TmuxSessionsProps) {
         <div className="flex items-center gap-2">
           <Terminal className="text-muted-foreground h-4 w-4" />
           <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-            Tmux Sessions
+            Tmux Terminals
           </span>
         </div>
         <Button
           variant="ghost"
           size="icon-sm"
-          onClick={fetchSessions}
+          onClick={fetchTerminals}
           disabled={loading}
           className="h-6 w-6"
         >
@@ -96,14 +96,14 @@ export function TmuxSessions({ onAttach }: TmuxSessionsProps) {
 
       <div className="space-y-1 px-4 pb-3">
         {error && <p className="text-destructive text-xs">{error}</p>}
-        {sessions.map((session) => (
+        {terminals.map((terminal) => (
           <button
-            key={session.name}
-            onClick={() => onAttach(session.name)}
+            key={terminal.name}
+            onClick={() => onAttach(terminal.name)}
             className={cn(
               "flex w-full items-center justify-between rounded-md p-2 text-left transition-colors",
               "hover:bg-primary/10 border",
-              session.attached
+              terminal.attached
                 ? "border-primary/50 bg-primary/5"
                 : "border-transparent"
             )}
@@ -111,14 +111,14 @@ export function TmuxSessions({ onAttach }: TmuxSessionsProps) {
             <div className="flex min-w-0 items-center gap-2">
               <MonitorUp className="text-primary h-4 w-4 flex-shrink-0" />
               <span className="truncate text-sm font-medium">
-                {session.name}
+                {terminal.name}
               </span>
             </div>
             <div className="flex flex-shrink-0 items-center gap-2">
               <span className="text-muted-foreground text-xs">
-                {session.windows}w
+                {terminal.windows}w
               </span>
-              {session.attached && (
+              {terminal.attached && (
                 <Badge variant="success" className="px-1 py-0 text-[10px]">
                   attached
                 </Badge>

@@ -11,7 +11,7 @@ your phone), fully self-hosted, with `docker compose up -d`.
 
 [AgentOS](https://github.com/saadnvd1/agent-os) (by
 [@saadnvd1](https://github.com/saadnvd1)) is a lovely open-source, mobile-first
-web app that lets you start and manage AI coding-agent sessions from any browser.
+web app that lets you start and manage AI coding-agent terminals from any browser.
 
 **This repo vendors a patched fork of AgentOS** (under [`agent-os/`](agent-os/),
 forked from commit
@@ -43,15 +43,15 @@ official [docs](https://runagentos.com/docs).
 
 | Enhancement | What you get | More |
 |---|---|---|
-| 🔐 **Persistent logins & state** | Authenticate each agent once — logins, projects, and session history survive restarts and rebuilds | [Volumes](#volumes--persistence) |
+| 🔐 **Persistent logins & state** | Authenticate each agent once — logins, projects, and terminal state survive restarts and rebuilds | [Volumes](#volumes--persistence) |
 | 👥 **Multiple Claude accounts** | Run `claude`, `claude-a`, `claude-b`… side by side, each its own login, selectable in the UI | [Logins](#multiple-claude-code-logins) |
 | 📱 **Friendlier mobile keyboard** | Keyboard-overlap fix, plus toolbar keys for newline, ⇧Tab, and ⌃/⌥ modifiers | [Mobile](#mobile) |
 | 🤖 **Autopilotagent TDD workflow** | `autopilotagent` skills/commands/hooks for Claude, Codex, OpenCode, Command Code | [Autopilotagent](#autopilotagent-tdd-workflow) |
 | 🔤 **JetBrains Mono code font** | Terminal & UI code blocks render in self-hosted JetBrains Mono | [Font](#terminal--code-font) |
-| 🧰 **Bundled CLIs** | `gh`, `bun`, `git`, `ripgrep`, `tmux`, `jq` preinstalled in every session | [Agents](#installed-agents) |
+| 🧰 **Bundled CLIs** | `gh`, `bun`, `git`, `ripgrep`, `tmux`, `jq` preinstalled in every terminal | [Agents](#installed-agents) |
 | 🌐 **Headless browser** | Chromium + system libs baked in so agents can render & screenshot the frontends they build | [Browser](#browser-verification) |
 | 👤 **Host-matched file ownership** | `PUID`/`PGID` so files in your mounted workspace stay owned by *you* | [Permissions](#file-permissions-puid--pgid) |
-| 🩹 **Quality-of-life fixes** | Inline session rename works again (upstream Radix focus-restore bug) | [Font & fixes](#terminal--code-font) |
+| 🩹 **Quality-of-life fixes** | Inline terminal rename works again (upstream Radix focus-restore bug) | [Font & fixes](#terminal--code-font) |
 | 📦 **Standalone build** | Patched source vendored in-repo — no network fetch of upstream at build time | [Vendored source](#vendored-source) |
 
 > **⚠️ Security Disclaimer**
@@ -187,7 +187,7 @@ in `~/.claude` **and** the loose `~/.claude.json`, the extra profiles in
 `~/.claude-profiles`, OpenCode in `~/.local/share/opencode`, Codex in
 `~/.codex`, git in `~/.gitstate`, SSH keys in `~/.ssh`, and AgentOS itself in
 `~/.agent-os` — including its SQLite database (`DB_PATH`), so your **projects and
-session history** persist too. Mounting all of `$HOME` means every login and all
+terminal state** persist too. Mounting all of `$HOME` means every login and all
 app state survive `docker compose down && up` (and image rebuilds), instead of
 having to re-authenticate each tool or re-create your projects. Build artifacts
 live in `/opt` (outside home), so nothing important is shadowed.
@@ -214,7 +214,7 @@ The container comes with these pre-installed:
 - **Command Code** — coding agent that learns your coding taste
   ([commandcode.ai](https://commandcode.ai))
 
-Plus a few supporting CLI tools on `PATH` inside every session:
+Plus a few supporting CLI tools on `PATH` inside every terminal:
 
 - **GitHub CLI (`gh`)** — installed from GitHub's official apt repo for PRs,
   issues, and authenticated git over HTTPS. Run `gh auth login` once; the token
@@ -222,10 +222,10 @@ Plus a few supporting CLI tools on `PATH` inside every session:
   restarts.
 - **Bun (`bun`)** — JS runtime / package manager via the [official
   installer](https://bun.com/docs/installation). Binary lands in
-  `/usr/local/bin` so every session sees it. Gated by `INSTALL_BUN` (default
+  `/usr/local/bin` so every terminal sees it. Gated by `INSTALL_BUN` (default
   `true`); set `false` and rebuild to skip.
 - **git**, **ripgrep (`rg`)**, **tmux** — version control, code search, and the
-  terminal multiplexer that drives AgentOS sessions.
+  terminal multiplexer that drives AgentOS terminals.
 
 (AgentOS itself — the web UI — runs the whole thing.)
 
@@ -250,7 +250,7 @@ Agents that build web frontends often want to *see* their work — render the pa
 and take a screenshot to check layout and styling, not just lint the code. A
 plain Chromium binary can't do that here: it needs a stack of system libraries
 (`libglib`, `libnss3`, `libatk`, …) that only root can `apt-get install`, and
-agent sessions run as the non-root `agent` user with no `sudo`. Installing them
+agent processes run as the non-root `agent` user with no `sudo`. Installing them
 at runtime is impossible.
 
 So the image ships a working headless Chromium, installed **at build time** (as
@@ -307,10 +307,10 @@ CLAUDE_PROFILES=a b c                 # -> claude-a, claude-b, claude-c
 ```
 
 Each profile also shows up as its own **selectable harness in the AgentOS UI**
-(e.g. "Claude (mimo)"), so you can start a session against a specific login from
-the new-session dialog — with full status detection, resume, and fork support.
+(e.g. "Claude (mimo)"), so you can start a terminal against a specific login from
+the new-terminal dialog — with resume and fork support.
 Profiles also appear in a project's **Default Agent** dropdown (New Project and
-Project Settings), so "Start Fresh" launches new sessions with the profile you
+Project Settings), so "Start Fresh" launches new terminals with the profile you
 picked as that project's default.
 
 Because that harness list is compiled into the app, apply changes with a
@@ -361,12 +361,11 @@ terminal/mono font is untouched.
 We also patch a couple of upstream rough edges (applied directly to the
 vendored source, before we forked):
 
-- **Inline session rename.** Renaming a session from its menu used to snap the
+- **Inline terminal rename.** Renaming a terminal from its menu used to snap the
   text field straight back to read-only before you could type. The "Rename" item
   lives in a Radix menu whose default close behaviour restores focus to the
   trigger, which blurred the freshly-opened input.
-  `inject-session-rename-fix.mjs` stopped
-  that focus restoration so the field stays editable on both desktop and mobile.
+  The focus-restoration fix keeps the field editable on both desktop and mobile.
 
 ## Mobile
 
@@ -430,7 +429,7 @@ bar. On devices/browsers with no inset, `env()` resolves to 0 and nothing change
 
 The mobile side drawer (`SwipeSidebar`) had the same problem at the top: it's
 `fixed top-0 bottom-0` and already pads the *bottom* inset, but its header (the
-session list's add-project / add buttons) rendered under the status bar in a PWA.
+terminal list's add-project / add buttons) rendered under the status bar in a PWA.
 `inject-mobile-drawer-safearea.mjs` adds a matching `env(safe-area-inset-top)` spacer above the drawer content so the
 buttons clear the status bar.
 

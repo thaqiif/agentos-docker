@@ -28,12 +28,12 @@ interface PaneContextValue {
   /** True once localStorage has been read, so we do not flash the default. */
   hydrated: boolean;
   attach: (tmuxName: string) => void;
-  /** Stop pointing at a session. The session itself keeps running. */
+  /** Stop pointing at a terminal. The terminal itself keeps running. */
   detach: () => void;
   setViewMode: (mode: ViewMode) => void;
   toggleGitDrawer: () => void;
   toggleShellDrawer: () => void;
-  /** Ask tmux to split the attached session's active pane. */
+  /** Ask tmux to split the attached terminal's active pane. */
   splitPane: (direction: "horizontal" | "vertical") => void;
 }
 
@@ -91,7 +91,7 @@ export function PaneProvider({ children }: { children: ReactNode }) {
       fetch("/api/tmux/split", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session: state.attachedTmux, direction }),
+        body: JSON.stringify({ terminal: state.attachedTmux, direction }),
       }).catch((err) => console.error("Failed to split tmux pane:", err));
     },
     [state.attachedTmux]

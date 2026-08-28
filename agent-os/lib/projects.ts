@@ -1,8 +1,8 @@
 /**
  * Projects Module
  *
- * Projects are workspaces that contain sessions and dev server configurations.
- * Sessions inherit settings from their parent project.
+ * Projects are workspaces that contain terminals and dev server configurations.
+ * Terminals inherit settings from their parent project.
  */
 
 import { randomUUID } from "crypto";
@@ -268,7 +268,7 @@ export function toggleProjectExpanded(id: string, expanded: boolean): void {
 }
 
 /**
- * Delete a project (moves sessions to Uncategorized)
+ * Delete a project (moves terminals to Uncategorized)
  */
 export function deleteProject(id: string): boolean {
   const project = getProject(id);

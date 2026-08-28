@@ -4,9 +4,9 @@ import { listTerminals, killTerminal } from "@/lib/terminals";
 /**
  * POST /api/tmux/kill-all - close every terminal.
  *
- * This used to kill only sessions whose names matched AgentOS's own naming
+ * This used to kill only terminals whose names matched AgentOS's own naming
  * scheme, then sweep a database table to match. Terminals are just tmux
- * sessions now, with no rows to clean up and no notion of "managed": what
+ * workspaces now, with no rows to clean up and no notion of "managed": what
  * the sidebar lists is what this closes.
  */
 export async function POST() {
@@ -23,7 +23,7 @@ export async function POST() {
       }
     }
 
-    return NextResponse.json({ killed: killed.length, sessions: killed });
+    return NextResponse.json({ killed: killed.length, terminals: killed });
   } catch (error) {
     console.error("Error killing terminals:", error);
     return NextResponse.json(

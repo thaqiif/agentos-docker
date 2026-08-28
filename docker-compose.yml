@@ -5,7 +5,7 @@ services:
       args:
         # Extra Claude Code profile names the entrypoint generates claude-a,
         # claude-b, ... login wrappers for at runtime. Read from .env so it
-        # stays the single source of truth. Note: the UI's session-provider
+        # stays the single source of truth. Note: the UI's terminal-provider
         # harness list is baked into the vendored agent-os/ source (a, b, c)
         # and is NOT driven by this — see README for changing it.
         CLAUDE_PROFILES: ${CLAUDE_PROFILES:-a b c}
@@ -29,7 +29,7 @@ services:
     restart: unless-stopped
 
     # Run an init process as PID 1 so it reaps zombie children (tmux, gh,
-    # esbuild, etc. spawned by agent sessions) instead of `npm start` leaking
+    # esbuild, etc. spawned by agent terminals) instead of `npm start` leaking
     # them forever — without this, exited subprocess zombies accumulate
     # indefinitely and can eventually hit the container's PID limit.
     init: true

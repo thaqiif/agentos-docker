@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { ServerLogsModal } from "@/components/DevServers";
 import {
   ProjectsSection,
@@ -17,7 +17,6 @@ import { FolderPlus, TriangleAlert } from "lucide-react";
 import { AEmptyState } from "@/components/a/AEmptyState";
 import type { TerminalRecord } from "@/lib/terminals";
 import type { ProjectWithRepositories } from "@/lib/projects";
-import { useViewport } from "@/hooks/useViewport";
 
 // Data hooks
 import { useTerminalsQuery } from "@/data/terminals";
@@ -29,18 +28,14 @@ import type { TerminalListProps } from "./TerminalList.types";
 export type { TerminalListProps } from "./TerminalList.types";
 
 export function TerminalList({
-  activeSessionId,
-  terminalStatuses,
+  activeTerminalId,
   onSelect,
   onNewTerminal,
   onCloseTerminal,
   onStartDevServer,
   onCreateDevServer,
-  notifications,
   onQuickSwitch,
 }: TerminalListProps) {
-  const { isMobile } = useViewport();
-
   // Fetch data directly with loading states
   const {
     data: terminalsData,
@@ -59,7 +54,7 @@ export function TerminalList({
   const isInitialLoading = isTerminalsPending || isProjectsPending;
   const hasError = isTerminalsError || isProjectsError;
 
-  const sessions = useMemo<TerminalRecord[]>(
+  const terminals = useMemo<TerminalRecord[]>(
     () => terminalsData ?? [],
     [terminalsData]
   );
@@ -77,60 +72,15 @@ export function TerminalList({
   const [editingProject, setEditingProject] =
     useState<ProjectWithRepositories | null>(null);
   const [showKillAllConfirm, setShowKillAllConfirm] = useState(false);
-  const [hoveredSession, setHoveredSession] =
-    useState<TerminalRecord | null>(null);
-  const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
   const [logsServerId, setLogsServerId] = useState<string | null>(null);
 
   // Use projects if available
   const useProjectsView = projects.length > 0;
 
-  // Flatten all session IDs for bulk operations
-  const allSessionIds = useMemo(() => sessions.map((s) => s.id), [sessions]);
-
   // Find server for logs modal
   const logsServer = logsServerId
     ? devServers.find((s) => s.id === logsServerId)
     : null;
-
-  // Handle hover on session card (desktop only) with delay
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const pendingHoverRef = useRef<{
-    session: TerminalRecord;
-    rect: DOMRect;
-  } | null>(null);
-
-  const hoverHandlers = {
-    onHoverStart: useCallback(
-      (session: TerminalRecord, rect: DOMRect) => {
-        if (isMobile) return;
-        // Clear any pending hover
-        if (hoverTimeoutRef.current) {
-          clearTimeout(hoverTimeoutRef.current);
-        }
-        // Store pending hover data and start delay
-        pendingHoverRef.current = { session, rect };
-        hoverTimeoutRef.current = setTimeout(() => {
-          if (pendingHoverRef.current) {
-            setHoveredSession(pendingHoverRef.current.session);
-            setHoverPosition({
-              x: pendingHoverRef.current.rect.right,
-              y: pendingHoverRef.current.rect.top,
-            });
-          }
-        }, 400);
-      },
-      [isMobile]
-    ),
-    onHoverEnd: useCallback(() => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
-        hoverTimeoutRef.current = null;
-      }
-      pendingHoverRef.current = null;
-      setHoveredSession(null);
-    }, []),
-  };
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -146,7 +96,6 @@ export function TerminalList({
           setShowNewProjectDialog(true);
         }}
         onKillAll={() => setShowKillAllConfirm(true)}
-        notifications={notifications}
         onQuickSwitch={onQuickSwitch}
       />
 
@@ -158,8 +107,7 @@ export function TerminalList({
         />
       )}
 
-
-      {/* Session list */}
+      {/* Terminal list */}
       <ScrollArea className="w-full flex-1">
         <div className="scrollbar-thin max-w-full px-2 py-2">
           {/* Loading state */}
@@ -180,13 +128,13 @@ export function TerminalList({
           {/* Empty state */}
           {!isInitialLoading &&
             !hasError &&
-            sessions.length === 0 &&
+            terminals.length === 0 &&
             projects.length <= 1 && (
               <AEmptyState
                 size="compact"
                 icon={FolderPlus}
                 title="No terminals yet"
-                description="Create a project to group the sessions you run in it."
+                description="Create a project to group the terminals you run in it."
                 action={{
                   label: "New project",
                   icon: FolderPlus,
@@ -199,9 +147,8 @@ export function TerminalList({
           {!isInitialLoading && !hasError && useProjectsView && (
             <ProjectsSection
               projects={projects}
-              terminals={sessions}
-              activeSessionId={activeSessionId}
-              terminalStatuses={terminalStatuses}
+              terminals={terminals}
+              activeTerminalId={activeTerminalId}
               devServers={devServers}
               onToggleProject={mutations.handleToggleProject}
               onEditProject={(projectId) => {
@@ -212,35 +159,19 @@ export function TerminalList({
               onRenameProject={mutations.handleRenameProject}
               onNewTerminal={onNewTerminal}
               onSelectTerminal={onSelect}
-              onCloseTerminal={onCloseTerminal ?? mutations.handleDeleteTerminal}
+              onCloseTerminal={
+                onCloseTerminal ?? mutations.handleDeleteTerminal
+              }
               onRenameTerminal={mutations.handleRenameTerminal}
               onStartDevServer={onStartDevServer}
               onStopDevServer={mutations.handleStopDevServer}
               onRestartDevServer={mutations.handleRestartDevServer}
               onRemoveDevServer={mutations.handleRemoveDevServer}
               onViewDevServerLogs={setLogsServerId}
-              onHoverStart={(session, rect) =>
-                hoverHandlers.onHoverStart(session, rect)
-              }
-              onHoverEnd={hoverHandlers.onHoverEnd}
             />
           )}
         </div>
       </ScrollArea>
-
-
-      {/* {!isMobile && (
-        <SessionPreviewPopover
-          session={hoveredSession}
-          status={
-            hoveredSession
-              ? sessionStatuses?.[hoveredSession.id]?.status
-              : undefined
-          }
-          position={hoverPosition}
-        />
-      )} */}
-
       {/* Server Logs Modal */}
       {logsServer && (
         <ServerLogsModal

@@ -41,8 +41,8 @@
       "icons/icon.ico"
     ],
     "category": "DeveloperTool",
-    "shortDescription": "Manage AI coding sessions from anywhere",
-    "longDescription": "AgentOS is a mobile-first web UI for managing multiple AI coding assistant sessions including Claude Code, Codex, OpenCode, Gemini CLI, and more.",
+    "shortDescription": "Manage AI coding terminals from anywhere",
+    "longDescription": "AgentOS is a mobile-first web UI for managing multiple AI coding assistant terminals including Claude Code, Codex, OpenCode, Gemini CLI, and more.",
     "copyright": "© 2025 AgentOS",
     "macOS": {
       "minimumSystemVersion": "10.15",

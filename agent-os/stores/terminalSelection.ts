@@ -10,23 +10,23 @@ export const selectionStore = proxy({
 // Actions - can be called from anywhere
 export const selectionActions = {
   toggle: (
-    sessionId: string,
+    terminalId: string,
     shiftKey = false,
-    allSessionIds: string[] = []
+    allTerminalIds: string[] = []
   ) => {
     const newSet = updateSelection(
       selectionStore.selectedIds,
-      sessionId,
+      terminalId,
       shiftKey,
       selectionStore.lastSelectedId,
-      allSessionIds
+      allTerminalIds
     );
     selectionStore.selectedIds = newSet;
-    selectionStore.lastSelectedId = sessionId;
+    selectionStore.lastSelectedId = terminalId;
   },
 
-  selectAll: (sessionIds: string[]) => {
-    selectionStore.selectedIds = new Set(sessionIds);
+  selectAll: (terminalIds: string[]) => {
+    selectionStore.selectedIds = new Set(terminalIds);
   },
 
   clear: () => {
@@ -34,8 +34,8 @@ export const selectionActions = {
     selectionStore.lastSelectedId = null;
   },
 
-  isSelected: (sessionId: string) => {
-    return selectionStore.selectedIds.has(sessionId);
+  isSelected: (terminalId: string) => {
+    return selectionStore.selectedIds.has(terminalId);
   },
 
   getCount: () => {

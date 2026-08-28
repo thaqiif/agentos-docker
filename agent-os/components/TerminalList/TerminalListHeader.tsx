@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import {
   ADropdownMenu,
   menuItem,
@@ -26,12 +26,6 @@ interface TerminalListHeaderProps {
   onCloneFromGithub: () => void;
   onKillAll: () => void;
   onQuickSwitch?: () => void;
-  /**
-   * The notification bell, rendered by whoever owns its state. It sits
-   * between the new-project and the overflow menus, so it is next to the
-   * terminals it is telling you about.
-   */
-  notifications?: ReactNode;
 }
 
 export function TerminalListHeader({
@@ -40,7 +34,6 @@ export function TerminalListHeader({
   onCloneFromGithub,
   onKillAll,
   onQuickSwitch,
-  notifications,
 }: TerminalListHeaderProps) {
   const [showThemeDialog, setShowThemeDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
@@ -82,7 +75,6 @@ export function TerminalListHeader({
               }),
             ]}
           />
-          {notifications}
           <ADropdownMenu
             icon={MoreHorizontal}
             tooltip="More options"

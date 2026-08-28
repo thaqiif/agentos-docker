@@ -10,10 +10,9 @@ import { fileOpenActions } from "@/stores/fileOpen";
 export function MobileView({
   terminals,
   projects,
-  terminalStatuses,
   sidebarOpen,
   setSidebarOpen,
-  activeSession,
+  activeTerminal,
   showQuickSwitcher,
   setShowQuickSwitcher,
   attachToTerminal,
@@ -27,45 +26,43 @@ export function MobileView({
   renderPane,
 }: ViewProps) {
   return (
-    <main className="bg-background flex h-app flex-col overflow-hidden">
+    <main className="bg-background h-app flex flex-col overflow-hidden">
       {/* Swipe sidebar */}
       <SwipeSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)}>
         <div className="flex h-full flex-col">
-          {/* Session list */}
+          {/* Terminal list */}
           <div className="min-h-0 flex-1 overflow-hidden">
             <TerminalList
-              activeSessionId={activeSession?.id}
-              terminalStatuses={terminalStatuses}
+              activeTerminalId={activeTerminal?.id}
               onSelect={(id) => {
-            attachToTerminal(id);
-          }}
+                attachToTerminal(id);
+              }}
               onNewTerminal={handleNewTerminal}
               onCloseTerminal={handleCloseTerminal}
               onStartDevServer={handleStartDevServer}
               onCreateDevServer={handleCreateDevServer}
             />
           </div>
-
         </div>
       </SwipeSidebar>
 
       {/* Terminal fills the screen */}
-      <div className="min-h-0 w-full flex-1">
-        {renderPane()}
-      </div>
+      <div className="min-h-0 w-full flex-1">{renderPane()}</div>
 
       {/* Dialogs */}
       <QuickSwitcher
         terminals={terminals}
         open={showQuickSwitcher}
         onOpenChange={setShowQuickSwitcher}
-        currentSessionId={activeSession?.id}
-        activeSessionWorkingDir={activeSession?.working_directory ?? undefined}
-        onSelectSession={(name) => attachToTerminal(name)}
+        currentTerminalId={activeTerminal?.id}
+        activeTerminalWorkingDir={
+          activeTerminal?.working_directory ?? undefined
+        }
+        onSelectTerminal={(name) => attachToTerminal(name)}
         onSelectFile={(file, line) => {
           // Convert relative path to absolute by prepending working directory
-          const absolutePath = activeSession?.working_directory
-            ? `${activeSession.working_directory}/${file.replace(/^\.\//, "")}`
+          const absolutePath = activeTerminal?.working_directory
+            ? `${activeTerminal.working_directory}/${file.replace(/^\.\//, "")}`
             : file;
           fileOpenActions.requestOpen(absolutePath, line);
         }}

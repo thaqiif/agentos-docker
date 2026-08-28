@@ -570,12 +570,12 @@ export function ProjectSettingsDialog({
                   id="project-settings-initial-prompt"
                   value={initialPrompt}
                   onChange={(e) => setInitialPrompt(e.target.value)}
-                  placeholder="This prompt will be prepended to all sessions in this project..."
+                  placeholder="This prompt will be prepended to all terminals in this project..."
                   rows={3}
                   className="resize-none"
                 />
                 <p className="text-muted-foreground text-xs">
-                  This prompt will be automatically prepended to all new sessions
+                  This prompt will be automatically prepended to all new terminals
                   created in this project.
                 </p>
               </div>

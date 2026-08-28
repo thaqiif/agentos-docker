@@ -208,7 +208,7 @@ export function WorkbenchBar() {
       </div>
 
       {/* Splits are tmux splits: they persist across a refresh, and are
-          only meaningful once the terminal is attached to a session. */}
+          only meaningful once the terminal is attached. */}
       <div className="flex items-center gap-0.5">
         <SplitControl
           icon={Columns2}

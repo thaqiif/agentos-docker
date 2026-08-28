@@ -19,10 +19,10 @@ export interface QuickSwitcherProps {
   terminals: TerminalRecord[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelectSession: (sessionId: string) => void;
+  onSelectTerminal: (terminalId: string) => void;
   onSelectFile?: (file: string, line: number) => void;
-  currentSessionId?: string;
-  activeSessionWorkingDir?: string;
+  currentTerminalId?: string;
+  activeTerminalWorkingDir?: string;
 }
 
 function ModeCell({
@@ -53,19 +53,19 @@ function ModeCell({
 }
 
 /**
- * Quick session switcher with search
+ * Quick terminal switcher with search
  * Triggered by Cmd+K or button tap
  */
 export function QuickSwitcher({
-  terminals: sessions,
+  terminals,
   open,
   onOpenChange,
-  onSelectSession,
+  onSelectTerminal,
   onSelectFile,
-  currentSessionId,
-  activeSessionWorkingDir,
+  currentTerminalId,
+  activeTerminalWorkingDir,
 }: QuickSwitcherProps) {
-  const [mode, setMode] = useState<"sessions" | "code">("sessions");
+  const [mode, setMode] = useState<"terminals" | "code">("terminals");
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -73,14 +73,14 @@ export function QuickSwitcher({
   // Check if ripgrep is available
   const { data: ripgrepAvailable } = useRipgrepAvailable();
 
-  // Filter sessions based on search query
-  const filteredSessions = sessions.filter((session) => {
+  // Filter terminals based on search query
+  const filteredTerminals = terminals.filter((terminal) => {
     if (!query) return true;
     const q = query.toLowerCase();
     return (
-      session.name?.toLowerCase().includes(q) ||
-      session.working_directory?.toLowerCase().includes(q) ||
-      session.agent_type?.toLowerCase().includes(q)
+      terminal.name?.toLowerCase().includes(q) ||
+      terminal.working_directory?.toLowerCase().includes(q) ||
+      terminal.agent_type?.toLowerCase().includes(q)
     );
   });
 
@@ -89,7 +89,7 @@ export function QuickSwitcher({
     if (!open) return;
 
     const frame = requestAnimationFrame(() => {
-      setMode("sessions");
+      setMode("terminals");
       setQuery("");
       setSelectedIndex(0);
     });
@@ -101,11 +101,11 @@ export function QuickSwitcher({
     };
   }, [open]);
 
-  // Force sessions mode if ripgrep is not available
+  // Force terminals mode if ripgrep is not available
   useEffect(() => {
     if (ripgrepAvailable !== false || mode !== "code") return;
 
-    const frame = requestAnimationFrame(() => setMode("sessions"));
+    const frame = requestAnimationFrame(() => setMode("terminals"));
     return () => cancelAnimationFrame(frame);
   }, [ripgrepAvailable, mode]);
 
@@ -116,7 +116,7 @@ export function QuickSwitcher({
         case "ArrowDown":
           e.preventDefault();
           setSelectedIndex((prev) =>
-            Math.min(prev + 1, filteredSessions.length - 1)
+            Math.min(prev + 1, filteredTerminals.length - 1)
           );
           break;
         case "ArrowUp":
@@ -125,8 +125,8 @@ export function QuickSwitcher({
           break;
         case "Enter":
           e.preventDefault();
-          if (filteredSessions[selectedIndex]) {
-            onSelectSession(filteredSessions[selectedIndex].id);
+          if (filteredTerminals[selectedIndex]) {
+            onSelectTerminal(filteredTerminals[selectedIndex].id);
             onOpenChange(false);
           }
           break;
@@ -136,7 +136,7 @@ export function QuickSwitcher({
           break;
       }
     },
-    [filteredSessions, selectedIndex, onSelectSession, onOpenChange]
+    [filteredTerminals, selectedIndex, onSelectTerminal, onOpenChange]
   );
 
   // Format relative time
@@ -169,7 +169,7 @@ export function QuickSwitcher({
         className="gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-lg"
       >
         <DialogHeader className="sr-only">
-          <DialogTitle>Switch Session / Search Code</DialogTitle>
+          <DialogTitle>Switch Terminal / Search Code</DialogTitle>
         </DialogHeader>
 
         {/* Header strip */}
@@ -181,9 +181,9 @@ export function QuickSwitcher({
               className="flex items-center gap-0.5 rounded-full bg-[var(--fill-4)] p-0.5"
             >
               <ModeCell
-                label="Sessions"
-                active={mode === "sessions"}
-                onClick={() => setMode("sessions")}
+                label="Terminals"
+                active={mode === "terminals"}
+                onClick={() => setMode("terminals")}
               />
               <ModeCell
                 label="Code"
@@ -201,7 +201,7 @@ export function QuickSwitcher({
             <Input
               ref={inputRef}
               placeholder={
-                mode === "sessions" || !ripgrepAvailable
+                mode === "terminals" || !ripgrepAvailable
                   ? "Search terminals"
                   : "Search code (min 3 characters)"
               }
@@ -210,7 +210,7 @@ export function QuickSwitcher({
                 setQuery(e.target.value);
                 setSelectedIndex(0);
               }}
-              onKeyDown={mode === "sessions" ? handleKeyDown : undefined}
+              onKeyDown={mode === "terminals" ? handleKeyDown : undefined}
               className="h-10 rounded-xl pl-9 text-[0.875rem] md:text-[0.875rem]"
             />
           </div>
@@ -218,8 +218,8 @@ export function QuickSwitcher({
 
         {/* Content */}
         <div className="scrollbar-thin max-h-[340px] overflow-y-auto px-2 pb-2">
-          {mode === "sessions" ? (
-            filteredSessions.length === 0 ? (
+          {mode === "terminals" ? (
+            filteredTerminals.length === 0 ? (
               <AEmptyState
                 size="compact"
                 icon={Terminal}
@@ -227,18 +227,18 @@ export function QuickSwitcher({
                 description="Nothing matches that search."
               />
             ) : (
-              filteredSessions.map((session, index) => {
+              filteredTerminals.map((terminal, index) => {
                 const isSelected = index === selectedIndex;
-                const isCurrent = session.id === currentSessionId;
+                const isCurrent = terminal.id === currentTerminalId;
                 // tmux reports last activity in seconds since the epoch.
                 const time = formatTime(
-                  new Date(session.activity * 1000).toISOString()
+                  new Date(terminal.activity * 1000).toISOString()
                 );
                 return (
                   <button
-                    key={session.id}
+                    key={terminal.id}
                     onClick={() => {
-                      onSelectSession(session.id);
+                      onSelectTerminal(terminal.id);
                       onOpenChange(false);
                     }}
                     className={cn(
@@ -259,17 +259,17 @@ export function QuickSwitcher({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
                         <span className="truncate text-[0.875rem] leading-tight tracking-[-0.006em]">
-                          {session.name || "Unnamed Session"}
+                          {terminal.name || "Unnamed Terminal"}
                         </span>
                         {isCurrent && (
                           <Check className="text-primary h-3.5 w-3.5 shrink-0" />
                         )}
                       </div>
                       <div className="text-muted-foreground mt-0.5 flex items-center gap-1.5 truncate text-[0.75rem]">
-                        <span>{session.agent_type || "claude"}</span>
+                        <span>{terminal.agent_type || "claude"}</span>
                         <span className="text-muted-foreground/70">·</span>
                         <span className="truncate">
-                          {session.working_directory?.split("/").pop() || "~"}
+                          {terminal.working_directory?.split("/").pop() || "~"}
                         </span>
                         {time && (
                           <>
@@ -285,7 +285,7 @@ export function QuickSwitcher({
             )
           ) : (
             <CodeSearchResults
-              workingDirectory={activeSessionWorkingDir || "~"}
+              workingDirectory={activeTerminalWorkingDir || "~"}
               query={query}
               onSelectFile={handleSelectFile}
             />
@@ -302,10 +302,10 @@ export function QuickSwitcher({
             <kbd className="rounded bg-[var(--fill-2)] px-1.5 py-0.5">esc</kbd>
             close
           </span>
-          {mode === "sessions" && (
+          {mode === "terminals" && (
             <span className="text-muted-foreground/80 text-[0.6875rem] tabular-nums">
-              {filteredSessions.length}
-              {filteredSessions.length === 1 ? " terminal" : " terminals"}
+              {filteredTerminals.length}
+              {filteredTerminals.length === 1 ? " terminal" : " terminals"}
             </span>
           )}
         </div>

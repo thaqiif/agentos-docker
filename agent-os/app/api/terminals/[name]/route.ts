@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   killTerminal,
   renameTerminal,
-  sanitizeSessionName,
+  sanitizeTerminalName,
   terminalExists,
 } from "@/lib/terminals";
 import {
@@ -14,7 +14,7 @@ import {
 /**
  * DELETE /api/terminals/:name - close a terminal for good.
  *
- * Killing the tmux session alone would leave the registry entry behind and
+ * Killing the tmux terminal alone would leave the registry entry behind and
  * the terminal would reappear as restartable. Closing is explicit user
  * intent, so the entry is forgotten too.
  */
@@ -26,7 +26,7 @@ export async function DELETE(
     const { name } = await params;
     const decoded = decodeURIComponent(name);
 
-    // The session may already be gone (this is how a stopped terminal is
+    // The terminal may already be gone (this is how a stopped terminal is
     // removed); forgetting it is the part that must happen either way.
     await killTerminal(decoded).catch(() => {});
     forgetTerminal(decoded);
@@ -44,7 +44,7 @@ export async function DELETE(
 /**
  * PATCH /api/terminals/:name - rename a terminal.
  *
- * A terminal's name *is* its tmux session name, so this has to keep tmux
+ * A terminal's name *is* its tmux name, so this has to keep tmux
  * and the registry saying the same thing. Every failure here used to be
  * swallowed and the registry renamed regardless, which is how a rename
  * tmux had rejected or rewritten produced one dead entry under the name
@@ -67,7 +67,7 @@ export async function PATCH(
 
     const decoded = decodeURIComponent(name);
     const requested = newName.trim();
-    const target = sanitizeSessionName(requested);
+    const target = sanitizeTerminalName(requested);
 
     if (!target) {
       return NextResponse.json(
@@ -91,7 +91,7 @@ export async function PATCH(
       );
     }
 
-    // A stopped terminal has no session to rename — only a registry entry.
+    // A stopped terminal has no tmux process to rename — only a registry entry.
     const actual = (await terminalExists(decoded))
       ? await renameTerminal(decoded, target)
       : target;

@@ -5,11 +5,11 @@ import { promisify } from "util";
 const execFileAsync = promisify(execFile);
 
 /**
- * POST /api/tmux/split - split the attached tmux session's active pane.
+ * POST /api/tmux/split - split the attached tmux terminal's active pane.
  *
  * Splitting is delegated to tmux rather than done in the browser layout.
  * A React-side split only existed in one tab's memory, so it evaporated on
- * refresh; a tmux split is part of the session's own window layout and is
+ * refresh; a tmux split is part of the terminal's own window layout and is
  * still there when you re-attach, from this browser or any other client.
  *
  * "Split horizontal" puts the new pane to the right, which is tmux's -h;
@@ -18,11 +18,11 @@ const execFileAsync = promisify(execFile);
  */
 export async function POST(request: NextRequest) {
   try {
-    const { session, direction } = await request.json();
+    const { terminal, direction } = await request.json();
 
-    if (!session || typeof session !== "string") {
+    if (!terminal || typeof terminal !== "string") {
       return NextResponse.json(
-        { error: "session is required" },
+        { error: "terminal is required" },
         { status: 400 }
       );
     }
@@ -36,13 +36,13 @@ export async function POST(request: NextRequest) {
 
     const flag = direction === "horizontal" ? "-h" : "-v";
 
-    // execFile, not exec: session names reach us from the client and must
+    // execFile, not exec: terminal names reach us from the client and must
     // never be pasted into a shell string.
     await execFileAsync("tmux", [
       "split-window",
       flag,
       "-t",
-      session,
+      terminal,
       "-c",
       "#{pane_current_path}",
     ]);

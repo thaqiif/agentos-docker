@@ -1,7 +1,7 @@
 [package]
 name = "agent-os"
 version = "0.1.0"
-description = "AgentOS Desktop - Manage AI coding sessions"
+description = "AgentOS Desktop - Manage AI coding terminals"
 authors = ["AgentOS"]
 edition = "2021"
 

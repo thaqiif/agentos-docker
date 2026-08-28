@@ -8,7 +8,7 @@
 FROM node:22-bookworm-slim
 
 # ---- System dependencies AgentOS needs at runtime ----
-# tmux: drives the terminal sessions  |  ripgrep: code search
+# tmux: drives the terminal workspaces  |  ripgrep: code search
 # git/openssh: cloning & git integration  |  procps: process management for tmux
 # gosu: drop from root to the agent user after remapping its UID/GID at startup
 # jq: JSON processor used by the autopilotagent CLI to read task status
@@ -163,7 +163,7 @@ RUN cd "${AGENT_OS_REPO}" \
 # Override with: docker compose build --build-arg AUTOPILOT_REF=<sha|tag|branch>
 # Gated by INSTALL_AUTOPILOT (default true): set false to skip the clone. The
 # entrypoint already guards its install with `if [ -d "${AUTOPILOT_REPO}" ]`, so
-# skipping it here degrades gracefully — sessions just won't have /autopilotagent.
+# skipping it here degrades gracefully — terminals just won't have /autopilotagent.
 ARG INSTALL_AUTOPILOT=true
 ARG AUTOPILOT_REF=multi-agent-support
 ENV AUTOPILOT_REPO=/opt/autopilot-multi
@@ -201,7 +201,7 @@ RUN useradd --create-home --shell /bin/bash --uid 1001 agent \
 # Extra Claude Code profiles the entrypoint generates claude-a, claude-b, ...
 # wrappers for at runtime. The matching UI harnesses (claude-a/b/c) are baked
 # into agent-os/'s vendored source already — adding a profile here past a/b/c
-# gets you a working wrapper CLI but no matching entry in the session-provider
+# gets you a working wrapper CLI but no matching entry in the terminal-provider
 # dropdown; edit the vendored source directly (or re-run
 # inject-claude-profiles.mjs from git history) if you need more UI harnesses.
 ARG CLAUDE_PROFILES="a b c"
@@ -209,10 +209,10 @@ ARG CLAUDE_PROFILES="a b c"
 ENV HOME=/home/agent \
     AGENT_OS_HOME=/home/agent/.agent-os \
     AGENT_OS_PORT=3011 \
-    # AgentOS' SQLite DB (projects, sessions, messages) defaults to
+    # AgentOS' SQLite DB (projects, terminals, messages) defaults to
     # <cwd>/agent-os.db, i.e. /opt/agent-os/agent-os.db — which lives in the
     # image build dir and gets wiped on every rebuild. Relocate it into the
-    # persisted home volume so projects and session history survive redeploys.
+    # persisted home volume so projects and terminal state survive redeploys.
     DB_PATH=/home/agent/.agent-os/agent-os.db \
     NODE_ENV=production \
     PATH=/home/agent/.local/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin \

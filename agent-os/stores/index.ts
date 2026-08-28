@@ -1,1 +1,1 @@
-export { selectionStore, selectionActions } from "./sessionSelection";
+export { selectionStore, selectionActions } from "./terminalSelection";

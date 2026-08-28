@@ -3,16 +3,16 @@
  *
  * There used to be a split tree and a tab list in here, both living only in
  * one browser tab's memory. Splitting is tmux's job now — `tmux split-window`
- * writes into the session's own window layout, so it survives a refresh, a
+ * writes into the terminal's own window layout, so it survives a refresh, a
  * second browser, and the server restarting — and tabs are gone entirely.
  * What is left is the small amount of state the UI genuinely owns: which
- * tmux session the single terminal is attached to, and which view is on top.
+ * tmux terminal the single terminal is attached to, and which view is on top.
  */
 
 export type ViewMode = "terminal" | "files" | "git";
 
 export interface WorkbenchState {
-  /** tmux session name the terminal is attached to, if any. */
+  /** tmux name the terminal is attached to, if any. */
   attachedTmux: string | null;
   viewMode: ViewMode;
   gitDrawerOpen: boolean;

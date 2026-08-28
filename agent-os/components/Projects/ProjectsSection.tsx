@@ -5,23 +5,16 @@ import { useSnapshot } from "valtio";
 import { ProjectCard } from "./ProjectCard";
 import { TerminalCard } from "@/components/TerminalCard";
 import { DevServerCard } from "@/components/DevServers/DevServerCard";
-import { selectionStore, selectionActions } from "@/stores/sessionSelection";
+import { selectionStore, selectionActions } from "@/stores/terminalSelection";
 import type { DevServer } from "@/lib/db";
 import type { TerminalRecord } from "@/lib/terminals";
 import type { ProjectWithDevServers } from "@/lib/projects";
 
-interface SessionStatus {
-  sessionName: string;
-  status: "idle" | "running" | "waiting" | "done" | "error" | "dead";
-}
-
 export interface ProjectsSectionProps {
   projects: ProjectWithDevServers[];
   terminals: TerminalRecord[];
-  /** tmux session name of the terminal currently attached. */
-  activeSessionId?: string;
-  /** Keyed by tmux session name. */
-  terminalStatuses?: Record<string, SessionStatus>;
+  /** tmux name of the terminal currently attached. */
+  activeTerminalId?: string;
   devServers?: DevServer[];
   onToggleProject?: (projectId: string, expanded: boolean) => void;
   onEditProject?: (projectId: string) => void;
@@ -36,61 +29,56 @@ export interface ProjectsSectionProps {
   onRestartDevServer?: (serverId: string) => Promise<void>;
   onRemoveDevServer?: (serverId: string) => Promise<void>;
   onViewDevServerLogs?: (serverId: string) => void;
-  onHoverStart?: (terminal: TerminalRecord, rect: DOMRect) => void;
-  onHoverEnd?: () => void;
 }
 
 export function ProjectsSection({
   projects,
-  terminals: sessions,
-  activeSessionId,
-  terminalStatuses: sessionStatuses,
+  terminals,
+  activeTerminalId,
   devServers = [],
   onToggleProject,
   onEditProject,
   onDeleteProject,
   onRenameProject,
   onNewTerminal,
-  onSelectTerminal: onSelectSession,
-  onCloseTerminal: onDeleteSession,
-  onRenameTerminal: onRenameSession,
+  onSelectTerminal,
+  onCloseTerminal,
+  onRenameTerminal,
   onStartDevServer,
   onStopDevServer,
   onRestartDevServer,
   onRemoveDevServer,
   onViewDevServerLogs,
-  onHoverStart,
-  onHoverEnd,
 }: ProjectsSectionProps) {
   const { selectedIds } = useSnapshot(selectionStore);
   const isInSelectMode = selectedIds.size > 0;
 
-  // Flatten all session IDs for range selection (respecting render order)
-  const allSessionIds = useMemo(() => {
+  // Flatten all terminal IDs for range selection (respecting render order)
+  const allTerminalIds = useMemo(() => {
     const ids: string[] = [];
     for (const project of projects) {
-      const projectSessions = sessions.filter(
-        (s) => (s.project_id || "uncategorized") === project.id
+      const projectTerminals = terminals.filter(
+        (terminal) => (terminal.project_id || "uncategorized") === project.id
       );
-      for (const session of projectSessions) ids.push(session.id);
+      for (const terminal of projectTerminals) ids.push(terminal.id);
     }
     return ids;
-  }, [projects, sessions]);
+  }, [projects, terminals]);
 
-  // Handler for toggling session selection
+  // Handler for toggling terminal selection
   const handleToggleSelect = useCallback(
-    (sessionId: string, shiftKey: boolean) => {
-      selectionActions.toggle(sessionId, shiftKey, allSessionIds);
+    (terminalId: string, shiftKey: boolean) => {
+      selectionActions.toggle(terminalId, shiftKey, allTerminalIds);
     },
-    [allSessionIds]
+    [allTerminalIds]
   );
 
   // Group terminals by the project their working directory falls under.
-  const sessionsByProject = sessions.reduce(
-    (acc, session) => {
-      const projectId = session.project_id || "uncategorized";
+  const terminalsByProject = terminals.reduce(
+    (acc, terminal) => {
+      const projectId = terminal.project_id || "uncategorized";
       if (!acc[projectId]) acc[projectId] = [];
-      acc[projectId].push(session);
+      acc[projectId].push(terminal);
       return acc;
     },
     {} as Record<string, TerminalRecord[]>
@@ -111,7 +99,7 @@ export function ProjectsSection({
   return (
     <div className="flex flex-col gap-1">
       {projects.map((project) => {
-        const projectSessions = sessionsByProject[project.id] || [];
+        const projectTerminals = terminalsByProject[project.id] || [];
         const runningServers = getProjectRunningServers(project.id);
         const projectDevServers = getProjectDevServers(project.id);
 
@@ -177,41 +165,35 @@ export function ProjectsSection({
                   </div>
                 )}
 
-                {/* Project sessions */}
-                {projectSessions.length === 0 &&
+                {/* Project terminals */}
+                {projectTerminals.length === 0 &&
                 projectDevServers.length === 0 ? (
                   <p className="text-muted-foreground px-2.5 py-1.5 text-[0.75rem]">
                     No terminals yet
                   </p>
-                ) : projectSessions.length === 0 ? null : (
-                  projectSessions.map((session) => (
-                    <div key={session.id} className="min-w-0">
+                ) : projectTerminals.length === 0 ? null : (
+                  projectTerminals.map((terminal) => (
+                    <div key={terminal.id} className="min-w-0">
                       <TerminalCard
-                        terminal={session}
-                        isActive={session.id === activeSessionId}
-                        tmuxStatus={sessionStatuses?.[session.id]?.status}
-                        isSelected={selectedIds.has(session.id)}
+                        terminal={terminal}
+                        isActive={terminal.id === activeTerminalId}
+                        isSelected={selectedIds.has(terminal.id)}
                         isInSelectMode={isInSelectMode}
                         onToggleSelect={(shiftKey) =>
-                          handleToggleSelect(session.id, shiftKey)
+                          handleToggleSelect(terminal.id, shiftKey)
                         }
-                        onClick={() => onSelectSession(session.id)}
+                        onClick={() => onSelectTerminal(terminal.id)}
                         onDelete={
-                          onDeleteSession
-                            ? () => onDeleteSession(session.id)
+                          onCloseTerminal
+                            ? () => onCloseTerminal(terminal.id)
                             : undefined
                         }
                         onRename={
-                          onRenameSession
-                            ? (newName) => onRenameSession(session.id, newName)
+                          onRenameTerminal
+                            ? (newName) =>
+                                onRenameTerminal(terminal.id, newName)
                             : undefined
                         }
-                        onHoverStart={
-                          onHoverStart
-                            ? (rect) => onHoverStart(session, rect)
-                            : undefined
-                        }
-                        onHoverEnd={onHoverEnd}
                       />
                     </div>
                   ))

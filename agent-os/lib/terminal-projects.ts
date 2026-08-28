@@ -3,7 +3,7 @@ import type { Project } from "@/lib/db";
 /**
  * Which project a terminal belongs to.
  *
- * Terminals have no stored project link any more — they are tmux sessions,
+ * Terminals have no stored project link any more — they are backed by tmux,
  * and tmux only knows a working directory. So the association is derived:
  * the project whose working directory is the longest prefix of the
  * terminal's path. Longest wins so that a project nested inside another

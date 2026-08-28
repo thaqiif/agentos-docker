@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-28
+
+### Changed
+
+- Standardized product terminology from "session" to "terminal" across the
+  UI, internal terminal state, APIs, documentation, and desktop metadata.
+
+### Removed
+
+- Removed browser notifications, waiting-for-input indicators, notification
+  sounds, status polling/SSE, and automatic agent status-hook installation.
+
 ## 2026-08-27
 
 ### Changed

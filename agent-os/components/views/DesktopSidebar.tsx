@@ -10,11 +10,8 @@ const COLLAPSE_DELAY_MS = 300;
 
 interface DesktopSidebarProps {
   isPinned: boolean;
-  /** Notification bell, rendered into the sidebar header. */
-  notifications?: React.ReactNode;
   onQuickSwitch?: () => void;
-  activeSessionId?: string;
-  terminalStatuses: React.ComponentProps<typeof TerminalList>["terminalStatuses"];
+  activeTerminalId?: string;
   onSelect: (name: string) => void;
   onNewTerminal: (projectId?: string) => void;
   onCloseTerminal: (projectId: string) => void;
@@ -26,10 +23,8 @@ interface DesktopSidebarProps {
 
 export function DesktopSidebar({
   isPinned,
-  notifications,
   onQuickSwitch,
-  activeSessionId,
-  terminalStatuses,
+  activeTerminalId,
   onSelect,
   onNewTerminal,
   onCloseTerminal,
@@ -80,14 +75,12 @@ export function DesktopSidebar({
     <div className="flex h-full flex-col">
       <div className="min-h-0 flex-1 overflow-hidden">
         <TerminalList
-          activeSessionId={activeSessionId}
-          terminalStatuses={terminalStatuses}
+          activeTerminalId={activeTerminalId}
           onSelect={onSelect}
           onNewTerminal={onNewTerminal}
           onCloseTerminal={onCloseTerminal}
           onStartDevServer={onStartDevServer}
           onCreateDevServer={onCreateDevServer}
-          notifications={notifications}
           onQuickSwitch={onQuickSwitch}
         />
       </div>

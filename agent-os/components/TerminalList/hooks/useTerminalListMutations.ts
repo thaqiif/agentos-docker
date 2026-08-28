@@ -18,9 +18,9 @@ import { terminalKeys } from "@/data/terminals/keys";
 /**
  * Sidebar mutations.
  *
- * Terminals are tmux sessions, so "delete" is `tmux kill-session` and
+ * Terminals are tmux workspaces, so "delete" is `tmux kill-session` and
  * "rename" is `tmux rename-session`. Fork, summarize and move-to-project
- * went with the session table: a terminal's project is derived from its
+ * went with the old database table: a terminal's project is derived from its
  * working directory, and there is nothing stored to fork or summarize.
  */
 export function useTerminalListMutations() {

@@ -1,15 +1,8 @@
 import type { TerminalRecord } from "@/lib/terminals";
 
-export interface SessionStatus {
-  sessionName: string;
-  status: "idle" | "running" | "waiting" | "done" | "error" | "dead";
-}
-
 export interface TerminalListProps {
-  /** tmux session name of the terminal currently attached. */
-  activeSessionId?: string;
-  /** Keyed by tmux session name. */
-  terminalStatuses?: Record<string, SessionStatus>;
+  /** tmux name of the terminal currently attached. */
+  activeTerminalId?: string;
   onSelect: (name: string) => void;
   /** Open a new terminal, optionally in a project's working directory. */
   onNewTerminal?: (projectId?: string) => void;
@@ -23,12 +16,10 @@ export interface TerminalListProps {
     workingDirectory: string;
     ports?: number[];
   }) => Promise<void>;
-  /** Notification bell element, rendered into the sidebar header. */
-  notifications?: React.ReactNode;
   onQuickSwitch?: () => void;
 }
 
-export interface SessionHoverHandlers {
+export interface TerminalHoverHandlers {
   onHoverStart: (terminal: TerminalRecord, rect: DOMRect) => void;
   onHoverEnd: () => void;
 }

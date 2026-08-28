@@ -3,9 +3,9 @@
  *
  * tmux stays the source of truth for what is *running*. This module adds
  * the one thing tmux cannot tell us: that a terminal exists at all after
- * its session has been killed.
+ * its tmux process has been killed.
  *
- * Without it, killing the last tmux session made the terminal disappear
+ * Without it, killing the last tmux terminal made the terminal disappear
  * from the sidebar with no way to get it back. Now the entry survives,
  * marked not-alive, and selecting it starts tmux again in the same working
  * directory under the same name.
@@ -17,9 +17,9 @@
 import { getDb, queries, type TerminalRow } from "@/lib/db";
 import { listTerminals, type Terminal } from "@/lib/terminals";
 
-/** A terminal, whether or not tmux currently has a session for it. */
+/** A terminal, whether or not tmux currently has a process for it. */
 export interface KnownTerminal extends Terminal {
-  /** False when the tmux session is gone and selecting it would restart it. */
+  /** False when the tmux process is gone and selecting it would restart it. */
   alive: boolean;
 }
 
@@ -48,10 +48,10 @@ export function terminalWorkingDirectory(name: string): string | null {
 }
 
 /**
- * Every terminal: live tmux sessions first, then registry entries whose
- * session is gone.
+ * Every terminal: live tmux terminals first, then registry entries whose
+ * process is gone.
  *
- * Live sessions are folded back into the registry as we go, so a session
+ * Live terminals are folded back into the registry as we go, so a terminal
  * started outside AgentOS (`tmux new` in a shell) becomes a first-class
  * terminal that survives being killed, exactly like one we created.
  */
@@ -76,7 +76,7 @@ export async function listKnownTerminals(): Promise<KnownTerminal[]> {
       continue;
     }
 
-    // Stopped: no tmux session, so no panes, no activity and no harness.
+    // Stopped: no tmux process, so no panes, no activity and no harness.
     // last_seen_at is when we last saw it running, which is what the card
     // should show as its timestamp.
     known.push({

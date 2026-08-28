@@ -17,7 +17,7 @@ const RECENT_LIMIT = 6;
  * What the workbench shows when it is not attached to anything.
  *
  * Before this, an unattached workbench still rendered a live terminal — a
- * bare shell that looked like a tmux session but was not one, so anything
+ * bare shell that looked like a tmux terminal but was not one, so anything
  * typed into it vanished on refresh. Showing nothing at all is more honest,
  * and gives closing a terminal somewhere to land.
  *

@@ -7,7 +7,7 @@ import { useViewport } from "@/hooks/useViewport";
 import type { TerminalHandle } from "@/components/Terminal";
 import type { ProjectWithRepositories } from "@/lib/projects";
 import type { TerminalRecord } from "@/lib/terminals";
-import { sessionRegistry } from "@/lib/client/session-registry";
+import { terminalStateRegistry } from "@/lib/client/terminal-state-registry";
 import { cn } from "@/lib/utils";
 import { useFileEditor } from "@/hooks/useFileEditor";
 import { MobileTabBar } from "./MobileTabBar";
@@ -86,9 +86,9 @@ export const Pane = memo(function Pane({
 
   const terminalRef = useRef<TerminalHandle | null>(null);
 
-  // The attached tmux session is the source of truth for which working
+  // The attached tmux terminal is the source of truth for which working
   // directory the Files and Git views point at.
-  const session = useMemo(
+  const currentTerminal = useMemo(
     () => terminals.find((t) => t.tmux_name === attachedTmux) ?? null,
     [terminals, attachedTmux]
   );
@@ -96,9 +96,9 @@ export const Pane = memo(function Pane({
   const fileEditor = useFileEditor();
 
   const currentProject = useMemo(() => {
-    if (!session?.project_id) return null;
-    return projects.find((p) => p.id === session.project_id) || null;
-  }, [session, projects]);
+    if (!currentTerminal?.project_id) return null;
+    return projects.find((p) => p.id === currentTerminal.project_id) || null;
+  }, [currentTerminal, projects]);
 
   const projectRepositories = useMemo(() => {
     if (!currentProject) return [];
@@ -114,12 +114,12 @@ export const Pane = memo(function Pane({
   }, [attachedTmux]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (fileOpenRequest && session) {
+    if (fileOpenRequest && currentTerminal) {
       setViewMode("files");
       fileEditor.openFile(fileOpenRequest.path);
       fileOpenActions.clearRequest();
     }
-  }, [fileOpenRequest, session, fileEditor, setViewMode]);
+  }, [fileOpenRequest, currentTerminal, fileEditor, setViewMode]);
 
   const setTerminalRef = useCallback((handle: TerminalHandle | null) => {
     terminalRef.current = handle;
@@ -157,8 +157,8 @@ export const Pane = memo(function Pane({
 
   // Swipe between terminals on mobile.
   const touchStartX = useRef<number | null>(null);
-  const currentIndex = session
-    ? terminals.findIndex((t) => t.id === session.id)
+  const currentIndex = currentTerminal
+    ? terminals.findIndex((t) => t.id === currentTerminal.id)
     : -1;
   const SWIPE_THRESHOLD = 120;
 
@@ -187,14 +187,14 @@ export const Pane = memo(function Pane({
     [viewMode, currentIndex, terminals, onSelectTerminal]
   );
 
-  const savedState = sessionRegistry.getTerminalState(paneId, "terminal");
+  const savedState = terminalStateRegistry.getTerminalState(paneId, "terminal");
 
   const terminal = (
     <Terminal
       ref={setTerminalRef}
       onConnected={handleTerminalConnected}
       onBeforeUnmount={(scrollState) => {
-        sessionRegistry.saveTerminalState(paneId, "terminal", {
+        terminalStateRegistry.saveTerminalState(paneId, "terminal", {
           scrollTop: scrollState.scrollTop,
           scrollHeight: 0,
           lastActivity: Date.now(),
@@ -214,7 +214,7 @@ export const Pane = memo(function Pane({
   );
 
   // Nothing attached means nothing to show: the terminal only exists as a
-  // window onto a tmux session, so without one it would be a throwaway
+  // window onto a tmux terminal, so without one it would be a throwaway
   // shell pretending to be persistent.
   const surface = attachedTmux ? (
     terminal
@@ -238,7 +238,7 @@ export const Pane = memo(function Pane({
           lives in the workbench top bar, so the pane has no chrome. */}
       {isMobile && (
         <MobileTabBar
-          terminal={session}
+          terminal={currentTerminal}
           projects={projects}
           viewMode={viewMode}
           onMenuClick={onMenuClick}
@@ -256,19 +256,19 @@ export const Pane = memo(function Pane({
             {surface}
           </div>
 
-          {session?.working_directory && (
+          {currentTerminal?.working_directory && (
             <div className={viewMode === "files" ? "h-full" : "hidden"}>
               <FileExplorer
-                workingDirectory={session.working_directory}
+                workingDirectory={currentTerminal.working_directory}
                 fileEditor={fileEditor}
               />
             </div>
           )}
 
-          {session?.working_directory && (
+          {currentTerminal?.working_directory && (
             <div className={viewMode === "git" ? "h-full" : "hidden"}>
               <GitPanel
-                workingDirectory={session.working_directory}
+                workingDirectory={currentTerminal.working_directory}
                 projectId={currentProject?.id}
                 repositories={projectRepositories}
               />
@@ -292,10 +292,10 @@ export const Pane = memo(function Pane({
                     {surface}
                   </div>
 
-                  {session?.working_directory && (
+                  {currentTerminal?.working_directory && (
                     <div className={viewMode === "files" ? "h-full" : "hidden"}>
                       <FileExplorer
-                        workingDirectory={session.working_directory}
+                        workingDirectory={currentTerminal.working_directory}
                         fileEditor={fileEditor}
                       />
                     </div>
@@ -303,14 +303,14 @@ export const Pane = memo(function Pane({
                 </div>
               </ResizablePanel>
 
-              {shellDrawerOpen && session?.working_directory && (
+              {shellDrawerOpen && currentTerminal?.working_directory && (
                 <>
                   <ResizablePanelHandle className="relative h-px cursor-row-resize bg-[var(--fill-2)] transition-colors duration-200 after:absolute after:inset-x-0 after:-top-1 after:h-3 after:content-[''] hover:bg-primary/40 active:bg-primary/60" />
                   <ResizablePanel defaultSize={30} minSize={10}>
                     <ShellDrawer
                       open={true}
                       onOpenChange={toggleShellDrawer}
-                      workingDirectory={session.working_directory}
+                      workingDirectory={currentTerminal.working_directory}
                     />
                   </ResizablePanel>
                 </>
@@ -318,14 +318,14 @@ export const Pane = memo(function Pane({
             </ResizablePanelGroup>
           </ResizablePanel>
 
-          {gitDrawerOpen && session?.working_directory && (
+          {gitDrawerOpen && currentTerminal?.working_directory && (
             <>
               <ResizablePanelHandle className="relative w-px cursor-col-resize bg-[var(--fill-2)] transition-colors duration-200 after:absolute after:inset-y-0 after:-left-1 after:w-3 after:content-[''] hover:bg-primary/40 active:bg-primary/60" />
               <ResizablePanel defaultSize={30} minSize={10}>
                 <GitDrawer
                   open={true}
                   onOpenChange={toggleGitDrawer}
-                  workingDirectory={session.working_directory}
+                  workingDirectory={currentTerminal.working_directory}
                   projectId={currentProject?.id}
                   repositories={projectRepositories}
                 />

@@ -37,7 +37,7 @@ Since `oldWs` and `ws` referenced the **same WebSocket object**, setting `oldWs.
 This meant the `onopen` handler never fired on the new connection, so:
 
 - `callbacks.onConnected?.()` was never called
-- The `tmux attach -t {session}` command was never sent
+- The `tmux attach -t {terminal}` command was never sent
 - The PTY shell had nothing to do and exited with code 1
 
 ## Solution

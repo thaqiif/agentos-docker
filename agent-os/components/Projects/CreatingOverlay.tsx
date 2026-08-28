@@ -19,8 +19,8 @@ interface CreatingOverlayProps {
 /**
  * Full-screen progress overlay for multi-step project creation.
  *
- * Previously lived under NewSessionDialog and carried a default set of
- * worktree steps. Worktrees went with the session model; the only caller
+ * Previously lived under NewTerminalDialog and carried a default set of
+ * worktree steps. Worktrees went with the terminal model; the only caller
  * left is the clone flow, which supplies its own steps.
  */
 export function CreatingOverlay({ step, steps, hint }: CreatingOverlayProps) {

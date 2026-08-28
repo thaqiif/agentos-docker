@@ -11,8 +11,8 @@
  * // With tooltip
  * <AIconButton icon={MessageSquare} tooltip="Comments" onClick={handleClick} />
  *
- * // With badge (for notifications)
- * <AIconButton icon={Bell} tooltip="Notifications" badge={5} onClick={handleClick} />
+ * // With a badge count
+ * <AIconButton icon={MessageSquare} tooltip="Messages" badge={5} onClick={handleClick} />
  *
  * // With dot indicator (for active state)
  * <AIconButton icon={Share2} tooltip="Share" dot dotColor="blue" onClick={handleClick} />
@@ -51,7 +51,7 @@ export interface AIconButtonProps extends Omit<
   shortcut?: string;
   /** Tooltip position */
   tooltipSide?: "top" | "right" | "bottom" | "left";
-  /** Optional badge count (shows red notification badge) */
+  /** Optional badge count */
   badge?: number;
   /** Show a small dot indicator */
   dot?: boolean;

@@ -347,7 +347,7 @@ EOF
 
         cat > "$service_path" << EOF
 [Unit]
-Description=AgentOS - AI Coding Session Manager
+Description=AgentOS - AI Coding Terminal Manager
 After=network.target
 
 [Service]
@@ -463,7 +463,7 @@ cmd_start_foreground() {
 
 cmd_help() {
     echo ""
-    echo -e "${BOLD}AgentOS${NC} - Self-hosted AI coding session manager"
+    echo -e "${BOLD}AgentOS${NC} - Self-hosted AI coding terminal manager"
     echo ""
     echo "Usage: agent-os <command>"
     echo ""

@@ -1,4 +1,4 @@
-// AgentOS session initialization
+// AgentOS terminal initialization
 // Writes an init script that shows the banner, configures tmux, then runs the agent
 
 import * as fs from "fs";
@@ -10,7 +10,7 @@ import * as path from "path";
  */
 function generateInitScript(agentCommand: string): string {
   return `#!/bin/bash
-# AgentOS Session Init Script
+# AgentOS Terminal Init Script
 # Auto-generated - do not edit manually
 
 # ANSI Colors (purple theme)
@@ -40,7 +40,7 @@ printf "\${C_PURPLE2}  / ___ \\\\ (_| |  __/ | | | |_| |_| |___) |\${C_RESET}\\n
 printf "\${C_PINK} /_/   \\\\_\\\\__, |\\\\___|_| |_|\\\\__|\\\\___/|____/ \${C_RESET}\\n"
 printf "\${C_PINK}         |___/                            \${C_RESET}\\n"
 printf "\\n"
-printf "\${C_MUTED}         AI Coding Session Manager\${C_RESET}\\n"
+printf "\${C_MUTED}         AI Coding Terminal Manager\${C_RESET}\\n"
 printf "\\n"
 
 # Brief pause to show banner
@@ -76,6 +76,6 @@ export function getBanner(): string {
  /_/   \\_\\__, |\\___|_| |_|\\__|\\___/|____/
          |___/
 
-         AI Coding Session Manager
+         AI Coding Terminal Manager
 `;
 }

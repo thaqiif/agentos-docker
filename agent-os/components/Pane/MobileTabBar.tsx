@@ -161,7 +161,7 @@ interface MobileTabBarProps {
 }
 
 export function MobileTabBar({
-  terminal: session,
+  terminal,
   projects,
   viewMode,
   onMenuClick,
@@ -169,9 +169,9 @@ export function MobileTabBar({
 }: MobileTabBarProps) {
   const renameTerminal = useTerminalRename();
 
-  // Get project name for current session
-  const projectName = session?.project_id
-    ? projects.find((p) => p.id === session.project_id)?.name
+  // Get project name for current terminal
+  const projectName = terminal?.project_id
+    ? projects.find((p) => p.id === terminal.project_id)?.name
     : null;
 
   return (
@@ -199,9 +199,9 @@ export function MobileTabBar({
 
       {/* Current terminal's name, renamable in place */}
       <div className="flex min-w-0 flex-1 items-center gap-1">
-        {session ? (
+        {terminal ? (
           <MobileTerminalTitle
-            name={session.name}
+            name={terminal.name}
             projectName={projectName}
             onRename={renameTerminal}
           />
@@ -213,7 +213,7 @@ export function MobileTabBar({
       </div>
 
       {/* View mode toggle */}
-      {session?.working_directory && (
+      {terminal?.working_directory && (
         <div
           role="tablist"
           className="relative flex shrink-0 items-center rounded-full bg-[var(--fill-4)] p-0.5"

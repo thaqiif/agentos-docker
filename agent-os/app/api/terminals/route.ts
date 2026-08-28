@@ -10,9 +10,9 @@ import { resolveProjectForPath } from "@/lib/terminal-projects";
 /**
  * GET /api/terminals - every terminal, with its harness and project.
  *
- * tmux is the source of truth for what is running: a session started from a
+ * tmux is the source of truth for what is running: a terminal started from a
  * plain shell shows up here exactly like one started from the UI. The
- * registry adds terminals whose session has been killed, which come back
+ * registry adds terminals whose tmux process has been killed, which come back
  * marked `alive: false` so they can be restarted rather than disappearing.
  */
 export async function GET() {

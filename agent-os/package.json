@@ -1,7 +1,7 @@
 {
   "name": "@saadnvd1/agent-os",
   "version": "0.2.1",
-  "description": "Self-hosted web UI for managing Claude Code sessions",
+  "description": "Self-hosted web UI for managing Claude Code terminals",
   "bin": {
     "agent-os": "./scripts/agent-os"
   },

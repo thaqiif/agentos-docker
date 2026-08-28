@@ -185,10 +185,10 @@ export function isValidProviderId(value: string): value is ProviderId {
 }
 
 /**
- * Get regex pattern for matching AgentOS-managed tmux session names
+ * Get regex pattern for matching AgentOS-managed terminal names
  * Format: {provider}-{uuid}
  */
-export function getManagedSessionPattern(): RegExp {
+export function getManagedTerminalPattern(): RegExp {
   const providerPattern = PROVIDER_IDS.join("|");
   return new RegExp(
     `^(${providerPattern})-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`,
@@ -197,13 +197,13 @@ export function getManagedSessionPattern(): RegExp {
 }
 
 /**
- * Get provider ID from a session name (e.g., "claude-abc123" -> "claude")
+ * Get provider ID from a terminal name (e.g., "claude-abc123" -> "claude")
  */
-export function getProviderIdFromSessionName(
-  sessionName: string
+export function getProviderIdFromTerminalName(
+  terminalName: string
 ): ProviderId | null {
   for (const id of PROVIDER_IDS) {
-    if (sessionName.startsWith(`${id}-`)) {
+    if (terminalName.startsWith(`${id}-`)) {
       return id;
     }
   }
@@ -211,9 +211,9 @@ export function getProviderIdFromSessionName(
 }
 
 /**
- * Extract the UUID from a session name (e.g., "claude-abc123" -> "abc123")
+ * Extract the UUID from a terminal name (e.g., "claude-abc123" -> "abc123")
  */
-export function getSessionIdFromName(sessionName: string): string {
+export function getTerminalIdFromName(terminalName: string): string {
   const providerPattern = PROVIDER_IDS.join("|");
-  return sessionName.replace(new RegExp(`^(${providerPattern})-`, "i"), "");
+  return terminalName.replace(new RegExp(`^(${providerPattern})-`, "i"), "");
 }

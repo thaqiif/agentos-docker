@@ -23,7 +23,7 @@ export function useProjects() {
     async (projectId: string) => {
       if (
         !confirm(
-          "Delete this project? Sessions will be moved to Uncategorized."
+          "Delete this project? Terminals will be moved to Uncategorized."
         )
       )
         return;

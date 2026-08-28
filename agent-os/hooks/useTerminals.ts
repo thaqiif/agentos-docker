@@ -28,7 +28,7 @@ export function useTerminals() {
 
   const killTerminal = useCallback(
     async (name: string) => {
-      // Killing a tmux session takes its processes with it, so make sure
+      // Killing a tmux terminal takes its processes with it, so make sure
       // that is what was meant.
       if (!confirm("Close this terminal? Anything running in it is killed."))
         return;

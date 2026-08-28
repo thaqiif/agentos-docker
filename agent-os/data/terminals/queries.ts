@@ -12,7 +12,7 @@ async function fetchTerminals(): Promise<TerminalRecord[]> {
  * The terminal list.
  *
  * tmux owns this, so it can change without the UI doing anything — someone
- * running `tmux new` in a shell, or a session exiting. A modest refetch
+ * running `tmux new` in a shell, or a terminal exiting. A modest refetch
  * interval keeps the list honest; status liveness comes over SSE separately.
  */
 export function useTerminalsQuery() {

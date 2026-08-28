@@ -1,6 +1,5 @@
 "use client";
 
-import { NotificationSettings } from "@/components/NotificationSettings";
 import { StartServerDialog } from "@/components/DevServers/StartServerDialog";
 import { DesktopSidebar } from "./DesktopSidebar";
 import { Button } from "@/components/ui/button";
@@ -21,16 +20,9 @@ import { WorkbenchTitle } from "./WorkbenchTitle";
 export function DesktopView({
   terminals,
   projects,
-  terminalStatuses,
-  activeSession,
-  showNotificationSettings,
-  setShowNotificationSettings,
+  activeTerminal,
   showQuickSwitcher,
   setShowQuickSwitcher,
-  notificationSettings,
-  permissionGranted,
-  updateSettings,
-  requestPermission,
   attachToTerminal,
   handleNewTerminal,
   handleCloseTerminal,
@@ -49,8 +41,7 @@ export function DesktopView({
     <div className="ambient-canvas flex h-screen overflow-hidden">
       <DesktopSidebar
         isPinned={isPinned}
-        activeSessionId={activeSession?.id}
-        terminalStatuses={terminalStatuses}
+        activeTerminalId={activeTerminal?.id}
         onSelect={(id) => {
           attachToTerminal(id);
         }}
@@ -59,25 +50,6 @@ export function DesktopView({
         onStartDevServer={handleStartDevServer}
         onCreateDevServer={handleCreateDevServer}
         onQuickSwitch={() => setShowQuickSwitcher(true)}
-        notifications={
-          <NotificationSettings
-            open={showNotificationSettings}
-            onOpenChange={setShowNotificationSettings}
-            settings={notificationSettings}
-            permissionGranted={permissionGranted}
-            waitingSessions={terminals
-              .filter((t) => {
-                // Anything wanting attention: blocked on input, or
-                // finished and not looked at yet.
-                const status = terminalStatuses[t.id]?.status;
-                return status === "waiting" || status === "done";
-              })
-              .map((t) => ({ id: t.id, name: t.name }))}
-            onUpdateSettings={updateSettings}
-            onRequestPermission={requestPermission}
-            onSelectSession={(id) => attachToTerminal(id)}
-          />
-        }
       />
 
       {/* Main content */}
@@ -110,13 +82,13 @@ export function DesktopView({
               </TooltipContent>
             </Tooltip>
 
-            {activeSession && (
+            {activeTerminal && (
               <div className="ml-1 flex min-w-0 items-center gap-1 rounded-full bg-[var(--fill-4)] py-1 pr-1 pl-3">
                 <WorkbenchTitle
-                  name={activeSession.name}
+                  name={activeTerminal.name}
                   onRename={renameTerminal}
                 />
-                {/* Detach, not kill: the session and everything in it keep
+                {/* Detach, not kill: the terminal and everything in it keep
                     running, the workbench just stops looking at it. */}
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -158,13 +130,15 @@ export function DesktopView({
         terminals={terminals}
         open={showQuickSwitcher}
         onOpenChange={setShowQuickSwitcher}
-        currentSessionId={activeSession?.id}
-        activeSessionWorkingDir={activeSession?.working_directory ?? undefined}
-        onSelectSession={(name) => attachToTerminal(name)}
+        currentTerminalId={activeTerminal?.id}
+        activeTerminalWorkingDir={
+          activeTerminal?.working_directory ?? undefined
+        }
+        onSelectTerminal={(name) => attachToTerminal(name)}
         onSelectFile={(file, line) => {
           // Convert relative path to absolute by prepending working directory
-          const absolutePath = activeSession?.working_directory
-            ? `${activeSession.working_directory}/${file.replace(/^\.\//, "")}`
+          const absolutePath = activeTerminal?.working_directory
+            ? `${activeTerminal.working_directory}/${file.replace(/^\.\//, "")}`
             : file;
           fileOpenActions.requestOpen(absolutePath, line);
         }}

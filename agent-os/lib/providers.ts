@@ -31,11 +31,6 @@ export interface AgentProvider {
   // Build the CLI command flags
   buildFlags(options: BuildFlagsOptions): string[];
 
-  // Status detection patterns
-  waitingPatterns: RegExp[];
-  runningPatterns: RegExp[];
-  idlePatterns: RegExp[];
-
   // Session ID detection (optional - not all CLIs support this)
   getSessionId?: (projectPath: string) => string | null;
 
@@ -51,9 +46,6 @@ export interface BuildFlagsOptions {
   model?: string;
   initialPrompt?: string; // Initial prompt to send to agent
 }
-
-// Common spinner characters used across CLIs
-const SPINNER_CHARS = /⠋|⠙|⠹|⠸|⠼|⠴|⠦|⠧|⠇|⠏/;
 
 /**
  * Claude Code Provider
@@ -100,40 +92,6 @@ export const claudeProvider: AgentProvider = {
     return flags;
   },
 
-  waitingPatterns: [
-    /\[Y\/n\]/i,
-    /\[y\/N\]/i,
-    /Allow\?/i,
-    /Approve\?/i,
-    /Continue\?/i,
-    /Press Enter/i,
-    /waiting for/i,
-    /\(yes\/no\)/i,
-    /Do you want to/i,
-    /Esc to cancel/i,
-    />\s*1\.\s*Yes/, // Claude's approval menu
-    /Yes, allow all/i,
-    /allow all edits/i,
-    /allow all commands/i,
-  ],
-
-  runningPatterns: [
-    /thinking/i,
-    /Working/i,
-    /Reading/i,
-    /Writing/i,
-    /Searching/i,
-    /Running/i,
-    /Executing/i,
-    SPINNER_CHARS,
-  ],
-
-  idlePatterns: [
-    /^>\s*$/m,
-    /claude.*>\s*$/im,
-    /✻\s*Sautéed/i, // Claude finished processing
-    /✻\s*Done/i,
-  ],
 };
 
 /**
@@ -189,24 +147,6 @@ export const commandcodeProvider: AgentProvider = {
     return flags;
   },
 
-  waitingPatterns: [
-    /\[Y\/n\]/i,
-    /\[y\/N\]/i,
-    /approve/i,
-    /confirm/i,
-    /Press Enter/i,
-    /\(yes\/no\)/i,
-    /Do you want to/i,
-  ],
-
-  runningPatterns: [
-    /thinking/i,
-    /working/i,
-    /generating/i,
-    SPINNER_CHARS,
-  ],
-
-  idlePatterns: [/^>\s*$/m, /commandcode.*>\s*$/im, /\$\s*$/m],
 };
 
 export const codexProvider: AgentProvider = {
@@ -245,18 +185,6 @@ export const codexProvider: AgentProvider = {
     return flags;
   },
 
-  waitingPatterns: [
-    /\[Y\/n\]/i,
-    /\[y\/N\]/i,
-    /approve/i,
-    /confirm/i,
-    /Press Enter/i,
-    /\(yes\/no\)/i,
-  ],
-
-  runningPatterns: [/thinking/i, /processing/i, /generating/i, SPINNER_CHARS],
-
-  idlePatterns: [/^>\s*$/m, /codex.*>\s*$/im, /\$\s*$/m],
 };
 
 /**
@@ -296,17 +224,6 @@ export const opencodeProvider: AgentProvider = {
     return flags;
   },
 
-  waitingPatterns: [
-    /\[Y\/n\]/i,
-    /\[y\/N\]/i,
-    /confirm/i,
-    /Press Enter/i,
-    /\(yes\/no\)/i,
-  ],
-
-  runningPatterns: [/thinking/i, /processing/i, /working/i, SPINNER_CHARS],
-
-  idlePatterns: [/^>\s*$/m, /opencode.*>\s*$/im, /\$\s*$/m],
 };
 
 /**
@@ -327,9 +244,6 @@ export const shellProvider: AgentProvider = {
     return []; // No flags for shell
   },
 
-  waitingPatterns: [],
-  runningPatterns: [],
-  idlePatterns: [/\$\s*$/m, />\s*$/m, /%\s*$/m],
 };
 
 // Provider registry

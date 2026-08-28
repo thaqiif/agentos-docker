@@ -1,6 +1,6 @@
 # AgentOS
 
-A mobile-first web UI for managing AI coding sessions.
+A mobile-first web UI for managing AI coding terminals.
 
 [![Discord](https://img.shields.io/badge/Discord-Join%20us-5865F2?logo=discord&logoColor=white)](https://discord.gg/cSjutkCGAh)
 
@@ -73,15 +73,15 @@ npm run dev  # http://localhost:3011
 ## Features
 
 - **Mobile-first** - Full functionality from your phone, not a dumbed-down responsive view
-- **Voice-to-text** - Dictate prompts to your coding sessions hands-free
-- **Multi-pane layout** - Run up to 4 sessions side-by-side
+- **Voice-to-text** - Dictate prompts to your coding terminals hands-free
+- **Multi-pane layout** - Run up to 4 terminals side-by-side
 - **Code search** - Fast codebase search with syntax-highlighted results (Cmd+K)
-- **File picker** - Browse and attach files to sessions, with direct upload from mobile
+- **File picker** - Browse and attach files to terminals, with direct upload from mobile
 - **Clone from GitHub** - Clone repos directly from the UI when creating projects
 - **Git integration** - Status, diffs, commits, PRs from the UI
 - **Git worktrees** - Isolated branches with auto-setup
 - **Dev servers** - Start/stop Node.js and Docker servers
-- **Session orchestration** - Conductor/worker model via MCP
+- **Terminal orchestration** - Conductor/worker model via MCP
 
 ## CLI Commands
 
@@ -109,7 +109,7 @@ For configuration and advanced usage, see the [docs](https://www.runagentos.com/
 ## Related Projects
 
 - **[aTerm](https://github.com/saadnvd1/aTerm)** - A Tauri-based desktop terminal workspace for AI-assisted coding. While AgentOS is a mobile-first web UI, aTerm is a native desktop app with multi-pane layouts optimized for running AI coding agents (Claude Code, Aider, OpenCode) alongside shells, dev servers, and a built-in git panel. Choose AgentOS for mobile access and browser-based workflows, or aTerm for a native desktop terminal experience.
-- **[LumifyHub](https://lumifyhub.io)** - Team collaboration platform with real-time chat and structured documentation. Useful alongside AgentOS for coordinating multi-agent work across a team — share session context, document architectural decisions from coding sessions, and track progress across parallel agent workflows.
+- **[LumifyHub](https://lumifyhub.io)** - Team collaboration platform with real-time chat and structured documentation. Useful alongside AgentOS for coordinating multi-agent work across a team — share terminal context, document architectural decisions from coding terminals, and track progress across parallel agent workflows.
 
 ## License
 
