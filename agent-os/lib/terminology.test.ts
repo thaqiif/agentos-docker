@@ -113,3 +113,42 @@ test("notification and waiting-alert surfaces are removed", () => {
     assert.doesNotMatch(source, pattern, `${relativePath} retains alert code`);
   }
 });
+
+test("terminal surfaces use the terminal icon everywhere", () => {
+  const terminalIconSurfaces = [
+    ["components/Welcome.tsx", /Terminal as TerminalIcon/],
+    ["components/QuickSwitcher.tsx", /import \{ Terminal,/],
+    ["components/Pane/MobileTabBar.tsx", /Terminal as TerminalIcon/],
+    ["components/TmuxTerminals.tsx", /RefreshCw, Terminal, MonitorUp/],
+    ["components/views/WorkbenchBar.tsx", /label: "Terminal", icon: Terminal/],
+    [
+      "components/TerminalList/TerminalListHeader.tsx",
+      /Terminal,\n\} from "lucide-react";/,
+    ],
+  ] as const;
+
+  for (const [relativePath, pattern] of terminalIconSurfaces) {
+    const source = readFileSync(join(process.cwd(), relativePath), "utf8");
+    assert.match(
+      source,
+      pattern,
+      `${relativePath} should use the terminal icon`
+    );
+  }
+
+  const iconSources = ["app/icon.svg", "public/icon.svg"];
+  for (const relativePath of iconSources) {
+    const source = readFileSync(join(process.cwd(), relativePath), "utf8");
+    assert.match(
+      source,
+      /m4 17 6-6-6/,
+      `${relativePath} is not a terminal icon`
+    );
+    assert.match(source, /M12 19h8/, `${relativePath} is not a terminal icon`);
+    assert.doesNotMatch(
+      source,
+      /M12 8V4H8/,
+      `${relativePath} still uses the old icon`
+    );
+  }
+});

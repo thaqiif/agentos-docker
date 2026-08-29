@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-29
+
+### Changed
+
+- Standardized the terminal prompt icon across the web app, PWA assets, and
+  desktop platform assets.
+
 ## 2026-08-28
 
 ### Changed

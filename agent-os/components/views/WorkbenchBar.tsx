@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Columns2,
-  FolderOpen,
-  GitBranch,
-  Rows2,
-  SquareTerminal,
-  Terminal,
-} from "lucide-react";
+import { Columns2, FolderOpen, GitBranch, Rows2, Terminal } from "lucide-react";
 import { usePanes } from "@/contexts/PaneContext";
 import {
   Tooltip,
@@ -33,7 +26,7 @@ import type { ViewMode } from "@/lib/panes";
  */
 
 const SEGMENTS: { mode: ViewMode; label: string; icon: LucideIcon }[] = [
-  { mode: "terminal", label: "Terminal", icon: SquareTerminal },
+  { mode: "terminal", label: "Terminal", icon: Terminal },
   { mode: "files", label: "Files", icon: FolderOpen },
 ];
 
@@ -57,7 +50,9 @@ function Segment({
       className={cn(
         "press-sm focus-ring relative z-10 flex h-7 w-full items-center justify-center gap-1.5 rounded-full px-3",
         "text-[0.75rem] font-medium transition-colors duration-200",
-        active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+        active
+          ? "text-foreground"
+          : "text-muted-foreground hover:text-foreground"
       )}
     >
       <Icon className="h-3.5 w-3.5" />
@@ -90,7 +85,7 @@ function DrawerToggle({
             "transition-colors duration-200",
             active
               ? "bg-primary/14 text-primary"
-              : "text-muted-foreground hover:bg-[var(--fill-4)] hover:text-foreground"
+              : "text-muted-foreground hover:text-foreground hover:bg-[var(--fill-4)]"
           )}
         >
           <Icon className="h-4 w-4" />
